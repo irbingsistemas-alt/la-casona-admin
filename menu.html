@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menú - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Menú interactivo</h1>
+
+  <div id="menu"></div>
+
+  <h3>Datos del cliente</h3>
+  <input type="text" id="cliente" placeholder="Nombre del cliente" />
+  <input type="text" id="direccion" placeholder="Dirección de entrega" />
+
+  <p>Total: <span id="total">0</span> CUP</p>
+  <button onclick="enviarPedido()">Enviar pedido por WhatsApp</button>
+
+  <script>
+    const menu = JSON.parse(localStorage.getItem("menu")) || [];
+    const menuDiv = document.getElementById("menu");
+
+    menu.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "menu-item";
+      div.innerHTML = `
+        <label>
+          ${item.nombre} - ${item.precio} CUP
+          <input type="number" min="0" value="0" data-index="${index}" data-price="${item.precio}" />
+        </label>
+      `;
+      menuDiv.appendChild(div);
+    });
+
+    document.querySelectorAll("input[type='number']").forEach((input) => {
+      input.addEventListener("input", calcularTotal);
+    });
+
+    function calcularTotal() {
+      let total = 0;
+      document.querySelectorAll("input[type='number']").forEach((input) => {
+        const cantidad = parseInt(input.value) || 0;
+        const precio = parseInt(input.dataset.price);
+        total += cantidad * precio;
+      });
+      document.getElementById("total").textContent = total;
+    }
+
+    function enviarPedido() {
+      const cliente = document.getElementById("cliente").value.trim();
+      const direccion = document.getElementById("direccion").value.trim();
+      if (!cliente || !direccion) {
+        alert("Por favor, completa nombre y dirección");
+        return;
+      }
+
+      let mensaje = `Pedido para: ${cliente}\nDirección: ${direccion}\n\n`;
+      let total = 0;
+
+      document.querySelectorAll("input[type='number']").forEach((input) => {
+        const cantidad = parseInt(input.value);
+        const index = input.dataset.index;
+        const plato = menu[index];
+        if (cantidad > 0) {
+          mensaje += `- ${plato.nombre} x${cantidad} = ${cantidad * plato.precio} CUP\n`;
+          total += cantidad * plato.precio;
+        }
+      });
+
+      mensaje += `\nTotal: ${total} CUP`;
+
+      const numero = "5355555555"; // ← Reemplaza con tu número real
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
+    }
+  </script>
+</body>
+</html>
