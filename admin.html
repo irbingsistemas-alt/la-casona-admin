@@ -1,1 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin - La Casona</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Panel de Administración</h1>
+  <button onclick="logout()">Cerrar sesión</button>
 
+  <table id="tabla">
+    <thead>
+      <tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Eliminar</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>Agregar nuevo plato</h3>
+  <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
+  <input type="number" id="nuevoPrecio" placeholder="Precio" />
+  <input type="text" id="nuevaCategoria" placeholder="Categoría" />
+  <button onclick="agregarPlato()">Agregar</button>
+  <br><br>
+  <button onclick="guardar()">Guardar menú</button>
+
+  <script src="script-admin.js"></script>
+</body>
+</html>
