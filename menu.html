@@ -25,16 +25,49 @@
     const menu = JSON.parse(localStorage.getItem("menu")) || [];
     const menuDiv = document.getElementById("menu");
 
-    menu.forEach((item, index) => {
-      const div = document.createElement("div");
-      div.className = "menu-item";
-      div.innerHTML = `
-        <label>
-          ${item.nombre} - ${item.precio} CUP
-          <input type="number" min="0" value="0" data-index="${index}" data-price="${item.precio}" />
-        </label>
-      `;
-      menuDiv.appendChild(div);
+const menuDiv = document.getElementById("menu");
+const filtroSelect = document.getElementById("filtro");
+
+// Extraer categorías únicas
+const categorias = [...new Set(menu.map(item => item.categoria))];
+categorias.forEach(cat => {
+  const option = document.createElement("option");
+  option.value = cat;
+  option.textContent = cat;
+  filtroSelect.appendChild(option);
+});
+
+function mostrarMenu(filtrado) {
+  menuDiv.innerHTML = "";
+  filtrado.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "menu-item";
+    div.innerHTML = `
+      <label>
+        <strong>${item.nombre}</strong> - ${item.precio} CUP
+        <input type="number" min="0" value="0" data-index="${index}" data-price="${item.precio}" />
+      </label>
+    `;
+    menuDiv.appendChild(div);
+  });
+
+  document.querySelectorAll("input[type='number']").forEach((input) => {
+    input.addEventListener("input", calcularTotal);
+  });
+}
+
+// Mostrar todo al inicio
+mostrarMenu(menu);
+
+function filtrarMenu() {
+  const seleccion = filtroSelect.value;
+  if (seleccion === "todos") {
+    mostrarMenu(menu);
+  } else {
+    const filtrado = menu.filter(item => item.categoria === seleccion);
+    mostrarMenu(filtrado);
+  }
+}
     });
 
     document.querySelectorAll("input[type='number']").forEach((input) => {
