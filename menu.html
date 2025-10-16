@@ -8,7 +8,10 @@
 </head>
 <body>
   <h1>Menú interactivo</h1>
-
+<label for="filtro">Filtrar por categoría:</label>
+<select id="filtro" onchange="filtrarMenu()">
+  <option value="todos">Todos</option>
+</select>
   <div id="menu"></div>
 
   <h3>Datos del cliente</h3>
