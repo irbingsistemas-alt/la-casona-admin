@@ -8,10 +8,12 @@
 </head>
 <body>
   <h1>Menú interactivo</h1>
-<label for="filtro">Filtrar por categoría:</label>
-<select id="filtro" onchange="filtrarMenu()">
-  <option value="todos">Todos</option>
-</select>
+
+  <label for="filtro">Filtrar por categoría:</label>
+  <select id="filtro" onchange="filtrarMenu()">
+    <option value="todos">Todos</option>
+  </select>
+
   <div id="menu"></div>
 
   <h3>Datos del cliente</h3>
@@ -19,60 +21,57 @@
   <input type="text" id="direccion" placeholder="Dirección de entrega" />
 
   <p>Total: <span id="total">0</span> CUP</p>
-  <button onclick="enviarPedido()">Enviar pedido por WhatsApp</button>
+  <button onclick="enviarPedido()">Revisar pedido</button>
+
+  <div id="confirmacion" style="display:none; margin-top:30px;">
+    <h3>Confirmación del pedido</h3>
+    <div id="resumen"></div>
+    <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
+    <button onclick="cancelar()">Cancelar</button>
+  </div>
 
   <script>
     const menu = JSON.parse(localStorage.getItem("menu")) || [];
     const menuDiv = document.getElementById("menu");
+    const filtroSelect = document.getElementById("filtro");
 
-const menuDiv = document.getElementById("menu");
-const filtroSelect = document.getElementById("filtro");
-
-// Extraer categorías únicas
-const categorias = [...new Set(menu.map(item => item.categoria))];
-categorias.forEach(cat => {
-  const option = document.createElement("option");
-  option.value = cat;
-  option.textContent = cat;
-  filtroSelect.appendChild(option);
-});
-
-function mostrarMenu(filtrado) {
-  menuDiv.innerHTML = "";
-  filtrado.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "menu-item";
-    div.innerHTML = `
-      <label>
-        <strong>${item.nombre}</strong> - ${item.precio} CUP
-        <input type="number" min="0" value="0" data-index="${index}" data-price="${item.precio}" />
-      </label>
-    `;
-    menuDiv.appendChild(div);
-  });
-
-  document.querySelectorAll("input[type='number']").forEach((input) => {
-    input.addEventListener("input", calcularTotal);
-  });
-}
-
-// Mostrar todo al inicio
-mostrarMenu(menu);
-
-function filtrarMenu() {
-  const seleccion = filtroSelect.value;
-  if (seleccion === "todos") {
-    mostrarMenu(menu);
-  } else {
-    const filtrado = menu.filter(item => item.categoria === seleccion);
-    mostrarMenu(filtrado);
-  }
-}
+    // Extraer categorías únicas
+    const categorias = [...new Set(menu.map(item => item.categoria))];
+    categorias.forEach(cat => {
+      const option = document.createElement("option");
+      option.value = cat;
+      option.textContent = cat;
+      filtroSelect.appendChild(option);
     });
 
-    document.querySelectorAll("input[type='number']").forEach((input) => {
-      input.addEventListener("input", calcularTotal);
-    });
+    function mostrarMenu(filtrado) {
+      menuDiv.innerHTML = "";
+      filtrado.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <label>
+            <strong>${item.nombre}</strong> - ${item.precio} CUP
+            <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+          </label>
+        `;
+        menuDiv.appendChild(div);
+      });
+
+      document.querySelectorAll("input[type='number']").forEach((input) => {
+        input.addEventListener("input", calcularTotal);
+      });
+    }
+
+    function filtrarMenu() {
+      const seleccion = filtroSelect.value;
+      if (seleccion === "todos") {
+        mostrarMenu(menu);
+      } else {
+        const filtrado = menu.filter(item => item.categoria === seleccion);
+        mostrarMenu(filtrado);
+      }
+    }
 
     function calcularTotal() {
       let total = 0;
@@ -92,25 +91,59 @@ function filtrarMenu() {
         return;
       }
 
+      let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Dirección:</strong> ${direccion}</p><ul>`;
       let mensaje = `Pedido para: ${cliente}\nDirección: ${direccion}\n\n`;
       let total = 0;
+      let items = [];
 
       document.querySelectorAll("input[type='number']").forEach((input) => {
         const cantidad = parseInt(input.value);
-        const index = input.dataset.index;
-        const plato = menu[index];
+        const nombre = input.dataset.name;
+        const precio = parseInt(input.dataset.price);
         if (cantidad > 0) {
-          mensaje += `- ${plato.nombre} x${cantidad} = ${cantidad * plato.precio} CUP\n`;
-          total += cantidad * plato.precio;
+          const subtotal = cantidad * precio;
+          mensaje += `- ${nombre} x${cantidad} = ${subtotal} CUP\n`;
+          resumenHTML += `<li>${nombre} x${cantidad} = ${subtotal} CUP</li>`;
+          total += subtotal;
+          items.push({ nombre, cantidad, subtotal });
         }
       });
 
-      mensaje += `\nTotal: ${total} CUP`;
+      if (items.length === 0) {
+        alert("Selecciona al menos un plato");
+        return;
+      }
 
-      const numero = "+5355582319"; // ← Reemplaza con tu número real
-      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+      mensaje += `\nTotal: ${total} CUP`;
+      resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+
+      // Guardar pedido en localStorage
+      const pedido = { cliente, direccion, fecha: new Date().toLocaleString(), items, total };
+      const historial = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      historial.push(pedido);
+      localStorage.setItem("historialPedidos", JSON.stringify(historial));
+
+      // Mostrar confirmación
+      document.getElementById("resumen").innerHTML = resumenHTML;
+      document.getElementById("confirmacion").style.display = "block";
+
+      // Guardar mensaje temporal para enviar
+      window.mensajeWhatsApp = mensaje;
     }
+
+    function enviarWhatsApp() {
+      const numero = "5355555555"; // ← Reemplaza con tu número real
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
+      window.open(url, "_blank");
+      document.getElementById("confirmacion").style.display = "none";
+    }
+
+    function cancelar() {
+      document.getElementById("confirmacion").style.display = "none";
+    }
+
+    // Mostrar todo al cargar
+    mostrarMenu(menu);
   </script>
 </body>
 </html>
