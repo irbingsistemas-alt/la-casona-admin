@@ -35,8 +35,8 @@
     const menuDiv = document.getElementById("menu");
     const filtroSelect = document.getElementById("filtro");
 
-    // Extraer categorías únicas
-    const categorias = [...new Set(menu.map(item => item.categoria))];
+    // Extraer categorías únicas (solo si existen)
+    const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
     categorias.forEach(cat => {
       const option = document.createElement("option");
       option.value = cat;
