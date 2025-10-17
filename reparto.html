@@ -20,7 +20,7 @@
     const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
 
     if (pedidos.length === 0) {
-      lista.innerHTML = "<p>No hay pedidos registrados.</p>";
+      lista.innerHTML = "<p>No hay pedidos pendientes.</p>";
     } else {
       pedidos.reverse().forEach((pedido, index) => {
         const div = document.createElement("div");
@@ -40,7 +40,20 @@
 
     function marcarEntregado(boton) {
       const tarjeta = boton.parentElement;
-      tarjeta.remove(); // Elimina el pedido del DOM
+      const index = Array.from(lista.children).indexOf(tarjeta);
+
+      // Eliminar del DOM
+      tarjeta.remove();
+
+      // Mover el pedido al historial de entregados
+      const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+
+      const entregado = pedidos.splice(pedidos.length - 1 - index, 1)[0];
+      entregados.push(entregado);
+
+      localStorage.setItem("historialPedidos", JSON.stringify(pedidos));
+      localStorage.setItem("pedidosEntregados", JSON.stringify(entregados));
     }
   </script>
 </body>
