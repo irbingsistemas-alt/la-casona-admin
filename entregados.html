@@ -13,16 +13,36 @@
     <p>Historial de entregas - Edificio FOCSA</p>
   </header>
 
+  <div style="margin-bottom: 20px;">
+    <input type="text" id="filtroCliente" placeholder="Filtrar por cliente" />
+    <input type="text" id="filtroPiso" placeholder="Filtrar por piso" />
+    <label>Desde: <input type="date" id="filtroDesde" /></label>
+    <label>Hasta: <input type="date" id="filtroHasta" /></label>
+    <button onclick="aplicarFiltros()">Filtrar</button>
+    <button onclick="limpiarFiltros()">Limpiar</button>
+    <button onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
   <div id="lista-entregados"></div>
+  <div id="tabla-exportable" style="margin-top: 30px;"></div>
 
   <script>
     const lista = document.getElementById("lista-entregados");
+    const tablaDiv = document.getElementById("tabla-exportable");
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+    let pedidosFiltrados = [];
 
-    if (entregados.length === 0) {
-      lista.innerHTML = "<p>No hay pedidos entregados registrados.</p>";
-    } else {
-      entregados.reverse().forEach((pedido) => {
+    function mostrarPedidos(pedidos) {
+      pedidosFiltrados = pedidos;
+      lista.innerHTML = "";
+      tablaDiv.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        lista.innerHTML = "<p>No hay pedidos entregados que coincidan.</p>";
+        return;
+      }
+
+      pedidos.reverse().forEach((pedido) => {
         const div = document.createElement("div");
         div.className = "menu-item";
         div.innerHTML = `
@@ -35,7 +55,96 @@
         `;
         lista.appendChild(div);
       });
+
+      let tablaHTML = `
+        <h3>Resumen en tabla</h3>
+        <table id="tablaCSV" border="1" cellpadding="6" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Piso</th>
+              <th>Apto</th>
+              <th>Platos</th>
+              <th>Total (CUP)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      pedidos.forEach(p => {
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
+        tablaHTML += `
+          <tr>
+            <td>${p.fecha}</td>
+            <td>${p.cliente}</td>
+            <td>${p.piso}</td>
+            <td>${p.apartamento}</td>
+            <td>${platos}</td>
+            <td>${p.total}</td>
+          </tr>
+        `;
+      });
+
+      tablaHTML += "</tbody></table>";
+      tablaDiv.innerHTML = tablaHTML;
     }
+
+    function aplicarFiltros() {
+      const cliente = document.getElementById("filtroCliente").value.toLowerCase();
+      const piso = document.getElementById("filtroPiso").value;
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      const filtrados = entregados.filter(p => {
+        const coincideCliente = cliente === "" || p.cliente.toLowerCase().includes(cliente);
+        const coincidePiso = piso === "" || p.piso === piso;
+
+        const fechaPedido = new Date(p.fecha);
+        const desdeFecha = desde ? new Date(desde + "T00:00") : null;
+        const hastaFecha = hasta ? new Date(hasta + "T23:59") : null;
+
+        const coincideFecha =
+          (!desdeFecha || fechaPedido >= desdeFecha) &&
+          (!hastaFecha || fechaPedido <= hastaFecha);
+
+        return coincideCliente && coincidePiso && coincideFecha;
+      });
+
+      mostrarPedidos(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("filtroCliente").value = "";
+      document.getElementById("filtroPiso").value = "";
+      document.getElementById("filtroDesde").value = "";
+      document.getElementById("filtroHasta").value = "";
+      mostrarPedidos(entregados);
+    }
+
+    function exportarCSV() {
+      if (pedidosFiltrados.length === 0) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+
+      let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
+      pedidosFiltrados.forEach(p => {
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
+        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "pedidos_entregados.csv";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    mostrarPedidos(entregados);
   </script>
 </body>
 </html>
