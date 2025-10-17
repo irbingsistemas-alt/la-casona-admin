@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estadísticas - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Panel de estadísticas</h1>
+    <p>Resumen de pedidos entregados</p>
+  </header>
+
+  <div style="margin-bottom: 20px;">
+    <label>Desde: <input type="date" id="filtroDesde" /></label>
+    <label>Hasta: <input type="date" id="filtroHasta" /></label>
+    <button onclick="aplicarFiltros()">Filtrar</button>
+    <button onclick="limpiarFiltros()">Limpiar</button>
+    <button onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
+  <section>
+    <canvas id="clientesChart" height="200"></canvas>
+    <canvas id="platosChart" height="200"></canvas>
+    <canvas id="pisosChart" height="200"></canvas>
+    <canvas id="ingresosChart" height="200"></canvas>
+  </section>
+
+  <script>
+    const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+    let filtrados = [];
+
+    function aplicarFiltros() {
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      filtrados = entregados.filter(p => {
+        const fechaPedido = new Date(p.fecha);
+        const desdeFecha = desde ? new Date(desde + "T00:00") : null;
+        const hastaFecha = hasta ? new Date(hasta + "T23:59") : null;
+
+        return (!desdeFecha || fechaPedido >= desdeFecha) &&
+               (!hastaFecha || fechaPedido <= hastaFecha);
+      });
+
+      generarEstadisticas(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("filtroDesde").value = "";
+      document.getElementById("filtroHasta").value = "";
+      generarEstadisticas(entregados);
+    }
+
+    function generarEstadisticas(pedidos) {
+      const clientes = {};
+      const platos = {};
+      const pisos = {};
+      const ingresos = {};
+
+      pedidos.forEach(p => {
+        clientes[p.cliente] = (clientes[p.cliente] || 0) + 1;
+        p.items.forEach(i => {
+          platos[i.nombre] = (platos[i.nombre] || 0) + i.cantidad;
+        });
+        pisos[p.piso] = (pisos[p.piso] || 0) + 1;
+        const fecha = p.fecha.split("T")[0];
+        ingresos[fecha] = (ingresos[fecha] || 0) + p.total;
+      });
+
+      crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
+      crearGrafico("platosChart", platos, "Platos más vendidos", "#f28e2b");
+      crearGrafico("pisosChart", pisos, "Pisos con más entregas", "#76b7b2");
+      crearGrafico("ingresosChart", ingresos, "Ingresos por día (CUP)", "#e15759");
+    }
+
+    function crearGrafico(id, datos, titulo, color) {
+      const ctx = document.getElementById(id).getContext("2d");
+      if (window[id]) window[id].destroy(); // evitar duplicados
+      window[id] = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: Object.keys(datos),
+          datasets: [{
+            label: titulo,
+            data: Object.values(datos),
+            backgroundColor: color
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: titulo }
+          }
+        }
+      });
+    }
+
+    function exportarCSV() {
+      const pedidos = filtrados.length ? filtrados : entregados;
+      if (pedidos.length === 0) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+
+      let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
+      pedidos.forEach(p => {
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
+        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "estadisticas_pedidos.csv";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    generarEstadisticas(entregados);
+  </script>
+</body>
+</html>
