@@ -1,3 +1,4 @@
+/* General layout */
 body {
   font-family: 'Segoe UI', sans-serif;
   background: #f9f9f9;
@@ -10,6 +11,10 @@ body {
 /* Encabezado con logo */
 header {
   text-align: center;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   margin-bottom: 20px;
 }
 header img {
