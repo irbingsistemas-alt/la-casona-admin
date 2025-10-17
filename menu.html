@@ -18,7 +18,8 @@
 
   <h3>Datos del cliente</h3>
   <input type="text" id="cliente" placeholder="Nombre del cliente" />
-  <input type="text" id="direccion" placeholder="Dirección de entrega" />
+  <input type="text" id="piso" placeholder="Piso (ej. 14)" />
+  <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
 
   <p>Total: <span id="total">0</span> CUP</p>
   <button onclick="enviarPedido()">Revisar pedido</button>
@@ -36,7 +37,6 @@
     const filtroSelect = document.getElementById("filtro");
     const cantidadesSeleccionadas = {};
 
-    // Extraer categorías únicas
     const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
     categorias.forEach(cat => {
       const option = document.createElement("option");
@@ -98,14 +98,15 @@
 
     function enviarPedido() {
       const cliente = document.getElementById("cliente").value.trim();
-      const direccion = document.getElementById("direccion").value.trim();
-      if (!cliente || !direccion) {
-        alert("Por favor, completa nombre y dirección");
+      const piso = document.getElementById("piso").value.trim();
+      const apartamento = document.getElementById("apartamento").value.trim();
+      if (!cliente || !piso || !apartamento) {
+        alert("Por favor, completa nombre, piso y apartamento");
         return;
       }
 
-      let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Dirección:</strong> ${direccion}</p><ul>`;
-      let mensaje = `Pedido para: ${cliente}\nDirección: ${direccion}\n\n`;
+      let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
+      let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
       let total = 0;
       let items = [];
 
@@ -129,7 +130,7 @@
       mensaje += `\nTotal: ${total} CUP`;
       resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
 
-      const pedido = { cliente, direccion, fecha: new Date().toLocaleString(), items, total };
+      const pedido = { cliente, piso, apartamento, fecha: new Date().toLocaleString(), items, total };
       const historial = JSON.parse(localStorage.getItem("historialPedidos")) || [];
       historial.push(pedido);
       localStorage.setItem("historialPedidos", JSON.stringify(historial));
@@ -150,7 +151,6 @@
       document.getElementById("confirmacion").style.display = "none";
     }
 
-    // Mostrar todo al cargar
     mostrarMenu(menu);
   </script>
 </body>
