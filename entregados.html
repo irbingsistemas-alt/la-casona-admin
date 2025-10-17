@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entregados - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Pedidos entregados</h1>
+    <p>Historial de entregas - Edificio FOCSA</p>
+  </header>
+
+  <div id="lista-entregados"></div>
+
+  <script>
+    const lista = document.getElementById("lista-entregados");
+    const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+
+    if (entregados.length === 0) {
+      lista.innerHTML = "<p>No hay pedidos entregados registrados.</p>";
+    } else {
+      entregados.reverse().forEach((pedido) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <p><strong>${pedido.fecha}</strong></p>
+          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
+          <ul>
+            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
+          </ul>
+          <p><strong>Total:</strong> ${pedido.total} CUP</p>
+        `;
+        lista.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
