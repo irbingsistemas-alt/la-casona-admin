@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reparto - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Pedidos para entregar</h1>
+    <p>Clientes del Edificio FOCSA</p>
+  </header>
+
+  <div id="lista-pedidos"></div>
+
+  <script>
+    const lista = document.getElementById("lista-pedidos");
+    const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+
+    if (pedidos.length === 0) {
+      lista.innerHTML = "<p>No hay pedidos registrados.</p>";
+    } else {
+      pedidos.reverse().forEach((pedido, index) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <p><strong>${pedido.fecha}</strong></p>
+          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
+          <ul>
+            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
+          </ul>
+          <p><strong>Total:</strong> ${pedido.total} CUP</p>
+          <button onclick="marcarEntregado(this)">Marcar como entregado</button>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function marcarEntregado(boton) {
+      const tarjeta = boton.parentElement;
+      tarjeta.style.opacity = "0.5";
+      tarjeta.style.pointerEvents = "none";
+      boton.textContent = "Entregado";
+      boton.disabled = true;
+    }
+  </script>
+</body>
+</html>
