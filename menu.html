@@ -7,33 +7,34 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-    <img src="assets/logo.png" alt="Logo La Casona de 17" style="height: 60px;" />
-    <h1 style="margin: 0;">
-      Menú Interactivo · La Casona 17 para Clientes del Edificio FOCSA
-    </h1>
-  </div>
+  <div class="contenedor">
+    <header>
+      <img src="assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Menú Interactivo</h1>
+      <p>Clientes del Edificio FOCSA</p>
+    </header>
 
-  <label for="filtro">Filtrar por categoría:</label>
-  <select id="filtro" onchange="filtrarMenu()">
-    <option value="todos">Todos</option>
-  </select>
+    <label for="filtro">Filtrar por categoría:</label>
+    <select id="filtro" onchange="filtrarMenu()">
+      <option value="todos">Todos</option>
+    </select>
 
-  <div id="menu"></div>
+    <div id="menu"></div>
 
-  <h3>Datos del cliente</h3>
-  <input type="text" id="cliente" placeholder="Nombre del cliente" />
-  <input type="text" id="piso" placeholder="Piso (ej. 14)" />
-  <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
+    <h3>Datos del cliente</h3>
+    <input type="text" id="cliente" placeholder="Nombre del cliente" />
+    <input type="text" id="piso" placeholder="Piso (ej. 14)" />
+    <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
 
-  <p>Total: <span id="total">0</span> CUP</p>
-  <button onclick="enviarPedido()">Revisar pedido</button>
+    <p>Total: <span id="total">0</span> CUP</p>
+    <button onclick="enviarPedido()">Revisar pedido</button>
 
-  <div id="confirmacion" style="display:none; margin-top:30px;">
-    <h3>Confirmación del pedido</h3>
-    <div id="resumen"></div>
-    <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
-    <button onclick="cancelar()">Cancelar</button>
+    <div id="confirmacion" style="display:none; margin-top:30px;">
+      <h3>Confirmación del pedido</h3>
+      <div id="resumen"></div>
+      <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
+      <button onclick="cancelar()">Cancelar</button>
+    </div>
   </div>
 
   <script>
@@ -146,17 +147,7 @@
     }
 
     function enviarWhatsApp() {
-      const numero = "5355582319"; // ← Reemplaza con tu número real
+      const numero = "5355555555"; // ← Reemplaza con tu número real
       const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
       window.open(url, "_blank");
-      document.getElementById("confirmacion").style.display = "none";
-    }
-
-    function cancelar() {
-      document.getElementById("confirmacion").style.display = "none";
-    }
-
-    mostrarMenu(menu);
-  </script>
-</body>
-</html>
+      document.getElementById("confirmacion").
