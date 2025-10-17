@@ -40,10 +40,7 @@
 
     function marcarEntregado(boton) {
       const tarjeta = boton.parentElement;
-      tarjeta.style.opacity = "0.5";
-      tarjeta.style.pointerEvents = "none";
-      boton.textContent = "Entregado";
-      boton.disabled = true;
+      tarjeta.remove(); // Elimina el pedido del DOM
     }
   </script>
 </body>
