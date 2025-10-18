@@ -33,27 +33,20 @@
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
     let filtrados = [];
 
-    function normalizarFecha(fechaStr) {
-      const f = new Date(fechaStr);
-      return new Date(f.getFullYear(), f.getMonth(), f.getDate());
-    }
-
-    function formatoFecha(fechaObj) {
-      const y = fechaObj.getFullYear();
-      const m = String(fechaObj.getMonth() + 1).padStart(2, "0");
-      const d = String(fechaObj.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
+    function parseFecha(fechaStr) {
+      const [y, m, d] = new Date(fechaStr).toISOString().split("T")[0].split("-");
+      return new Date(+y, +m - 1, +d);
     }
 
     function aplicarFiltros() {
       const desde = document.getElementById("filtroDesde").value;
       const hasta = document.getElementById("filtroHasta").value;
 
-      const desdeFecha = desde ? normalizarFecha(desde) : null;
-      const hastaFecha = hasta ? normalizarFecha(hasta) : null;
+      const desdeFecha = desde ? parseFecha(desde) : null;
+      const hastaFecha = hasta ? parseFecha(hasta) : null;
 
       filtrados = entregados.filter(p => {
-        const fechaPedido = normalizarFecha(p.fecha);
+        const fechaPedido = parseFecha(p.fecha);
         return (!desdeFecha || fechaPedido >= desdeFecha) &&
                (!hastaFecha || fechaPedido <= hastaFecha);
       });
@@ -80,9 +73,8 @@
         });
         pisos[p.piso] = (pisos[p.piso] || 0) + 1;
 
-        const fechaObj = normalizarFecha(p.fecha);
-        const clave = formatoFecha(fechaObj);
-        ingresos[clave] = (ingresos[clave] || 0) + p.total;
+        const fecha = new Date(p.fecha).toISOString().split("T")[0];
+        ingresos[fecha] = (ingresos[fecha] || 0) + p.total;
       });
 
       crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
@@ -126,7 +118,7 @@
       let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
       pedidos.forEach(p => {
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-        const fecha = formatoFecha(normalizarFecha(p.fecha));
+        const fecha = new Date(p.fecha).toISOString().split("T")[0];
         csv += `"${fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
       });
 
