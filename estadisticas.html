@@ -33,15 +33,20 @@
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
     let filtrados = [];
 
+    function normalizarFecha(fechaStr) {
+      const f = new Date(fechaStr);
+      return new Date(f.getFullYear(), f.getMonth(), f.getDate());
+    }
+
     function aplicarFiltros() {
       const desde = document.getElementById("filtroDesde").value;
       const hasta = document.getElementById("filtroHasta").value;
 
-      filtrados = entregados.filter(p => {
-        const fechaPedido = new Date(p.fecha);
-        const desdeFecha = desde ? new Date(desde + "T00:00") : null;
-        const hastaFecha = hasta ? new Date(hasta + "T23:59") : null;
+      const desdeFecha = desde ? normalizarFecha(desde) : null;
+      const hastaFecha = hasta ? normalizarFecha(hasta) : null;
 
+      filtrados = entregados.filter(p => {
+        const fechaPedido = normalizarFecha(p.fecha);
         return (!desdeFecha || fechaPedido >= desdeFecha) &&
                (!hastaFecha || fechaPedido <= hastaFecha);
       });
