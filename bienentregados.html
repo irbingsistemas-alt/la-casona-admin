@@ -32,6 +32,53 @@
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
     let pedidosFiltrados = [];
 
+    function fechaLocalAISO(fechaStr) {
+      const partes = fechaStr.split(",")[0].split("/");
+      const dia = partes[0];
+      const mes = partes[1];
+      const año = partes[2];
+      return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+
+    function hoyISO() {
+      const hoy = new Date();
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, "0");
+      const d = String(hoy.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function aplicarFiltros() {
+      const cliente = document.getElementById("filtroCliente").value.toLowerCase();
+      const piso = document.getElementById("filtroPiso").value;
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      const filtrados = entregados.filter(p => {
+        const coincideCliente = cliente === "" || p.cliente.toLowerCase().includes(cliente);
+        const coincidePiso = piso === "" || p.piso === piso;
+
+        const fechaPedido = fechaLocalAISO(p.fecha);
+        const coincideFecha =
+          (!desde || fechaPedido >= desde) &&
+          (!hasta || fechaPedido <= hasta);
+
+        return coincideCliente && coincidePiso && coincideFecha;
+      });
+
+      mostrarPedidos(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("filtroCliente").value = "";
+      document.getElementById("filtroPiso").value = "";
+      document.getElementById("filtroDesde").value = "";
+      document.getElementById("filtroHasta").value = "";
+      const hoy = hoyISO();
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    }
+
     function mostrarPedidos(pedidos) {
       pedidosFiltrados = pedidos;
       lista.innerHTML = "";
@@ -42,11 +89,12 @@
         return;
       }
 
-      pedidos.reverse().forEach((pedido) => {
+      pedidos.slice().reverse().forEach((pedido) => {
         const div = document.createElement("div");
         div.className = "menu-item";
+        const fecha = fechaLocalAISO(pedido.fecha);
         div.innerHTML = `
-          <p><strong>${pedido.fecha}</strong></p>
+          <p><strong>${fecha}</strong></p>
           <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
           <ul>
             ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
@@ -73,10 +121,11 @@
       `;
 
       pedidos.forEach(p => {
+        const fecha = fechaLocalAISO(p.fecha);
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
         tablaHTML += `
           <tr>
-            <td>${p.fecha}</td>
+            <td>${fecha}</td>
             <td>${p.cliente}</td>
             <td>${p.piso}</td>
             <td>${p.apartamento}</td>
@@ -90,38 +139,6 @@
       tablaDiv.innerHTML = tablaHTML;
     }
 
-    function aplicarFiltros() {
-      const cliente = document.getElementById("filtroCliente").value.toLowerCase();
-      const piso = document.getElementById("filtroPiso").value;
-      const desde = document.getElementById("filtroDesde").value;
-      const hasta = document.getElementById("filtroHasta").value;
-
-      const filtrados = entregados.filter(p => {
-        const coincideCliente = cliente === "" || p.cliente.toLowerCase().includes(cliente);
-        const coincidePiso = piso === "" || p.piso === piso;
-
-        const fechaPedido = new Date(p.fecha);
-        const desdeFecha = desde ? new Date(desde + "T00:00") : null;
-        const hastaFecha = hasta ? new Date(hasta + "T23:59") : null;
-
-        const coincideFecha =
-          (!desdeFecha || fechaPedido >= desdeFecha) &&
-          (!hastaFecha || fechaPedido <= hastaFecha);
-
-        return coincideCliente && coincidePiso && coincideFecha;
-      });
-
-      mostrarPedidos(filtrados);
-    }
-
-    function limpiarFiltros() {
-      document.getElementById("filtroCliente").value = "";
-      document.getElementById("filtroPiso").value = "";
-      document.getElementById("filtroDesde").value = "";
-      document.getElementById("filtroHasta").value = "";
-      mostrarPedidos(entregados);
-    }
-
     function exportarCSV() {
       if (pedidosFiltrados.length === 0) {
         alert("No hay datos para exportar.");
@@ -130,8 +147,9 @@
 
       let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
       pedidosFiltrados.forEach(p => {
+        const fecha = fechaLocalAISO(p.fecha);
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+        csv += `"${fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -144,7 +162,11 @@
       document.body.removeChild(link);
     }
 
-    mostrarPedidos(entregados);
+    window.onload = () => {
+      const hoy = hoyISO();
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    };
   </script>
 </body>
 </html>
