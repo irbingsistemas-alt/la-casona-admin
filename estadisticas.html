@@ -23,6 +23,7 @@
   </div>
 
   <div id="resumen-numerico" style="margin-bottom: 20px;"></div>
+  <canvas id="resumenChart" height="200"></canvas>
 
   <section>
     <canvas id="clientesChart" height="200"></canvas>
@@ -49,8 +50,7 @@
 
       filtrados = entregados.filter(p => {
         const fechaPedido = fechaLocalAISO(p.fecha);
-        return (!desde || fechaPedido >= desde) &&
-               (!hasta || fechaPedido <= hasta);
+        return (!desde || fechaPedido >= desde) && (!hasta || fechaPedido <= hasta);
       });
 
       generarEstadisticas(filtrados);
@@ -79,16 +79,87 @@
       });
 
       const totalIngresos = Object.values(ingresos).reduce((a, b) => a + b, 0);
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      let tituloResumen = "Resumen general";
+      if (desde && hasta && desde !== hasta) {
+        tituloResumen = `Resumen general del período: ${desde} al ${hasta}`;
+      } else if (desde) {
+        tituloResumen = `Resumen general del día: ${desde}`;
+      } else {
+        const hoy = new Date().toISOString().split("T")[0];
+        tituloResumen = `Resumen general del día: ${hoy}`;
+      }
+
+      const promedioPorCliente = pedidos.length > 0 ? (totalIngresos / pedidos.length).toFixed(2) : 0;
+      const promedioPorPiso = Object.keys(pisos).length > 0 ? (totalIngresos / Object.keys(pisos).length).toFixed(2) : 0;
+
+      let platoMasVendido = "—";
+      if (Object.keys(platos).length > 0) {
+        const topPlato = Object.entries(platos).sort((a, b) => b[1] - a[1])[0];
+        platoMasVendido = `${topPlato[0]} (${topPlato[1]} uds)`;
+      }
+
+      let clienteTop = "—";
+      if (Object.keys(clientes).length > 0) {
+        const topCliente = Object.entries(clientes).sort((a, b) => b[1] - a[1])[0];
+        clienteTop = `${topCliente[0]} (${topCliente[1]} pedidos)`;
+      }
+
+      let pisoTop = "—";
+      if (Object.keys(pisos).length > 0) {
+        const topPiso = Object.entries(pisos).sort((a, b) => b[1] - a[1])[0];
+        pisoTop = `Piso ${topPiso[0]} (${topPiso[1]} entregas)`;
+      }
+
       const resumen = `
-        <h3>Resumen general</h3>
+        <h3>${tituloResumen}</h3>
         <table>
           <tr><th>Total de pedidos</th><td>${pedidos.length}</td></tr>
           <tr><th>Total de ingresos</th><td>${totalIngresos} CUP</td></tr>
           <tr><th>Clientes únicos</th><td>${Object.keys(clientes).length}</td></tr>
           <tr><th>Pisos atendidos</th><td>${Object.keys(pisos).length}</td></tr>
+          <tr><th>Promedio por cliente</th><td>${promedioPorCliente} CUP</td></tr>
+          <tr><th>Promedio por piso</th><td>${promedioPorPiso} CUP</td></tr>
+          <tr><th>Plato más vendido</th><td>${platoMasVendido}</td></tr>
+          <tr><th>Cliente más frecuente</th><td>${clienteTop}</td></tr>
+          <tr><th>Piso con más entregas</th><td>${pisoTop}</td></tr>
         </table>
       `;
       document.getElementById("resumen-numerico").innerHTML = resumen;
+
+      const resumenData = {
+        "Pedidos": pedidos.length,
+        "Ingresos (CUP)": totalIngresos,
+        "Clientes únicos": Object.keys(clientes).length,
+        "Pisos atendidos": Object.keys(pisos).length,
+        "Plato más vendido": Object.keys(platos).length > 0 ? Object.entries(platos).sort((a, b) => b[1] - a[1])[0][1] : 0
+      };
+
+      const resumenCanvas = document.getElementById("resumenChart");
+      if (window.resumenChart instanceof Chart) {
+        window.resumenChart.destroy();
+      }
+      window.resumenChart = new Chart(resumenCanvas, {
+        type: "bar",
+        data: {
+          labels: Object.keys(resumenData),
+          datasets: [{
+            label: "Resumen visual",
+            data: Object.values(resumenData),
+            backgroundColor: ["#4e79a7", "#f28e2b", "#59a14f", "#edc948", "#e15759"]
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: "Resumen visual del período" }
+          }
+        }
+      });
 
       crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
       crearGrafico("platosChart", platos, "Platos más vendidos", "#f28e2b");
