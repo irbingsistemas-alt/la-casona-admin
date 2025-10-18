@@ -34,7 +34,7 @@
       const lista = document.getElementById("lista-pedidos");
       const tablaDiv = document.getElementById("tabla-exportable");
       const resumenDiv = document.getElementById("resumen-pisos");
-      const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      let pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
       let pedidosFiltrados = [];
 
       function fechaLocalAISO(fechaStr) {
@@ -200,7 +200,20 @@
 
         localStorage.setItem("historialPedidos", JSON.stringify(pedidosActuales));
         localStorage.setItem("pedidosEntregados", JSON.stringify(entregados));
+        pedidos = pedidosActuales;
+        mostrarPedidos(pedidos);
       };
 
       document.getElementById("btnFiltrar").onclick = aplicarFiltros;
-     
+      document.getElementById("btnLimpiar").onclick = limpiarFiltros;
+      document.getElementById("btnVerTodos").onclick = verTodos;
+      document.getElementById("btnExportar").onclick = exportarCSV;
+
+      // Mostrar pedidos del día al cargar
+      const hoy = hoyISO();
+      const pedidosHoy = pedidos.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    });
+  </script>
+</body>
+</html>
