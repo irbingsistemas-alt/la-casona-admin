@@ -25,6 +25,7 @@
 
   <div id="lista-entregados"></div>
   <div id="tabla-exportable" style="margin-top: 30px;"></div>
+  <div id="resumen-pisos" style="margin-top: 30px; font-weight: bold;"></div>
 
   <script>
     const lista = document.getElementById("lista-entregados");
@@ -42,10 +43,94 @@
 
     function hoyISO() {
       const hoy = new Date();
-      const y = hoy.getFullYear();
-      const m = String(hoy.getMonth() + 1).padStart(2, "0");
-      const d = String(hoy.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
+      return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+    }
+
+    function mostrarPedidos(pedidos) {
+      pedidosFiltrados = pedidos;
+      lista.innerHTML = "";
+      tablaDiv.innerHTML = "";
+      document.getElementById("resumen-pisos").innerHTML = "";
+
+      if (pedidos.length === 0) {
+        lista.innerHTML = "<p>No hay pedidos entregados que coincidan.</p>";
+        return;
+      }
+
+      pedidos.slice().reverse().forEach((pedido) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <p><strong>${pedido.fecha}</strong></p>
+          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
+          <ul>
+            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
+          </ul>
+          <p><strong>Total:</strong> ${pedido.total} CUP</p>
+        `;
+        lista.appendChild(div);
+      });
+
+      let tablaHTML = `
+        <h3>Resumen en tabla</h3>
+        <table id="tablaCSV" border="1" cellpadding="6" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Piso</th>
+              <th>Apto</th>
+              <th>Platos</th>
+              <th>Total (CUP)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      pedidos.forEach(p => {
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
+        tablaHTML += `
+          <tr>
+            <td>${p.fecha}</td>
+            <td>${p.cliente}</td>
+            <td>${p.piso}</td>
+            <td>${p.apartamento}</td>
+            <td>${platos}</td>
+            <td>${p.total}</td>
+          </tr>
+        `;
+      });
+
+      tablaHTML += "</tbody></table>";
+      tablaDiv.innerHTML = tablaHTML;
+
+      mostrarResumenPorPiso(pedidos);
+    }
+
+    function mostrarResumenPorPiso(pedidos) {
+      const resumen = {};
+
+      pedidos.forEach(p => {
+        const piso = p.piso || "Sin piso";
+        if (!resumen[piso]) resumen[piso] = 0;
+        resumen[piso] += 1;
+      });
+
+      const contenedor = document.getElementById("resumen-pisos");
+      const pisosOrdenados = Object.keys(resumen).sort((a, b) => {
+        const na = parseInt(a), nb = parseInt(b);
+        return isNaN(nb) - isNaN(na) || nb - na;
+      });
+
+      let html = `<h3>Resumen de pedidos del día</h3>`;
+      html += `<p>Total de pedidos: ${pedidos.length}</p>`;
+      html += `<table border="1" cellpadding="6" cellspacing="0"><thead><tr><th>Piso</th><th>Pedidos</th></tr></thead><tbody>`;
+      pisosOrdenados.forEach(piso => {
+        html += `<tr><td>${piso}</td><td>${resumen[piso]}</td></tr>`;
+      });
+      html += "</tbody></table>";
+
+      contenedor.innerHTML = html;
     }
 
     function aplicarFiltros() {
@@ -79,66 +164,6 @@
       mostrarPedidos(pedidosHoy);
     }
 
-    function mostrarPedidos(pedidos) {
-      pedidosFiltrados = pedidos;
-      lista.innerHTML = "";
-      tablaDiv.innerHTML = "";
-
-      if (pedidos.length === 0) {
-        lista.innerHTML = "<p>No hay pedidos entregados que coincidan.</p>";
-        return;
-      }
-
-      pedidos.slice().reverse().forEach((pedido) => {
-        const div = document.createElement("div");
-        div.className = "menu-item";
-        const fecha = fechaLocalAISO(pedido.fecha);
-        div.innerHTML = `
-          <p><strong>${fecha}</strong></p>
-          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
-          <ul>
-            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
-          </ul>
-          <p><strong>Total:</strong> ${pedido.total} CUP</p>
-        `;
-        lista.appendChild(div);
-      });
-
-      let tablaHTML = `
-        <h3>Resumen en tabla</h3>
-        <table id="tablaCSV" border="1" cellpadding="6" cellspacing="0">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Cliente</th>
-              <th>Piso</th>
-              <th>Apto</th>
-              <th>Platos</th>
-              <th>Total (CUP)</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      pedidos.forEach(p => {
-        const fecha = fechaLocalAISO(p.fecha);
-        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
-        tablaHTML += `
-          <tr>
-            <td>${fecha}</td>
-            <td>${p.cliente}</td>
-            <td>${p.piso}</td>
-            <td>${p.apartamento}</td>
-            <td>${platos}</td>
-            <td>${p.total}</td>
-          </tr>
-        `;
-      });
-
-      tablaHTML += "</tbody></table>";
-      tablaDiv.innerHTML = tablaHTML;
-    }
-
     function exportarCSV() {
       if (pedidosFiltrados.length === 0) {
         alert("No hay datos para exportar.");
@@ -147,19 +172,15 @@
 
       let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
       pedidosFiltrados.forEach(p => {
-        const fecha = fechaLocalAISO(p.fecha);
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-        csv += `"${fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "pedidos_entregados.csv";
-      link.style.display = "none";
-      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
     }
 
     window.onload = () => {
