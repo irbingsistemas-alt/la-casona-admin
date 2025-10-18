@@ -21,8 +21,11 @@
     <button onclick="aplicarFiltros()">Filtrar</button>
     <button onclick="limpiarFiltros()">Limpiar</button>
     <button onclick="exportarCSV()">Exportar CSV</button>
+    <button onclick="mostrarResumen('semana')">Resumen semanal</button>
+    <button onclick="mostrarResumen('mes')">Resumen mensual</button>
   </div>
 
+  <div id="total-dia" style="margin-top: 10px; font-weight: bold;"></div>
   <div id="lista-entregados"></div>
   <div id="tabla-exportable" style="margin-top: 30px;"></div>
 
@@ -48,6 +51,12 @@
       return `${y}-${m}-${d}`;
     }
 
+    function mostrarTotalDelDia(pedidos) {
+      const total = pedidos.reduce((sum, p) => sum + p.total, 0);
+      const contenedor = document.getElementById("total-dia");
+      contenedor.textContent = `Total acumulado del día: ${total} CUP`;
+    }
+
     function aplicarFiltros() {
       const cliente = document.getElementById("filtroCliente").value.toLowerCase();
       const piso = document.getElementById("filtroPiso").value;
@@ -67,6 +76,7 @@
       });
 
       mostrarPedidos(filtrados);
+      mostrarTotalDelDia(filtrados);
     }
 
     function limpiarFiltros() {
@@ -77,6 +87,7 @@
       const hoy = hoyISO();
       const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
       mostrarPedidos(pedidosHoy);
+      mostrarTotalDelDia(pedidosHoy);
     }
 
     function mostrarPedidos(pedidos) {
@@ -139,6 +150,46 @@
       tablaDiv.innerHTML = tablaHTML;
     }
 
+    function mostrarResumen(tipo) {
+      const resumen = {};
+
+      entregados.forEach(p => {
+        const fecha = fechaLocalAISO(p.fecha);
+        let clave;
+
+        if (tipo === "mes") {
+          clave = fecha.slice(0, 7); // YYYY-MM
+        } else if (tipo === "semana") {
+          const d = new Date(fecha);
+          const año = d.getFullYear();
+          const primera = new Date(año, 0, 1);
+          const dias = Math.floor((d - primera) / (24 * 60 * 60 * 1000));
+          const semana = Math.ceil((dias + primera.getDay() + 1) / 7);
+          clave = `${año}-sem${semana}`;
+        } else {
+          clave = fecha;
+        }
+
+        if (!resumen[clave]) {
+          resumen[clave] = { total: 0, cantidad: 0 };
+        }
+
+        resumen[clave].total += p.total;
+        resumen[clave].cantidad += 1;
+      });
+
+      let html = `<h3>Resumen por ${tipo}</h3><table border="1" cellpadding="6" cellspacing="0"><thead><tr><th>${tipo === "mes" ? "Mes" : "Semana"}</th><th>Pedidos</th><th>Total (CUP)</th></tr></thead><tbody>`;
+
+      Object.entries(resumen).forEach(([clave, datos]) => {
+        html += `<tr><td>${clave}</td><td>${datos.cantidad}</td><td>${datos.total}</td></tr>`;
+      });
+
+      html += "</tbody></table>";
+      tablaDiv.innerHTML = html;
+      lista.innerHTML = "";
+      document.getElementById("total-dia").textContent = "";
+    }
+
     function exportarCSV() {
       if (pedidosFiltrados.length === 0) {
         alert("No hay datos para exportar.");
@@ -153,20 +204,4 @@
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "pedidos_entregados.csv";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    window.onload = () => {
-      const hoy = hoyISO();
-      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
-      mostrarPedidos(pedidosHoy);
-    };
-  </script>
-</body>
-</html>
+      const link =
