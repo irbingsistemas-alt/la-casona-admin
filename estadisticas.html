@@ -23,7 +23,6 @@
   </div>
 
   <div id="resumen-numerico" style="margin-bottom: 20px;"></div>
-  <canvas id="resumenChart" height="200"></canvas>
 
   <section>
     <canvas id="clientesChart" height="200"></canvas>
@@ -59,7 +58,8 @@
     function limpiarFiltros() {
       document.getElementById("filtroDesde").value = "";
       document.getElementById("filtroHasta").value = "";
-      generarEstadisticas(entregados);
+      filtrados = entregados;
+      generarEstadisticas(filtrados);
     }
 
     function generarEstadisticas(pedidos) {
@@ -129,38 +129,6 @@
       `;
       document.getElementById("resumen-numerico").innerHTML = resumen;
 
-      const resumenData = {
-        "Pedidos": pedidos.length,
-        "Ingresos (CUP)": totalIngresos,
-        "Clientes únicos": Object.keys(clientes).length,
-        "Pisos atendidos": Object.keys(pisos).length,
-        "Plato más vendido": Object.keys(platos).length > 0 ? Object.entries(platos).sort((a, b) => b[1] - a[1])[0][1] : 0
-      };
-
-      const resumenCanvas = document.getElementById("resumenChart");
-      if (window.resumenChart instanceof Chart) {
-        window.resumenChart.destroy();
-      }
-      window.resumenChart = new Chart(resumenCanvas, {
-        type: "bar",
-        data: {
-          labels: Object.keys(resumenData),
-          datasets: [{
-            label: "Resumen visual",
-            data: Object.values(resumenData),
-            backgroundColor: ["#4e79a7", "#f28e2b", "#59a14f", "#edc948", "#e15759"]
-          }]
-        },
-        options: {
-          indexAxis: "y",
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: "Resumen visual del período" }
-          }
-        }
-      });
-
       crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
       crearGrafico("platosChart", platos, "Platos más vendidos", "#f28e2b");
       crearGrafico("pisosChart", pisos, "Pisos con más entregas", "#76b7b2");
@@ -223,7 +191,13 @@
       document.body.removeChild(link);
     }
 
-    window.onload = () => generarEstadisticas(entregados);
+    window.onload = () => {
+      const hoy = new Date();
+      const hoyISO = hoy.toISOString().split("T")[0];
+      document.getElementById("filtroDesde").value = hoyISO;
+      document.getElementById("filtroHasta").value = hoyISO;
+      aplicarFiltros();
+    };
   </script>
 </body>
 </html>
