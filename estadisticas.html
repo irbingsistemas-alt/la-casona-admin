@@ -79,7 +79,9 @@
 
     function crearGrafico(id, datos, titulo, color) {
       const ctx = document.getElementById(id).getContext("2d");
-      if (window[id]) window[id].destroy();
+      if (window[id] instanceof Chart) {
+        window[id].destroy();
+      }
       window[id] = new Chart(ctx, {
         type: "bar",
         data: {
