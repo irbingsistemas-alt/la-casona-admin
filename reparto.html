@@ -13,207 +13,103 @@
     <p>Clientes del Edificio FOCSA</p>
   </header>
 
-  <div id="resumen-pisos"></div>
-
   <div style="margin-bottom: 20px;">
-    <input type="text" id="filtroCliente" placeholder="Buscar cliente por nombre..." />
-    <input type="text" id="filtroPiso" placeholder="Buscar por piso (ej. 10)" />
-    <label>Desde: <input type="date" id="filtroDesde" /></label>
-    <label>Hasta: <input type="date" id="filtroHasta" /></label>
-    <button id="btnFiltrar">Filtrar</button>
-    <button id="btnLimpiar">Limpiar</button>
-    <button id="btnVerTodos">Ver todos</button>
-    <button id="btnExportar">Exportar CSV</button>
+    <label>Selecciona una fecha: <input type="date" id="filtroFecha" /></label>
+    <button onclick="mostrarResumen()">Ver resumen</button>
   </div>
 
+  <div id="resumen-dia" style="margin-bottom: 20px;"></div>
   <div id="lista-pedidos"></div>
-  <div id="tabla-exportable"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const lista = document.getElementById("lista-pedidos");
-      const tablaDiv = document.getElementById("tabla-exportable");
-      const resumenDiv = document.getElementById("resumen-pisos");
-      let pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
-      let pedidosFiltrados = [];
+    const lista = document.getElementById("lista-pedidos");
+    const resumenDiv = document.getElementById("resumen-dia");
 
-      function fechaLocalAISO(fechaStr) {
-        const partes = fechaStr.split(",")[0].split("/");
-        const dia = partes[0];
-        const mes = partes[1];
-        const año = partes[2];
-        return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    function fechaLocalAISO(fechaStr) {
+      const partes = fechaStr.split(",")[0].split("/");
+      const dia = partes[0];
+      const mes = partes[1];
+      const año = partes[2];
+      return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+
+    function mostrarResumen() {
+      const fechaSeleccionada = document.getElementById("filtroFecha").value;
+      if (!fechaSeleccionada) {
+        alert("Selecciona una fecha.");
+        return;
       }
 
-      function hoyISO() {
-        const hoy = new Date();
-        return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+      const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+
+      const pedidosDelDia = pedidos.filter(p => fechaLocalAISO(p.fecha) === fechaSeleccionada);
+      const entregadosDelDia = entregados.filter(p => fechaLocalAISO(p.fecha) === fechaSeleccionada);
+
+      resumenDiv.innerHTML = `
+        <h3>Resumen del ${fechaSeleccionada}</h3>
+        <table>
+          <tr><th>Pedidos generados</th><td>${pedidosDelDia.length}</td></tr>
+          <tr><th>Pedidos entregados</th><td>${entregadosDelDia.length}</td></tr>
+        </table>
+      `;
+
+      mostrarPedidos(pedidosDelDia);
+    }
+
+    function mostrarPedidos(pedidos) {
+      lista.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        lista.innerHTML = "<p>No hay pedidos pendientes para esa fecha.</p>";
+        return;
       }
 
-      function mostrarPedidos(pedidosMostrar) {
-        pedidosFiltrados = pedidosMostrar;
-        lista.innerHTML = "";
-        tablaDiv.innerHTML = "";
-        resumenDiv.innerHTML = "";
-
-        if (pedidosMostrar.length === 0) {
-          lista.innerHTML = "<p>No hay pedidos pendientes.</p>";
-          return;
-        }
-
-        pedidosMostrar.slice().reverse().forEach((pedido, index) => {
-          const div = document.createElement("div");
-          div.className = "menu-item";
-          div.innerHTML = `
-            <p><strong>${pedido.fecha}</strong></p>
-            <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
-            <ul>
-              ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
-            </ul>
-            <p><strong>Total:</strong> ${pedido.total} CUP</p>
-            <button onclick="marcarEntregado(${index})">Marcar como entregado</button>
-          `;
-          lista.appendChild(div);
-        });
-
-        let tablaHTML = `
-          <h3>Resumen en tabla</h3>
-          <table id="tablaCSV">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Piso</th>
-                <th>Apto</th>
-                <th>Platos</th>
-                <th>Total (CUP)</th>
-              </tr>
-            </thead>
-            <tbody>
+      pedidos.slice().reverse().forEach((pedido, index) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <p><strong>${pedido.fecha}</strong></p>
+          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
+          <ul>
+            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
+          </ul>
+          <p><strong>Total:</strong> ${pedido.total} CUP</p>
+          <button onclick="marcarEntregado(this)">Marcar como entregado</button>
         `;
+        lista.appendChild(div);
+      });
+    }
 
-        pedidosMostrar.forEach(p => {
-          const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
-          tablaHTML += `
-            <tr>
-              <td>${p.fecha}</td>
-              <td>${p.cliente}</td>
-              <td>${p.piso}</td>
-              <td>${p.apartamento}</td>
-              <td>${platos}</td>
-              <td>${p.total}</td>
-            </tr>
-          `;
-        });
+    function marcarEntregado(boton) {
+      const tarjeta = boton.parentElement;
+      const index = Array.from(lista.children).indexOf(tarjeta);
 
-        tablaHTML += "</tbody></table>";
-        tablaDiv.innerHTML = tablaHTML;
+      tarjeta.remove();
 
-        mostrarResumenPorPiso(pedidosMostrar);
-      }
+      const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
 
-      function mostrarResumenPorPiso(pedidosMostrar) {
-        const resumen = {};
-        pedidosMostrar.forEach(p => {
-          const piso = p.piso || "Sin piso";
-          if (!resumen[piso]) resumen[piso] = 0;
-          resumen[piso] += 1;
-        });
+      const entregado = pedidos.splice(pedidos.length - 1 - index, 1)[0];
+      entregados.push(entregado);
 
-        const pisosOrdenados = Object.keys(resumen).sort((a, b) => {
-          const na = parseInt(a), nb = parseInt(b);
-          return isNaN(nb) - isNaN(na) || nb - na;
-        });
+      localStorage.setItem("historialPedidos", JSON.stringify(pedidos));
+      localStorage.setItem("pedidosEntregados", JSON.stringify(entregados));
 
-        let html = `<h3>Resumen de pedidos en reparto</h3>`;
-        html += `<p>Total de pedidos: ${pedidosMostrar.length}</p>`;
-        html += `<table><thead><tr><th>Piso</th><th>Pedidos</th></tr></thead><tbody>`;
-        pisosOrdenados.forEach(piso => {
-          html += `<tr><td>${piso}</td><td>${resumen[piso]}</td></tr>`;
-        });
-        html += "</tbody></table>";
+      // Refrescar resumen
+      mostrarResumen();
+    }
 
-        resumenDiv.innerHTML = html;
-      }
-
-      function aplicarFiltros() {
-        const cliente = document.getElementById("filtroCliente").value.toLowerCase();
-        const piso = document.getElementById("filtroPiso").value;
-        const desde = document.getElementById("filtroDesde").value;
-        const hasta = document.getElementById("filtroHasta").value;
-
-        const filtrados = pedidos.filter(p => {
-          const coincideCliente = cliente === "" || p.cliente.toLowerCase().includes(cliente);
-          const coincidePiso = piso === "" || p.piso === piso;
-          const fechaPedido = fechaLocalAISO(p.fecha);
-          const coincideFecha =
-            (!desde || fechaPedido >= desde) &&
-            (!hasta || fechaPedido <= hasta);
-          return coincideCliente && coincidePiso && coincideFecha;
-        });
-
-        mostrarPedidos(filtrados);
-      }
-
-      function limpiarFiltros() {
-        document.getElementById("filtroCliente").value = "";
-        document.getElementById("filtroPiso").value = "";
-        document.getElementById("filtroDesde").value = "";
-        document.getElementById("filtroHasta").value = "";
-        const hoy = hoyISO();
-        const pedidosHoy = pedidos.filter(p => fechaLocalAISO(p.fecha) === hoy);
-        mostrarPedidos(pedidosHoy);
-      }
-
-      function verTodos() {
-        mostrarPedidos(pedidos);
-      }
-
-      function exportarCSV() {
-        if (pedidosFiltrados.length === 0) {
-          alert("No hay datos para exportar.");
-          return;
-        }
-
-        let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
-        pedidosFiltrados.forEach(p => {
-          const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-          csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "pedidos_reparto.csv";
-        link.click();
-      }
-
-      window.marcarEntregado = function(index) {
-        const tarjeta = lista.children[index];
-        tarjeta.remove();
-
-        const pedidosActuales = JSON.parse(localStorage.getItem("historialPedidos")) || [];
-        const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
-
-        const entregado = pedidosActuales.splice(pedidosActuales.length - 1 - index, 1)[0];
-        entregados.push(entregado);
-
-        localStorage.setItem("historialPedidos", JSON.stringify(pedidosActuales));
-        localStorage.setItem("pedidosEntregados", JSON.stringify(entregados));
-        pedidos = pedidosActuales;
-        mostrarPedidos(pedidos);
-      };
-
-      document.getElementById("btnFiltrar").onclick = aplicarFiltros;
-      document.getElementById("btnLimpiar").onclick = limpiarFiltros;
-      document.getElementById("btnVerTodos").onclick = verTodos;
-      document.getElementById("btnExportar").onclick = exportarCSV;
-
-      // Mostrar pedidos del día al cargar
-      const hoy = hoyISO();
-      const pedidosHoy = pedidos.filter(p => fechaLocalAISO(p.fecha) === hoy);
-      mostrarPedidos(pedidosHoy);
-    });
+    // Mostrar resumen del día actual al cargar
+    window.onload = () => {
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+      const dd = String(hoy.getDate()).padStart(2, "0");
+      const hoyISO = `${yyyy}-${mm}-${dd}`;
+      document.getElementById("filtroFecha").value = hoyISO;
+      mostrarResumen();
+    };
   </script>
 </body>
 </html>
