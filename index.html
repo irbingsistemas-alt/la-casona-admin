@@ -3,69 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crear pedido - La Casona Admin</title>
+  <title>Login - La Casona</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Nuevo pedido</h1>
+  <h1>Acceso al panel</h1>
+  <input type="text" id="usuario" placeholder="Usuario" />
+  <input type="password" id="clave" placeholder="Contraseña" />
+  <button onclick="login()">Entrar</button>
 
-  <form id="formPedido">
-    <label>Cliente: <input type="text" id="cliente" required /></label><br />
-    <label>Piso: <input type="text" id="piso" /></label><br />
-    <label>Apartamento: <input type="text" id="apartamento" /></label><br />
-    <label>Platos (JSON): <textarea id="items" required></textarea></label><br />
-    <label>Total CUP: <input type="number" id="total" required /></label><br />
-    <button type="submit">Guardar pedido</button>
-  </form>
-
-  <div id="mensaje"></div>
-
-  <script>
-    const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"; // ← reemplaza con tu clave pública (anon key)
-
-    document.getElementById("formPedido").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const cliente = document.getElementById("cliente").value;
-      const piso = document.getElementById("piso").value;
-      const apartamento = document.getElementById("apartamento").value;
-      const itemsRaw = document.getElementById("items").value;
-      const total = parseFloat(document.getElementById("total").value);
-
-      let items;
-      try {
-        items = JSON.parse(itemsRaw);
-      } catch (err) {
-        document.getElementById("mensaje").textContent = "❌ Error: formato JSON inválido en platos.";
-        return;
-      }
-
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/pedidos`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify({
-          fecha: new Date().toISOString(),
-          cliente,
-          piso,
-          apartamento,
-          items,
-          total,
-          estado: "pendiente"
-        })
-      });
-
-      if (res.ok) {
-        document.getElementById("mensaje").textContent = "✅ Pedido guardado correctamente.";
-        document.getElementById("formPedido").reset();
-      } else {
-        const error = await res.text();
-        document.getElementById("mensaje").textContent = "❌ Error al guardar: " + error;
-      }
-    });
-  </script>
+  <script src="script-login.js"></script>
 </body>
 </html>
