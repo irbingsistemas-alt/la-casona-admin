@@ -10,16 +10,13 @@
       margin: 20px;
       background-color: #f4f6f8;
     }
-
     header {
       text-align: center;
       margin-bottom: 20px;
     }
-
     header img {
       max-height: 80px;
     }
-
     .menu-item {
       background-color: #fff;
       border-left: 6px solid #007bff;
@@ -28,39 +25,32 @@
       border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-
     .menu-item p {
       margin: 4px 0;
     }
-
     .menu-item ul {
       margin: 6px 0;
       padding-left: 20px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
     }
-
     th {
       background-color: #007bff;
       color: white;
     }
-
     input, button {
       margin: 4px;
       padding: 6px;
       font-size: 14px;
     }
-
     #resumen-pisos {
       margin-top: 10px;
     }
@@ -88,8 +78,7 @@
 
   <div id="lista-entregados"></div>
   <div id="tabla-exportable"></div>
-
-  <script>
+    <script>
     const lista = document.getElementById("lista-entregados");
     const tablaDiv = document.getElementById("tabla-exportable");
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
@@ -233,4 +222,21 @@
       let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
       pedidosFiltrados.forEach(p => {
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-        csv += `"${p.fecha}
+        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "pedidos_entregados.csv";
+      link.click();
+    }
+
+    window.onload = () => {
+      const hoy = hoyISO();
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    };
+  </script>
+</body>
+</html>
