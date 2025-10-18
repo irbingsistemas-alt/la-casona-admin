@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pedidos Entregados - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Pedidos entregados</h1>
+    <p>Historial de entregas realizadas</p>
+  </header>
+
+  <div style="margin-bottom: 20px;">
+    <label>Desde: <input type="date" id="filtroDesde" /></label>
+    <label>Hasta: <input type="date" id="filtroHasta" /></label>
+    <button onclick="aplicarFiltros()">Filtrar</button>
+    <button onclick="limpiarFiltros()">Limpiar</button>
+  </div>
+
+  <section id="listaPedidos"></section>
+
+  <script>
+    const pedidos = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+    let filtrados = [];
+
+    function fechaLocalAISO(fechaStr) {
+      const partes = fechaStr.split(",")[0].split("/");
+      const dia = partes[0];
+      const mes = partes[1];
+      const año = partes[2];
+      return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+
+    function aplicarFiltros() {
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      filtrados = pedidos.filter(p => {
+        const fechaPedido = fechaLocalAISO(p.fecha);
+        return (!desde || fechaPedido >= desde) &&
+               (!hasta || fechaPedido <= hasta);
+      });
+
+      mostrarPedidos(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("filtroDesde").value = "";
+      document.getElementById("filtroHasta").value = "";
+      mostrarPedidos(pedidos);
+    }
+
+    function mostrarPedidos(lista) {
+      const contenedor = document.getElementById("listaPedidos");
+      contenedor.innerHTML = "";
+
+      if (lista.length === 0) {
+        contenedor.innerHTML = "<p>No hay pedidos en este rango de fechas.</p>";
+        return;
+      }
+
+      lista.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "pedido";
+
+        const fecha = fechaLocalAISO(p.fecha);
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
+
+        div.innerHTML = `
+          <h3>${p.cliente}</h3>
+          <p><strong>Fecha:</strong> ${fecha}</p>
+          <p><strong>Piso:</strong> ${p.piso || ""} <strong>Apto:</strong> ${p.apartamento || ""}</p>
+          <p><strong>Platos:</strong> ${platos}</p>
+          <p><strong>Total:</strong> ${p.total} CUP</p>
+        `;
+
+        contenedor.appendChild(div);
+      });
+    }
+
+    window.onload = () => mostrarPedidos(pedidos);
+  </script>
+</body>
+</html>
