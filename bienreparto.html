@@ -13,16 +13,59 @@
     <p>Clientes del Edificio FOCSA</p>
   </header>
 
+  <div style="margin-bottom: 20px;">
+    <label>Selecciona una fecha: <input type="date" id="filtroFecha" /></label>
+    <button onclick="mostrarResumen()">Ver resumen</button>
+  </div>
+
+  <div id="resumen-dia" style="margin-bottom: 20px;"></div>
   <div id="lista-pedidos"></div>
 
   <script>
     const lista = document.getElementById("lista-pedidos");
-    const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+    const resumenDiv = document.getElementById("resumen-dia");
 
-    if (pedidos.length === 0) {
-      lista.innerHTML = "<p>No hay pedidos pendientes.</p>";
-    } else {
-      pedidos.reverse().forEach((pedido, index) => {
+    function fechaLocalAISO(fechaStr) {
+      const partes = fechaStr.split(",")[0].split("/");
+      const dia = partes[0];
+      const mes = partes[1];
+      const año = partes[2];
+      return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+
+    function mostrarResumen() {
+      const fechaSeleccionada = document.getElementById("filtroFecha").value;
+      if (!fechaSeleccionada) {
+        alert("Selecciona una fecha.");
+        return;
+      }
+
+      const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
+      const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
+
+      const pedidosDelDia = pedidos.filter(p => fechaLocalAISO(p.fecha) === fechaSeleccionada);
+      const entregadosDelDia = entregados.filter(p => fechaLocalAISO(p.fecha) === fechaSeleccionada);
+
+      resumenDiv.innerHTML = `
+        <h3>Resumen del ${fechaSeleccionada}</h3>
+        <table>
+          <tr><th>Pedidos generados</th><td>${pedidosDelDia.length}</td></tr>
+          <tr><th>Pedidos entregados</th><td>${entregadosDelDia.length}</td></tr>
+        </table>
+      `;
+
+      mostrarPedidos(pedidosDelDia);
+    }
+
+    function mostrarPedidos(pedidos) {
+      lista.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        lista.innerHTML = "<p>No hay pedidos pendientes para esa fecha.</p>";
+        return;
+      }
+
+      pedidos.slice().reverse().forEach((pedido, index) => {
         const div = document.createElement("div");
         div.className = "menu-item";
         div.innerHTML = `
@@ -42,10 +85,8 @@
       const tarjeta = boton.parentElement;
       const index = Array.from(lista.children).indexOf(tarjeta);
 
-      // Eliminar del DOM
       tarjeta.remove();
 
-      // Mover el pedido al historial de entregados
       const pedidos = JSON.parse(localStorage.getItem("historialPedidos")) || [];
       const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
 
@@ -54,7 +95,21 @@
 
       localStorage.setItem("historialPedidos", JSON.stringify(pedidos));
       localStorage.setItem("pedidosEntregados", JSON.stringify(entregados));
+
+      // Refrescar resumen
+      mostrarResumen();
     }
+
+    // Mostrar resumen del día actual al cargar
+    window.onload = () => {
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+      const dd = String(hoy.getDate()).padStart(2, "0");
+      const hoyISO = `${yyyy}-${mm}-${dd}`;
+      document.getElementById("filtroFecha").value = hoyISO;
+      mostrarResumen();
+    };
   </script>
 </body>
 </html>
