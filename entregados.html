@@ -21,15 +21,14 @@
     <button onclick="aplicarFiltros()">Filtrar</button>
     <button onclick="limpiarFiltros()">Limpiar</button>
     <button onclick="exportarCSV()">Exportar CSV</button>
-    <button onclick="mostrarResumen('semana')">Resumen semanal</button>
-    <button onclick="mostrarResumen('mes')">Resumen mensual</button>
   </div>
 
-  <div id="total-dia" style="margin-top: 10px; font-weight: bold;"></div>
   <div id="lista-entregados"></div>
   <div id="tabla-exportable" style="margin-top: 30px;"></div>
 
   <script>
+    const lista = document.getElementById("lista-entregados");
+    const tablaDiv = document.getElementById("tabla-exportable");
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
     let pedidosFiltrados = [];
 
@@ -43,57 +42,10 @@
 
     function hoyISO() {
       const hoy = new Date();
-      return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
-    }
-
-    function mostrarTotalDelDia(pedidos) {
-      const total = pedidos.reduce((sum, p) => sum + p.total, 0);
-      document.getElementById("total-dia").textContent = `Total acumulado del día: ${total} CUP`;
-    }
-
-    function mostrarPedidos(pedidos) {
-      pedidosFiltrados = pedidos;
-      const lista = document.getElementById("lista-entregados");
-      const tablaDiv = document.getElementById("tabla-exportable");
-      lista.innerHTML = "";
-      tablaDiv.innerHTML = "";
-
-      if (pedidos.length === 0) {
-        lista.innerHTML = "<p>No hay pedidos entregados que coincidan.</p>";
-        return;
-      }
-
-      pedidos.slice().reverse().forEach(p => {
-        const div = document.createElement("div");
-        div.className = "menu-item";
-        const fecha = fechaLocalAISO(p.fecha);
-        div.innerHTML = `
-          <p><strong>${fecha}</strong></p>
-          <p><strong>${p.cliente}</strong> - Piso ${p.piso}, Apto ${p.apartamento}</p>
-          <ul>${p.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
-          <p><strong>Total:</strong> ${p.total} CUP</p>
-        `;
-        lista.appendChild(div);
-      });
-
-      let tablaHTML = `
-        <h3>Resumen en tabla</h3>
-        <table border="1" cellpadding="6" cellspacing="0">
-          <thead>
-            <tr>
-              <th>Fecha</th><th>Cliente</th><th>Piso</th><th>Apto</th><th>Platos</th><th>Total (CUP)</th>
-            </tr>
-          </thead><tbody>
-      `;
-
-      pedidos.forEach(p => {
-        const fecha = fechaLocalAISO(p.fecha);
-        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
-        tablaHTML += `<tr><td>${fecha}</td><td>${p.cliente}</td><td>${p.piso}</td><td>${p.apartamento}</td><td>${platos}</td><td>${p.total}</td></tr>`;
-      });
-
-      tablaHTML += "</tbody></table>";
-      tablaDiv.innerHTML = tablaHTML;
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, "0");
+      const d = String(hoy.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
     }
 
     function aplicarFiltros() {
@@ -103,15 +55,18 @@
       const hasta = document.getElementById("filtroHasta").value;
 
       const filtrados = entregados.filter(p => {
+        const coincideCliente = cliente === "" || p.cliente.toLowerCase().includes(cliente);
+        const coincidePiso = piso === "" || p.piso === piso;
+
         const fechaPedido = fechaLocalAISO(p.fecha);
-        return (!cliente || p.cliente.toLowerCase().includes(cliente)) &&
-               (!piso || p.piso === piso) &&
-               (!desde || fechaPedido >= desde) &&
-               (!hasta || fechaPedido <= hasta);
+        const coincideFecha =
+          (!desde || fechaPedido >= desde) &&
+          (!hasta || fechaPedido <= hasta);
+
+        return coincideCliente && coincidePiso && coincideFecha;
       });
 
       mostrarPedidos(filtrados);
-      mostrarTotalDelDia(filtrados);
     }
 
     function limpiarFiltros() {
@@ -122,47 +77,66 @@
       const hoy = hoyISO();
       const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
       mostrarPedidos(pedidosHoy);
-      mostrarTotalDelDia(pedidosHoy);
     }
 
-    function mostrarResumen(tipo) {
-      const resumen = {};
-
-      entregados.forEach(p => {
-        const fecha = fechaLocalAISO(p.fecha);
-        let clave;
-
-        if (tipo === "mes") {
-          clave = fecha.slice(0, 7);
-        } else if (tipo === "semana") {
-          const d = new Date(fecha);
-          const año = d.getFullYear();
-          const primera = new Date(año, 0, 1);
-          const dias = Math.floor((d - primera) / (24 * 60 * 60 * 1000));
-          const semana = Math.ceil((dias + primera.getDay() + 1) / 7);
-          clave = `${año}-sem${semana}`;
-        } else {
-          clave = fecha;
-        }
-
-        if (!resumen[clave]) resumen[clave] = { total: 0, cantidad: 0 };
-        resumen[clave].total += p.total;
-        resumen[clave].cantidad += 1;
-      });
-
-      const tablaDiv = document.getElementById("tabla-exportable");
-      const lista = document.getElementById("lista-entregados");
-      document.getElementById("total-dia").textContent = "";
-
-      let html = `<h3>Resumen por ${tipo}</h3><table border="1" cellpadding="6" cellspacing="0"><thead><tr><th>${tipo === "mes" ? "Mes" : "Semana"}</th><th>Pedidos</th><th>Total (CUP)</th></tr></thead><tbody>`;
-
-      Object.entries(resumen).forEach(([clave, datos]) => {
-        html += `<tr><td>${clave}</td><td>${datos.cantidad}</td><td>${datos.total}</td></tr>`;
-      });
-
-      html += "</tbody></table>";
-      tablaDiv.innerHTML = html;
+    function mostrarPedidos(pedidos) {
+      pedidosFiltrados = pedidos;
       lista.innerHTML = "";
+      tablaDiv.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        lista.innerHTML = "<p>No hay pedidos entregados que coincidan.</p>";
+        return;
+      }
+
+      pedidos.slice().reverse().forEach((pedido) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        const fecha = fechaLocalAISO(pedido.fecha);
+        div.innerHTML = `
+          <p><strong>${fecha}</strong></p>
+          <p><strong>${pedido.cliente}</strong> - Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
+          <ul>
+            ${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}
+          </ul>
+          <p><strong>Total:</strong> ${pedido.total} CUP</p>
+        `;
+        lista.appendChild(div);
+      });
+
+      let tablaHTML = `
+        <h3>Resumen en tabla</h3>
+        <table id="tablaCSV" border="1" cellpadding="6" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Piso</th>
+              <th>Apto</th>
+              <th>Platos</th>
+              <th>Total (CUP)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      pedidos.forEach(p => {
+        const fecha = fechaLocalAISO(p.fecha);
+        const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(", ");
+        tablaHTML += `
+          <tr>
+            <td>${fecha}</td>
+            <td>${p.cliente}</td>
+            <td>${p.piso}</td>
+            <td>${p.apartamento}</td>
+            <td>${platos}</td>
+            <td>${p.total}</td>
+          </tr>
+        `;
+      });
+
+      tablaHTML += "</tbody></table>";
+      tablaDiv.innerHTML = tablaHTML;
     }
 
     function exportarCSV() {
@@ -182,9 +156,17 @@
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "pedidos_entregados.csv";
+      link.style.display = "none";
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     }
 
     window.onload = () => {
       const hoy = hoyISO();
-      const
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    };
+  </script>
+</body>
+</html>
