@@ -22,6 +22,8 @@
     <button onclick="exportarCSV()">Exportar CSV</button>
   </div>
 
+  <div id="resumen-numerico" style="margin-bottom: 20px;"></div>
+
   <section>
     <canvas id="clientesChart" height="200"></canvas>
     <canvas id="platosChart" height="200"></canvas>
@@ -76,6 +78,18 @@
         ingresos[fecha] = (ingresos[fecha] || 0) + p.total;
       });
 
+      const totalIngresos = Object.values(ingresos).reduce((a, b) => a + b, 0);
+      const resumen = `
+        <h3>Resumen general</h3>
+        <table>
+          <tr><th>Total de pedidos</th><td>${pedidos.length}</td></tr>
+          <tr><th>Total de ingresos</th><td>${totalIngresos} CUP</td></tr>
+          <tr><th>Clientes únicos</th><td>${Object.keys(clientes).length}</td></tr>
+          <tr><th>Pisos atendidos</th><td>${Object.keys(pisos).length}</td></tr>
+        </table>
+      `;
+      document.getElementById("resumen-numerico").innerHTML = resumen;
+
       crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
       crearGrafico("platosChart", platos, "Platos más vendidos", "#f28e2b");
       crearGrafico("pisosChart", pisos, "Pisos con más entregas", "#76b7b2");
@@ -89,13 +103,18 @@
       if (window[id] instanceof Chart) {
         window[id].destroy();
       }
+
+      const entries = Object.entries(datos).sort((a, b) => b[1] - a[1]);
+      const labels = entries.map(e => e[0]);
+      const values = entries.map(e => e[1]);
+
       window[id] = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: Object.keys(datos),
+          labels: labels,
           datasets: [{
             label: titulo,
-            data: Object.values(datos),
+            data: values,
             backgroundColor: color
           }]
         },
