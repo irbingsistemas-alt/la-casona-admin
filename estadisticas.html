@@ -33,20 +33,15 @@
     const entregados = JSON.parse(localStorage.getItem("pedidosEntregados")) || [];
     let filtrados = [];
 
-    function parseFecha(fechaStr) {
-      const [y, m, d] = new Date(fechaStr).toISOString().split("T")[0].split("-");
-      return new Date(+y, +m - 1, +d);
-    }
-
     function aplicarFiltros() {
       const desde = document.getElementById("filtroDesde").value;
       const hasta = document.getElementById("filtroHasta").value;
 
-      const desdeFecha = desde ? parseFecha(desde) : null;
-      const hastaFecha = hasta ? parseFecha(hasta) : null;
-
       filtrados = entregados.filter(p => {
-        const fechaPedido = parseFecha(p.fecha);
+        const fechaPedido = new Date(p.fecha);
+        const desdeFecha = desde ? new Date(desde + "T00:00") : null;
+        const hastaFecha = hasta ? new Date(hasta + "T23:59") : null;
+
         return (!desdeFecha || fechaPedido >= desdeFecha) &&
                (!hastaFecha || fechaPedido <= hastaFecha);
       });
@@ -72,8 +67,7 @@
           platos[i.nombre] = (platos[i.nombre] || 0) + i.cantidad;
         });
         pisos[p.piso] = (pisos[p.piso] || 0) + 1;
-
-        const fecha = new Date(p.fecha).toISOString().split("T")[0];
+        const fecha = p.fecha.split("T")[0];
         ingresos[fecha] = (ingresos[fecha] || 0) + p.total;
       });
 
@@ -118,8 +112,7 @@
       let csv = "Fecha,Cliente,Piso,Apto,Platos,Total\n";
       pedidos.forEach(p => {
         const platos = p.items.map(i => `${i.nombre} x${i.cantidad}`).join(" | ");
-        const fecha = new Date(p.fecha).toISOString().split("T")[0];
-        csv += `"${fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
+        csv += `"${p.fecha}","${p.cliente}","${p.piso}","${p.apartamento}","${platos}","${p.total}"\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
