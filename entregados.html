@@ -40,6 +40,14 @@
       return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
     }
 
+    function hoyISO() {
+      const hoy = new Date();
+      const y = hoy.getFullYear();
+      const m = String(hoy.getMonth() + 1).padStart(2, "0");
+      const d = String(hoy.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
     function aplicarFiltros() {
       const cliente = document.getElementById("filtroCliente").value.toLowerCase();
       const piso = document.getElementById("filtroPiso").value;
@@ -66,7 +74,9 @@
       document.getElementById("filtroPiso").value = "";
       document.getElementById("filtroDesde").value = "";
       document.getElementById("filtroHasta").value = "";
-      mostrarPedidos(entregados);
+      const hoy = hoyISO();
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
     }
 
     function mostrarPedidos(pedidos) {
@@ -152,7 +162,11 @@
       document.body.removeChild(link);
     }
 
-    mostrarPedidos(entregados);
+    window.onload = () => {
+      const hoy = hoyISO();
+      const pedidosHoy = entregados.filter(p => fechaLocalAISO(p.fecha) === hoy);
+      mostrarPedidos(pedidosHoy);
+    };
   </script>
 </body>
 </html>
