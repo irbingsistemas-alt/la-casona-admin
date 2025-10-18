@@ -22,6 +22,8 @@
     <button onclick="exportarCSV()">Exportar CSV</button>
   </div>
 
+  <div id="resumen-numerico" style="margin-bottom: 20px;"></div>
+
   <section>
     <canvas id="clientesChart" height="200"></canvas>
     <canvas id="platosChart" height="200"></canvas>
@@ -47,8 +49,7 @@
 
       filtrados = entregados.filter(p => {
         const fechaPedido = fechaLocalAISO(p.fecha);
-        return (!desde || fechaPedido >= desde) &&
-               (!hasta || fechaPedido <= hasta);
+        return (!desde || fechaPedido >= desde) && (!hasta || fechaPedido <= hasta);
       });
 
       generarEstadisticas(filtrados);
@@ -57,7 +58,8 @@
     function limpiarFiltros() {
       document.getElementById("filtroDesde").value = "";
       document.getElementById("filtroHasta").value = "";
-      generarEstadisticas(entregados);
+      filtrados = entregados;
+      generarEstadisticas(filtrados);
     }
 
     function generarEstadisticas(pedidos) {
@@ -76,6 +78,57 @@
         ingresos[fecha] = (ingresos[fecha] || 0) + p.total;
       });
 
+      const totalIngresos = Object.values(ingresos).reduce((a, b) => a + b, 0);
+      const desde = document.getElementById("filtroDesde").value;
+      const hasta = document.getElementById("filtroHasta").value;
+
+      let tituloResumen = "Resumen general";
+      if (desde && hasta && desde !== hasta) {
+        tituloResumen = `Resumen general del período: ${desde} al ${hasta}`;
+      } else if (desde) {
+        tituloResumen = `Resumen general del día: ${desde}`;
+      } else {
+        const hoy = new Date().toISOString().split("T")[0];
+        tituloResumen = `Resumen general del día: ${hoy}`;
+      }
+
+      const promedioPorCliente = pedidos.length > 0 ? (totalIngresos / pedidos.length).toFixed(2) : 0;
+      const promedioPorPiso = Object.keys(pisos).length > 0 ? (totalIngresos / Object.keys(pisos).length).toFixed(2) : 0;
+
+      let platoMasVendido = "—";
+      if (Object.keys(platos).length > 0) {
+        const topPlato = Object.entries(platos).sort((a, b) => b[1] - a[1])[0];
+        platoMasVendido = `${topPlato[0]} (${topPlato[1]} uds)`;
+      }
+
+      let clienteTop = "—";
+      if (Object.keys(clientes).length > 0) {
+        const topCliente = Object.entries(clientes).sort((a, b) => b[1] - a[1])[0];
+        clienteTop = `${topCliente[0]} (${topCliente[1]} pedidos)`;
+      }
+
+      let pisoTop = "—";
+      if (Object.keys(pisos).length > 0) {
+        const topPiso = Object.entries(pisos).sort((a, b) => b[1] - a[1])[0];
+        pisoTop = `Piso ${topPiso[0]} (${topPiso[1]} entregas)`;
+      }
+
+      const resumen = `
+        <h3>${tituloResumen}</h3>
+        <table>
+          <tr><th>Total de pedidos</th><td>${pedidos.length}</td></tr>
+          <tr><th>Total de ingresos</th><td>${totalIngresos} CUP</td></tr>
+          <tr><th>Clientes únicos</th><td>${Object.keys(clientes).length}</td></tr>
+          <tr><th>Pisos atendidos</th><td>${Object.keys(pisos).length}</td></tr>
+          <tr><th>Promedio por cliente</th><td>${promedioPorCliente} CUP</td></tr>
+          <tr><th>Promedio por piso</th><td>${promedioPorPiso} CUP</td></tr>
+          <tr><th>Plato más vendido</th><td>${platoMasVendido}</td></tr>
+          <tr><th>Cliente más frecuente</th><td>${clienteTop}</td></tr>
+          <tr><th>Piso con más entregas</th><td>${pisoTop}</td></tr>
+        </table>
+      `;
+      document.getElementById("resumen-numerico").innerHTML = resumen;
+
       crearGrafico("clientesChart", clientes, "Clientes frecuentes", "#4e79a7");
       crearGrafico("platosChart", platos, "Platos más vendidos", "#f28e2b");
       crearGrafico("pisosChart", pisos, "Pisos con más entregas", "#76b7b2");
@@ -89,13 +142,18 @@
       if (window[id] instanceof Chart) {
         window[id].destroy();
       }
+
+      const entries = Object.entries(datos).sort((a, b) => b[1] - a[1]);
+      const labels = entries.map(e => e[0]);
+      const values = entries.map(e => e[1]);
+
       window[id] = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: Object.keys(datos),
+          labels: labels,
           datasets: [{
             label: titulo,
-            data: Object.values(datos),
+            data: values,
             backgroundColor: color
           }]
         },
@@ -133,7 +191,13 @@
       document.body.removeChild(link);
     }
 
-    window.onload = () => generarEstadisticas(entregados);
+    window.onload = () => {
+      const hoy = new Date();
+      const hoyISO = hoy.toISOString().split("T")[0];
+      document.getElementById("filtroDesde").value = hoyISO;
+      document.getElementById("filtroHasta").value = hoyISO;
+      aplicarFiltros();
+    };
   </script>
 </body>
 </html>
