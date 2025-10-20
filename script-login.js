@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function login() {
   const usuario = document.getElementById("usuario").value.trim();
