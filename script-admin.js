@@ -63,6 +63,7 @@ async function cargarCategorias() {
   const categorias = [...new Set(data.map(p => p.categoria).filter(Boolean))];
   const select = document.getElementById("categoriaExistente");
 
+  select.innerHTML = '<option value="">-- Nueva categoría --</option>';
   categorias.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat;
@@ -131,6 +132,7 @@ function logout() {
   window.location.href = "index.html";
 }
 
+// ✅ Exponer funciones para que funcionen los botones HTML
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
 window.logout = logout;
