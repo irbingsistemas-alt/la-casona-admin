@@ -25,7 +25,13 @@
   <h3>Agregar nuevo plato</h3>
   <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
   <input type="number" id="nuevoPrecio" placeholder="Precio" />
-  <input type="text" id="nuevaCategoria" placeholder="Categoría" />
+
+  <label for="categoriaExistente">Categoría:</label>
+  <select id="categoriaExistente">
+    <option value="">-- Nueva categoría --</option>
+  </select>
+  <input type="text" id="nuevaCategoria" placeholder="O escribe una nueva" />
+
   <button onclick="agregarPlato()">Agregar</button>
 
   <script type="module" src="script-admin.js"></script>
