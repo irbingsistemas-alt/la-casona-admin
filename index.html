@@ -5,18 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - La Casona</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- ✅ Cargar Supabase antes del script -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <main class="login-box">
     <h1>Acceso al panel</h1>
     <input type="text" id="usuario" placeholder="Usuario" />
-    <input type="password" id="clave" placeholder="Contraseña" />
+
+    <div style="position: relative;">
+      <input type="password" id="clave" placeholder="Contraseña" />
+      <button type="button" onclick="toggleClave()" style="position: absolute; right: 0; top: 0;">
+        👁️
+      </button>
+    </div>
+
     <button onclick="login()">Entrar</button>
   </main>
 
-  <!-- ✅ Cargar script después -->
   <script src="script-login.js"></script>
+
+  <script>
+    function toggleClave() {
+      const campo = document.getElementById("clave");
+      campo.type = campo.type === "password" ? "text" : "password";
+    }
+  </script>
 </body>
 </html>
