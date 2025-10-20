@@ -7,6 +7,27 @@ const supabase = createClient(
 
 const tabla = document.querySelector("#tabla tbody");
 
+async function verificarAcceso() {
+  const usuario = localStorage.getItem("usuarioActivo");
+  if (!usuario) {
+    document.body.innerHTML = "<h2>Acceso restringido. No has iniciado sesión.</h2>";
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("rol")
+    .eq("usuario", usuario)
+    .single();
+
+  if (error || !data || data.rol !== "admin") {
+    document.body.innerHTML = "<h2>Acceso restringido. Solo administradores.</h2>";
+    return;
+  }
+
+  cargarPlatos();
+}
+
 async function cargarPlatos() {
   const { data, error } = await supabase
     .from("menus")
@@ -78,8 +99,10 @@ async function eliminarPlato(id) {
 
 function logout() {
   localStorage.removeItem("usuarioActivo");
+  localStorage.removeItem("autenticado");
   window.location.href = "index.html";
 }
 
 window.eliminarPlato = eliminarPlato;
-window.onload = cargarPlatos;
+window.logout = logout;
+window.onload = verificarAcceso;
