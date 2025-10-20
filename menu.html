@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Menú - La Casona de 17</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <header>
@@ -36,37 +37,53 @@
   </div>
 
   <script>
-    const menu = JSON.parse(localStorage.getItem("menu")) || [];
-    const menuDiv = document.getElementById("menu");
-    const filtroSelect = document.getElementById("filtro");
+    const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let menu = [];
     const cantidadesSeleccionadas = {};
 
-    const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
-    categorias.forEach(cat => {
-      const option = document.createElement("option");
-      option.value = cat;
-      option.textContent = cat;
-      filtroSelect.appendChild(option);
-    });
+    async function cargarMenu() {
+      const { data, error } = await supabase.from("menu").select("*");
+      if (error) {
+        alert("Error al cargar el menú");
+        console.error(error);
+        return;
+      }
+      menu = data;
+      inicializarFiltro();
+      mostrarMenu(menu);
+    }
 
-    function mostrarMenu(filtrado) {
+    function inicializarFiltro() {
+      const filtroSelect = document.getElementById("filtro");
+      const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
+      categorias.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        filtroSelect.appendChild(option);
+      });
+    }
+
+    function mostrarMenu(platos) {
+      const menuDiv = document.getElementById("menu");
       menuDiv.innerHTML = "";
-      filtrado.forEach((item) => {
-        const key = item.nombre;
-        const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
-
+      platos.forEach(item => {
+        const cantidad = cantidadesSeleccionadas[item.nombre] || 0;
         const div = document.createElement("div");
         div.className = "menu-item";
         div.innerHTML = `
           <label>
             <strong>${item.nombre}</strong> - ${item.precio} CUP
-            <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
+            <input type="number" min="0" value="${cantidad}" data-name="${item.nombre}" data-price="${item.precio}" />
           </label>
         `;
         menuDiv.appendChild(div);
       });
 
-      document.querySelectorAll("input[type='number']").forEach((input) => {
+      document.querySelectorAll("input[type='number']").forEach(input => {
         input.addEventListener("input", () => {
           const nombre = input.dataset.name;
           const cantidad = parseInt(input.value) || 0;
@@ -79,7 +96,7 @@
     }
 
     function filtrarMenu() {
-      const seleccion = filtroSelect.value;
+      const seleccion = document.getElementById("filtro").value;
       if (seleccion === "todos") {
         mostrarMenu(menu);
       } else {
@@ -109,8 +126,8 @@
         return;
       }
 
-      let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
       let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
+      let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
       let total = 0;
       let items = [];
 
@@ -133,15 +150,30 @@
 
       mensaje += `\nTotal: ${total} CUP`;
       resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
-
-      const pedido = { cliente, piso, apartamento, fecha: new Date().toLocaleString(), items, total };
-      const historial = JSON.parse(localStorage.getItem("historialPedidos")) || [];
-      historial.push(pedido);
-      localStorage.setItem("historialPedidos", JSON.stringify(historial));
-
       document.getElementById("resumen").innerHTML = resumenHTML;
       document.getElementById("confirmacion").style.display = "block";
       window.mensajeWhatsApp = mensaje;
+
+      const pedido = {
+        cliente,
+        piso,
+        apartamento,
+        fecha: new Date().toISOString(),
+        total,
+        items
+      };
+
+      guardarPedidoEnSupabase(pedido);
+    }
+
+    async function guardarPedidoEnSupabase(pedido) {
+      const { error } = await supabase.from("pedidos").insert([pedido]);
+      if (error) {
+        console.error("Error al guardar pedido:", error);
+        alert("No se pudo guardar el pedido");
+      } else {
+        console.log("Pedido guardado correctamente");
+      }
     }
 
     function enviarWhatsApp() {
@@ -155,7 +187,7 @@
       document.getElementById("confirmacion").style.display = "none";
     }
 
-    mostrarMenu(menu);
+    cargarMenu();
   </script>
 </body>
 </html>
