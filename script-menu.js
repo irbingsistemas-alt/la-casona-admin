@@ -1,49 +1,50 @@
-// Conexión a Supabase
-const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Variables globales
-let menu = [];
+const supabase = createClient(
+  "https://ihswokmnhwaitzwjzvmy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+);
+
+const menuDiv = document.getElementById("menu");
+const filtroSelect = document.getElementById("filtro");
 const cantidadesSeleccionadas = {};
+let menu = [];
 
-// Cargar menú desde Supabase
 async function cargarMenu() {
-  const { data, error } = await supabase.from("menu").select("*");
+  const { data, error } = await supabase
+    .from("menus")
+    .select("*")
+    .eq("disponible", true)
+    .order("orden", { ascending: true });
+
   if (error) {
-    alert("Error al cargar el menú");
-    console.error(error);
+    alert("❌ Error al cargar el menú");
     return;
   }
-  menu = data;
-  inicializarFiltro();
-  mostrarMenu(menu);
-}
 
-// Inicializar filtro por categoría
-function inicializarFiltro() {
-  const filtro = document.getElementById("filtro");
+  menu = data;
   const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
   categorias.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat;
     option.textContent = cat;
-    filtro.appendChild(option);
+    filtroSelect.appendChild(option);
   });
+
+  mostrarMenu(menu);
 }
 
-// Mostrar menú filtrado
-function mostrarMenu(platos) {
-  const menuDiv = document.getElementById("menu");
+function mostrarMenu(filtrado) {
   menuDiv.innerHTML = "";
-  platos.forEach(item => {
-    const cantidad = cantidadesSeleccionadas[item.nombre] || 0;
+  filtrado.forEach(item => {
+    const key = item.nombre;
+    const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
     const div = document.createElement("div");
     div.className = "menu-item";
     div.innerHTML = `
       <label>
         <strong>${item.nombre}</strong> - ${item.precio} CUP
-        <input type="number" min="0" value="${cantidad}" data-name="${item.nombre}" data-price="${item.precio}" />
+        <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
       </label>
     `;
     menuDiv.appendChild(div);
@@ -61,9 +62,8 @@ function mostrarMenu(platos) {
   calcularTotal();
 }
 
-// Filtrar por categoría
 function filtrarMenu() {
-  const seleccion = document.getElementById("filtro").value;
+  const seleccion = filtroSelect.value;
   if (seleccion === "todos") {
     mostrarMenu(menu);
   } else {
@@ -72,7 +72,6 @@ function filtrarMenu() {
   }
 }
 
-// Calcular total
 function calcularTotal() {
   let total = 0;
   for (const nombre in cantidadesSeleccionadas) {
@@ -85,18 +84,18 @@ function calcularTotal() {
   document.getElementById("total").textContent = total;
 }
 
-// Enviar pedido
-function enviarPedido() {
+async function enviarPedido() {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
+
   if (!cliente || !piso || !apartamento) {
-    alert("Completa nombre, piso y apartamento");
+    alert("Por favor, completa nombre, piso y apartamento");
     return;
   }
 
-  let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
   let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
+  let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
   let total = 0;
   let items = [];
 
@@ -119,45 +118,53 @@ function enviarPedido() {
 
   mensaje += `\nTotal: ${total} CUP`;
   resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+
+  const { data: pedido, error } = await supabase
+    .from("pedidos")
+    .insert([{
+      cliente,
+      piso,
+      apartamento,
+      fecha: new Date().toISOString(),
+      total,
+      entregado: false
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    alert("❌ Error al guardar el pedido");
+    return;
+  }
+
+  for (const item of items) {
+    await supabase.from("pedido_items").insert([{
+      pedido_id: pedido.id,
+      nombre: item.nombre,
+      cantidad: item.cantidad,
+      subtotal: item.subtotal
+    }]);
+  }
+
   document.getElementById("resumen").innerHTML = resumenHTML;
   document.getElementById("confirmacion").style.display = "block";
   window.mensajeWhatsApp = mensaje;
-
-  const pedido = {
-    cliente,
-    piso,
-    apartamento,
-    fecha: new Date().toISOString(),
-    total,
-    items
-  };
-
-  guardarPedidoEnSupabase(pedido);
 }
 
-// Guardar pedido en Supabase
-async function guardarPedidoEnSupabase(pedido) {
-  const { error } = await supabase.from("pedidos").insert([pedido]);
-  if (error) {
-    console.error("Error al guardar pedido:", error);
-    alert("No se pudo guardar el pedido");
-  } else {
-    console.log("Pedido guardado correctamente");
-  }
-}
-
-// Enviar por WhatsApp
 function enviarWhatsApp() {
-  const numero = "5350971023"; // ← Reemplaza con tu número real
+  const numero = "5350971023";
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
   window.open(url, "_blank");
   document.getElementById("confirmacion").style.display = "none";
 }
 
-// Cancelar confirmación
 function cancelar() {
   document.getElementById("confirmacion").style.display = "none";
 }
 
-// Iniciar carga
+window.filtrarMenu = filtrarMenu;
+window.enviarPedido = enviarPedido;
+window.enviarWhatsApp = enviarWhatsApp;
+window.cancelar = cancelar;
+
 cargarMenu();
