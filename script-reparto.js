@@ -20,10 +20,14 @@ async function mostrarResumen() {
     return;
   }
 
+  const desde = `${fechaSeleccionada}T00:00:00`;
+  const hasta = `${fechaSeleccionada}T23:59:59`;
+
   const { data: pedidos, error } = await supabase
     .from("pedidos")
     .select("*")
-    .eq("fecha", fechaSeleccionada)
+    .gte("created_at", desde)
+    .lte("created_at", hasta)
     .order("created_at", { ascending: false });
 
   if (error) {
