@@ -25,7 +25,8 @@ async function verificarAcceso() {
     return;
   }
 
-  cargarPlatos();
+  await cargarPlatos();
+  await cargarCategorias();
 }
 
 async function cargarPlatos() {
@@ -49,6 +50,29 @@ async function cargarPlatos() {
       <td><button onclick="eliminarPlato('${plato.id}')">🗑️</button></td>
     `;
     tabla.appendChild(fila);
+  });
+}
+
+async function cargarCategorias() {
+  const { data, error } = await supabase
+    .from("menus")
+    .select("categoria");
+
+  if (error) return;
+
+  const categorias = [...new Set(data.map(p => p.categoria).filter(Boolean))];
+  const select = document.getElementById("categoriaExistente");
+
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
+  });
+
+  select.addEventListener("change", () => {
+    const seleccionada = select.value;
+    document.getElementById("nuevaCategoria").value = seleccionada;
   });
 }
 
@@ -77,7 +101,10 @@ async function agregarPlato() {
   document.getElementById("nuevoNombre").value = "";
   document.getElementById("nuevoPrecio").value = "";
   document.getElementById("nuevaCategoria").value = "";
-  cargarPlatos();
+  document.getElementById("categoriaExistente").value = "";
+
+  await cargarPlatos();
+  await cargarCategorias();
 }
 
 async function eliminarPlato(id) {
@@ -94,7 +121,8 @@ async function eliminarPlato(id) {
     return;
   }
 
-  cargarPlatos();
+  await cargarPlatos();
+  await cargarCategorias();
 }
 
 function logout() {
@@ -103,6 +131,7 @@ function logout() {
   window.location.href = "index.html";
 }
 
+window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
 window.logout = logout;
 window.onload = verificarAcceso;
