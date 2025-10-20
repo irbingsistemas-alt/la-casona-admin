@@ -36,25 +36,19 @@
     // ✅ Conexión a Supabase
     const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    const headers = {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json"
-    };
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function cargarPlatos() {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?select=*`, { headers });
-      if (!res.ok) {
-        const error = await res.text();
-        alert("❌ Error al cargar platos: " + error);
+      const { data, error } = await supabase.from("menu").select("*");
+      if (error) {
+        alert("❌ Error al cargar platos: " + error.message);
         return;
       }
 
-      const platos = await res.json();
       const tbody = document.querySelector("#tabla tbody");
       tbody.innerHTML = "";
 
-      platos.forEach(plato => {
+      data.forEach(plato => {
         const fila = document.createElement("tr");
         fila.innerHTML = `
           <td>${plato.nombre}</td>
@@ -76,20 +70,17 @@
         return;
       }
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ nombre, precio, categoria, disponible: true })
-      });
+      const { error } = await supabase.from("menu").insert([
+        { nombre, precio, categoria, disponible: true }
+      ]);
 
-      if (res.ok) {
+      if (error) {
+        alert("❌ Error al guardar el plato: " + error.message);
+      } else {
         document.getElementById("nuevoNombre").value = "";
         document.getElementById("nuevoPrecio").value = "";
         document.getElementById("nuevaCategoria").value = "";
         cargarPlatos();
-      } else {
-        const error = await res.text();
-        alert("❌ Error al guardar el plato: " + error);
       }
     }
 
@@ -97,16 +88,11 @@
       const confirmar = confirm("¿Eliminar este plato?");
       if (!confirmar) return;
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?id=eq.${id}`, {
-        method: "DELETE",
-        headers
-      });
-
-      if (res.ok) {
-        cargarPlatos();
+      const { error } = await supabase.from("menu").delete().eq("id", id);
+      if (error) {
+        alert("❌ Error al eliminar: " + error.message);
       } else {
-        const error = await res.text();
-        alert("❌ Error al eliminar: " + error);
+        cargarPlatos();
       }
     }
 
