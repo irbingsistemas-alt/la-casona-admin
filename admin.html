@@ -12,31 +12,51 @@
     <h1>Panel de Administración</h1>
     <button onclick="logout()">Cerrar sesión</button>
 
-    <h3>Agregar nuevo plato</h3>
-    <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
-    <input type="number" id="nuevoPrecio" placeholder="Precio" />
-    <input type="text" id="nuevaCategoria" placeholder="Categoría" />
-    <button onclick="agregarPlato()">Agregar</button>
+    <section id="panel" style="display:none;">
+      <h3>Agregar nuevo plato</h3>
+      <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
+      <input type="number" id="nuevoPrecio" placeholder="Precio" />
+      <input type="text" id="nuevaCategoria" placeholder="Categoría" />
+      <button onclick="agregarPlato()">Agregar</button>
 
-    <h3>Platos existentes</h3>
-    <table id="tabla">
-      <thead>
-        <tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Eliminar</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <h3>Platos existentes</h3>
+      <table id="tabla">
+        <thead>
+          <tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Eliminar</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </main>
 
   <script>
-    // ✅ Verificación de sesión
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "index.html";
-    }
-
-    // ✅ Conexión a Supabase
     const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const usuarioActivo = localStorage.getItem("usuarioActivo");
+    const autenticado = localStorage.getItem("autenticado");
+
+    if (autenticado !== "true" || !usuarioActivo) {
+      window.location.href = "index.html";
+    }
+
+    async function validarRol() {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("usuario", usuarioActivo)
+        .single();
+
+      if (error || !data || data.rol !== "admin") {
+        alert("⛔ Acceso restringido. Solo administradores.");
+        logout();
+        return;
+      }
+
+      document.getElementById("panel").style.display = "block";
+      cargarPlatos();
+    }
 
     async function cargarPlatos() {
       const { data, error } = await supabase.from("menu").select("*");
@@ -102,7 +122,7 @@
       window.location.href = "index.html";
     }
 
-    window.onload = cargarPlatos;
+    window.onload = validarRol;
   </script>
 </body>
 </html>
