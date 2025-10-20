@@ -1,16 +1,16 @@
-//  Configuración de Supabase
+// ✅ Configuración de Supabase
 const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-//  Función principal de login
+// ✅ Función principal de login
 async function login() {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
   if (!usuario || !clave) {
-    alert(" Ingresa usuario y contraseña");
+    alert("⚠️ Ingresa usuario y contraseña");
     return;
   }
 
@@ -20,7 +20,7 @@ async function login() {
   });
 
   if (error || !data || data.length === 0) {
-    alert(" Usuario o contraseña incorrectos");
+    alert("❌ Usuario o contraseña incorrectos");
     return;
   }
 
