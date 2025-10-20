@@ -86,3 +86,48 @@ button:hover {
 #resumen ul {
   padding-left: 20px;
 }
+/* Panel de administración: tabla con scroll y filtro */
+
+#tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+#tabla thead {
+  background-color: #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#tabla tbody {
+  display: block;
+  max-height: 300px; /* Aproximadamente 7 filas visibles */
+  overflow-y: auto;
+}
+
+#tabla thead tr,
+#tabla tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+#tabla th, #tabla td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: left;
+  background: #fff;
+}
+
+/* Ajustes para el filtro y formulario */
+#filtroCategoria {
+  margin-bottom: 16px;
+}
+
+label {
+  font-weight: 500;
+  margin-top: 10px;
+  display: block;
+}
