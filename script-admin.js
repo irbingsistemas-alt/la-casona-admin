@@ -29,11 +29,11 @@ async function verificarAcceso() {
   await cargarCategorias();
 }
 
-async function cargarPlatos() {
-  const { data, error } = await supabase
-    .from("menus")
-    .select("*")
-    .order("orden", { ascending: true });
+async function cargarPlatos(categoria = "") {
+  let query = supabase.from("menus").select("*").order("orden", { ascending: true });
+  if (categoria) query = query.eq("categoria", categoria);
+
+  const { data, error } = await query;
 
   if (error) {
     alert("❌ Error al cargar platos");
@@ -54,26 +54,35 @@ async function cargarPlatos() {
 }
 
 async function cargarCategorias() {
-  const { data, error } = await supabase
-    .from("menus")
-    .select("categoria");
+  const { data, error } = await supabase.from("menus").select("categoria");
 
   if (error) return;
 
   const categorias = [...new Set(data.map(p => p.categoria).filter(Boolean))];
-  const select = document.getElementById("categoriaExistente");
+  const selectFiltro = document.getElementById("filtroCategoria");
+  const selectAgregar = document.getElementById("categoriaExistente");
 
-  select.innerHTML = '<option value="">-- Nueva categoría --</option>';
+  selectFiltro.innerHTML = '<option value="">Todas</option>';
+  selectAgregar.innerHTML = '<option value="">-- Nueva categoría --</option>';
+
   categorias.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    select.appendChild(option);
+    const option1 = document.createElement("option");
+    option1.value = cat;
+    option1.textContent = cat;
+    selectFiltro.appendChild(option1);
+
+    const option2 = document.createElement("option");
+    option2.value = cat;
+    option2.textContent = cat;
+    selectAgregar.appendChild(option2);
   });
 
-  select.addEventListener("change", () => {
-    const seleccionada = select.value;
-    document.getElementById("nuevaCategoria").value = seleccionada;
+  selectAgregar.addEventListener("change", () => {
+    document.getElementById("nuevaCategoria").value = selectAgregar.value;
+  });
+
+  selectFiltro.addEventListener("change", () => {
+    cargarPlatos(selectFiltro.value);
   });
 }
 
@@ -132,7 +141,6 @@ function logout() {
   window.location.href = "index.html";
 }
 
-// ✅ Exponer funciones para que funcionen los botones HTML
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
 window.logout = logout;
