@@ -1,30 +1,25 @@
-const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json"
-};
+const supabase = createClient(
+  "https://ihswokmnhwaitzwjzvmy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+);
+
+const tabla = document.querySelector("#tabla tbody");
 
 async function cargarPlatos() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/menus?select=*`, { headers });
-  if (!res.ok) {
-    const error = await res.text();
-    alert("❌ Error al cargar platos: " + error);
+  const { data, error } = await supabase
+    .from("menus")
+    .select("*")
+    .order("orden", { ascending: true });
+
+  if (error) {
+    alert("❌ Error al cargar platos");
     return;
   }
 
-  const platos = await res.json();
-  const tbody = document.querySelector("#tabla tbody");
-  tbody.innerHTML = "";
-
-  if (!Array.isArray(platos)) {
-    alert("❌ Error: respuesta inesperada del servidor.");
-    return;
-  }
-
-  platos.sort((a, b) => a.orden - b.orden).forEach(plato => {
+  tabla.innerHTML = "";
+  data.forEach(plato => {
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td>${plato.nombre}</td>
@@ -32,7 +27,7 @@ async function cargarPlatos() {
       <td>${plato.categoria || ""}</td>
       <td><button onclick="eliminarPlato('${plato.id}')">🗑️</button></td>
     `;
-    tbody.appendChild(fila);
+    tabla.appendChild(fila);
   });
 }
 
@@ -46,43 +41,39 @@ async function agregarPlato() {
     return;
   }
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/menus`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      nombre,
-      precio,
-      categoria,
-      disponible: true
-    })
-  });
+  const { error } = await supabase.from("menus").insert([{
+    nombre,
+    precio,
+    categoria,
+    disponible: true
+  }]);
 
-  if (res.ok) {
-    document.getElementById("nuevoNombre").value = "";
-    document.getElementById("nuevoPrecio").value = "";
-    document.getElementById("nuevaCategoria").value = "";
-    cargarPlatos();
-  } else {
-    const error = await res.text();
-    alert("❌ Error al guardar el plato: " + error);
+  if (error) {
+    alert("❌ Error al guardar el plato");
+    return;
   }
+
+  document.getElementById("nuevoNombre").value = "";
+  document.getElementById("nuevoPrecio").value = "";
+  document.getElementById("nuevaCategoria").value = "";
+  cargarPlatos();
 }
 
 async function eliminarPlato(id) {
   const confirmar = confirm("¿Eliminar este plato?");
   if (!confirmar) return;
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/menus?id=eq.${id}`, {
-    method: "DELETE",
-    headers
-  });
+  const { error } = await supabase
+    .from("menus")
+    .delete()
+    .eq("id", id);
 
-  if (res.ok) {
-    cargarPlatos();
-  } else {
-    const error = await res.text();
-    alert("❌ Error al eliminar: " + error);
+  if (error) {
+    alert("❌ Error al eliminar");
+    return;
   }
+
+  cargarPlatos();
 }
 
 function logout() {
@@ -90,4 +81,5 @@ function logout() {
   window.location.href = "index.html";
 }
 
+window.eliminarPlato = eliminarPlato;
 window.onload = cargarPlatos;
