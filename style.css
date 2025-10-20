@@ -131,3 +131,8 @@ label {
   margin-top: 10px;
   display: block;
 }
+#lista-pedidos-container {
+  max-height: 420px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
