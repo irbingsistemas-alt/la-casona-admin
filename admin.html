@@ -5,124 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin - La Casona</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <main class="admin-box">
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
     <h1>Panel de Administración</h1>
-    <button onclick="logout()">Cerrar sesión</button>
+    <p>Gestión de platos del menú</p>
+  </header>
 
-    <section id="panel" style="display:none;">
-      <h3>Agregar nuevo plato</h3>
-      <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
-      <input type="number" id="nuevoPrecio" placeholder="Precio" />
-      <input type="text" id="nuevaCategoria" placeholder="Categoría" />
-      <button onclick="agregarPlato()">Agregar</button>
+  <button onclick="logout()">Cerrar sesión</button>
 
-      <h3>Platos existentes</h3>
-      <table id="tabla">
-        <thead>
-          <tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Eliminar</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-  </main>
+  <table id="tabla">
+    <thead>
+      <tr><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Eliminar</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <script>
-    const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <h3>Agregar nuevo plato</h3>
+  <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
+  <input type="number" id="nuevoPrecio" placeholder="Precio" />
+  <input type="text" id="nuevaCategoria" placeholder="Categoría" />
+  <button onclick="agregarPlato()">Agregar</button>
 
-    const usuarioActivo = localStorage.getItem("usuarioActivo");
-    const autenticado = localStorage.getItem("autenticado");
-
-    if (autenticado !== "true" || !usuarioActivo) {
-      window.location.href = "index.html";
-    }
-
-    async function validarRol() {
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("rol")
-        .eq("usuario", usuarioActivo)
-        .single();
-
-      if (error || !data || data.rol !== "admin") {
-        alert("⛔ Acceso restringido. Solo administradores.");
-        logout();
-        return;
-      }
-
-      document.getElementById("panel").style.display = "block";
-      cargarPlatos();
-    }
-
-    async function cargarPlatos() {
-      const { data, error } = await supabase.from("menu").select("*");
-      if (error) {
-        alert("❌ Error al cargar platos: " + error.message);
-        return;
-      }
-
-      const tbody = document.querySelector("#tabla tbody");
-      tbody.innerHTML = "";
-
-      data.forEach(plato => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-          <td>${plato.nombre}</td>
-          <td>${plato.precio} CUP</td>
-          <td>${plato.categoria || ""}</td>
-          <td><button onclick="eliminarPlato('${plato.id}')">🗑️</button></td>
-        `;
-        tbody.appendChild(fila);
-      });
-    }
-
-    async function agregarPlato() {
-      const nombre = document.getElementById("nuevoNombre").value.trim();
-      const precio = parseFloat(document.getElementById("nuevoPrecio").value);
-      const categoria = document.getElementById("nuevaCategoria").value.trim();
-
-      if (!nombre || isNaN(precio)) {
-        alert("⚠️ Completa nombre y precio.");
-        return;
-      }
-
-      const { error } = await supabase.from("menu").insert([
-        { nombre, precio, categoria, disponible: true }
-      ]);
-
-      if (error) {
-        alert("❌ Error al guardar el plato: " + error.message);
-      } else {
-        document.getElementById("nuevoNombre").value = "";
-        document.getElementById("nuevoPrecio").value = "";
-        document.getElementById("nuevaCategoria").value = "";
-        cargarPlatos();
-      }
-    }
-
-    async function eliminarPlato(id) {
-      const confirmar = confirm("¿Eliminar este plato?");
-      if (!confirmar) return;
-
-      const { error } = await supabase.from("menu").delete().eq("id", id);
-      if (error) {
-        alert("❌ Error al eliminar: " + error.message);
-      } else {
-        cargarPlatos();
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem("autenticado");
-      localStorage.removeItem("usuarioActivo");
-      window.location.href = "index.html";
-    }
-
-    window.onload = validarRol;
-  </script>
+  <script type="module" src="script-admin.js"></script>
 </body>
 </html>
