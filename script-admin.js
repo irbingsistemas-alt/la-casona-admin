@@ -45,15 +45,19 @@ async function cargarPlatos(categoria = "") {
   data.forEach(plato => {
     const fila = document.createElement("tr");
 
+    // Nombre
     const celdaNombre = document.createElement("td");
     celdaNombre.textContent = plato.nombre;
 
+    // Precio
     const celdaPrecio = document.createElement("td");
     celdaPrecio.textContent = `${plato.precio} CUP`;
 
+    // Categoría
     const celdaCategoria = document.createElement("td");
     celdaCategoria.textContent = plato.categoria || "";
 
+    // Disponible (checkbox)
     const celdaDisponible = document.createElement("td");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -61,6 +65,7 @@ async function cargarPlatos(categoria = "") {
     checkbox.addEventListener("change", () => actualizarDisponibilidad(plato.id, checkbox.checked));
     celdaDisponible.appendChild(checkbox);
 
+    // Eliminar
     const celdaEliminar = document.createElement("td");
     const botonEliminar = document.createElement("button");
     botonEliminar.textContent = "🗑️";
