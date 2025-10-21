@@ -8,7 +8,7 @@ const supabase = createClient(
 const menuContainer = document.getElementById("menuContainer");
 
 async function cargarMenu() {
-  const { data, error } = await supabase.from("menu").select("*").eq("disponible", true);
+  const { data, error } = await supabase.from("menus").select("*").eq("disponible", true);
   if (error) {
     alert("❌ Error al cargar menú");
     return;
@@ -33,7 +33,7 @@ async function enviarPedido() {
     return;
   }
 
-  const { data: menu } = await supabase.from("menu").select("*").eq("disponible", true);
+  const { data: menu } = await supabase.from("menus").select("*").eq("disponible", true);
   const pedido = [];
 
   menu.forEach(item => {
