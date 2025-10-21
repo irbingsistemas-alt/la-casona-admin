@@ -205,6 +205,7 @@ function logout() {
   window.location.href = "index.html";
 }
 
+// ✅ Registrar funciones para que funcionen desde el HTML
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
 window.guardarDisponibilidad = guardarDisponibilidad;
