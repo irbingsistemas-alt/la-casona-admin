@@ -39,7 +39,7 @@ async function enviarPedido() {
   menu.forEach(item => {
     const cantidad = parseInt(document.getElementById(`item-${item.id}`).value);
     if (cantidad > 0) {
-      pedido.push({ item_id: item.id, cantidad });
+      pedido.push({ item_id: item.id, nombre: item.nombre, cantidad });
     }
   });
 
@@ -48,7 +48,13 @@ async function enviarPedido() {
     return;
   }
 
-  const { error } = await supabase.from("pedidos").insert([{ mesa, pedido, estado: "pendiente" }]);
+  const { error } = await supabase.from("pedidos").insert([{
+    mesa,
+    tipo: "mesa",
+    pedido,
+    estado: "pendiente"
+  }]);
+
   if (error) {
     alert("❌ Error al enviar pedido");
     return;
