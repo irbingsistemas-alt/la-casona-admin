@@ -3,39 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menú Restaurante - La Casona</title>
+  <title>Menú - La Casona de 17</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <img src="assets/logo.png" alt="Logo La Casona de 17" />
-    <h1>Menú en Mesa</h1>
-    <p>Selecciona tus platos y envía el pedido desde tu mesa</p>
+    <h1>Menú Interactivo</h1>
+    <p>Consumo en salón (por mesa)</p>
   </header>
 
-  <section>
-    <label for="mesa"><strong>Número de mesa:</strong></label>
-    <input type="number" id="mesa" placeholder="Ej. 5" required />
-  </section>
+  <label for="filtro">Filtrar por categoría:</label>
+  <select id="filtro" onchange="filtrarMenu()">
+    <option value="todos">Todos</option>
+  </select>
 
-  <section>
-    <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-    <select id="filtro" onchange="filtrarMenu()"></select>
-  </section>
+  <!-- Scroll vertical para limitar la altura del menú -->
+  <div id="menu-container" style="max-height: 420px; overflow-y: auto; margin-bottom: 20px;">
+    <div id="menu"></div>
+  </div>
 
-  <section id="menu"></section>
+  <h3>Número de mesa</h3>
+  <input type="text" id="mesa" placeholder="Ej. 5" />
+  <p>Total: <span id="total">0</span> CUP</p>
+  <button onclick="enviarPedido()">Revisar pedido</button>
 
-  <section>
-    <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
-    <button onclick="enviarPedido()">Enviar pedido</button>
-  </section>
-
-  <section id="confirmacion" style="display:none;">
-    <h2>✅ Pedido enviado</h2>
+  <div id="confirmacion" style="display:none; margin-top:30px;">
+    <h3>Confirmación del pedido</h3>
     <div id="resumen"></div>
-    <button onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
-    <button onclick="cancelar()">Cerrar</button>
-  </section>
+    <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
+    <button onclick="cancelar()">Cancelar</button>
+  </div>
 
   <script type="module" src="script-menu-mesa.js"></script>
 </body>
