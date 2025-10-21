@@ -41,17 +41,38 @@ async function cargarPlatos(categoria = "") {
   }
 
   tabla.innerHTML = "";
+
   data.forEach(plato => {
     const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${plato.nombre}</td>
-      <td>${plato.precio} CUP</td>
-      <td>${plato.categoria || ""}</td>
-      <td>
-        <input type="checkbox" ${plato.disponible ? "checked" : ""} onchange="actualizarDisponibilidad('${plato.id}', this.checked)" />
-      </td>
-      <td><button onclick="eliminarPlato('${plato.id}')">🗑️</button></td>
-    `;
+
+    const celdaNombre = document.createElement("td");
+    celdaNombre.textContent = plato.nombre;
+
+    const celdaPrecio = document.createElement("td");
+    celdaPrecio.textContent = `${plato.precio} CUP`;
+
+    const celdaCategoria = document.createElement("td");
+    celdaCategoria.textContent = plato.categoria || "";
+
+    const celdaDisponible = document.createElement("td");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = plato.disponible;
+    checkbox.addEventListener("change", () => actualizarDisponibilidad(plato.id, checkbox.checked));
+    celdaDisponible.appendChild(checkbox);
+
+    const celdaEliminar = document.createElement("td");
+    const botonEliminar = document.createElement("button");
+    botonEliminar.textContent = "🗑️";
+    botonEliminar.onclick = () => eliminarPlato(plato.id);
+    celdaEliminar.appendChild(botonEliminar);
+
+    fila.appendChild(celdaNombre);
+    fila.appendChild(celdaPrecio);
+    fila.appendChild(celdaCategoria);
+    fila.appendChild(celdaDisponible);
+    fila.appendChild(celdaEliminar);
+
     tabla.appendChild(fila);
   });
 }
