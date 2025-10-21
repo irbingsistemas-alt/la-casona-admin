@@ -246,3 +246,49 @@ label {
 .pedido-cocina button:hover {
   background: #218838;
 }
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f8f8;
+  margin: 0;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+input, select {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 1rem;
+}
+
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
