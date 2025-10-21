@@ -46,6 +46,7 @@ async function cargarPlatos(categoria = "") {
 
   data.forEach(plato => {
     const fila = document.createElement("tr");
+    fila.dataset.id = plato.id; // ✅ guardar el ID en el DOM
 
     const celdaNombre = document.createElement("td");
     celdaNombre.textContent = plato.nombre;
@@ -83,13 +84,13 @@ async function guardarDisponibilidad() {
   const actualizaciones = [];
 
   filas.forEach(fila => {
-    const nombre = fila.children[0].textContent;
+    const id = fila.dataset.id;
     const checkbox = fila.children[3].querySelector("input[type='checkbox']");
     const disponible = checkbox.checked;
 
-    const plato = platos.find(p => p.nombre === nombre);
+    const plato = platos.find(p => p.id == id);
     if (plato && plato.disponible !== disponible) {
-      actualizaciones.push({ id: plato.id, disponible });
+      actualizaciones.push({ id, disponible });
     }
   });
 
