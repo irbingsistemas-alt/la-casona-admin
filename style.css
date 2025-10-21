@@ -165,3 +165,62 @@ label {
   margin: 8px 0;
   padding-left: 12px;
 }
+/* Adaptación para móviles y formato compacto */
+@media screen and (max-width: 600px) {
+  body {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  header img {
+    height: 60px;
+  }
+
+  header h1 {
+    font-size: 1.2rem;
+  }
+
+  header p {
+    font-size: 0.95rem;
+  }
+
+  #menu-container {
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select {
+    width: 100%;
+    margin: 6px 0;
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 10px;
+    font-size: 1rem;
+  }
+
+  .menu-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+  }
+
+  .menu-item label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .menu-item input[type="number"] {
+    width: 100%;
+  }
+
+  .categoria-grupo h3 {
+    font-size: 1rem;
+  }
+}
