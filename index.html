@@ -3,36 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Acceso al sistema</title>
+  <title>Login - La Casona</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Bienvenido a La Casona de 17</h1>
-    <p>Acceso para administración y cocina</p>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Bienvenido a La Casona</h1>
+    <p>Inicia sesión para continuar</p>
   </header>
 
-  <div style="max-width: 400px; margin: auto;">
-    <input type="text" id="usuario" placeholder="Usuario" />
-    <input type="password" id="clave" placeholder="Contraseña" />
-    <button id="btn-login">Entrar</button>
-    <p id="mensaje" style="color: red; margin-top: 10px;"></p>
-  </div>
+  <form id="loginForm">
+    <input type="text" id="usuario" placeholder="Usuario" required />
+    <input type="password" id="clave" placeholder="Contraseña" required />
+    <button type="submit">Ingresar</button>
+  </form>
+
+  <p id="mensajeError" style="color: red;"></p>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
     const supabase = createClient(
       "https://ihswokmnhwaitzwjzvmy.supabase.co",
-      "public-anon-key"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // tu clave pública
     );
 
-    async function login() {
+    const form = document.getElementById("loginForm");
+    const mensajeError = document.getElementById("mensajeError");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      mensajeError.textContent = "";
+
       const usuario = document.getElementById("usuario").value.trim();
       const clave = document.getElementById("clave").value.trim();
-      const mensaje = document.getElementById("mensaje");
-
-      mensaje.textContent = "";
 
       const { data, error } = await supabase
         .from("usuarios")
@@ -42,22 +47,23 @@
         .single();
 
       if (error || !data) {
-        mensaje.textContent = "❌ Usuario o clave incorrecta";
+        mensajeError.textContent = "❌ Usuario o clave incorrecta";
         return;
       }
 
+      localStorage.setItem("usuarioActivo", usuario);
       localStorage.setItem("rol", data.rol);
 
       if (data.rol === "admin") {
         window.location.href = "admin.html";
       } else if (data.rol === "cocina") {
         window.location.href = "cocina.html";
+      } else if (data.rol === "reparto") {
+        window.location.href = "reparto.html";
       } else {
-        mensaje.textContent = "❌ Rol no autorizado";
+        mensajeError.textContent = "❌ Rol no reconocido";
       }
-    }
-
-    document.getElementById("btn-login").addEventListener("click", login);
+    });
   </script>
 </body>
 </html>
