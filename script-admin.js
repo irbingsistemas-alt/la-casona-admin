@@ -85,12 +85,14 @@ async function guardarDisponibilidad() {
 
   filas.forEach(fila => {
     const id = fila.dataset.id;
-    const checkbox = fila.children[3].querySelector("input[type='checkbox']");
-    const disponible = checkbox.checked;
+    const checkbox = fila.querySelector("input[type='checkbox']");
+    const nuevoEstado = checkbox.checked;
 
-    const plato = platos.find(p => p.id == id);
-    if (plato && Boolean(plato.disponible) !== Boolean(disponible)) {
-      actualizaciones.push({ id, disponible });
+    const platoOriginal = platos.find(p => p.id === id);
+    const estadoOriginal = Boolean(platoOriginal?.disponible);
+
+    if (estadoOriginal !== nuevoEstado) {
+      actualizaciones.push({ id, disponible: nuevoEstado });
     }
   });
 
@@ -100,6 +102,8 @@ async function guardarDisponibilidad() {
   }
 
   for (const cambio of actualizaciones) {
+    console.log("Actualizando:", cambio.id, "→", cambio.disponible);
+
     const { data, error } = await supabase
       .from("menus")
       .update({ disponible: cambio.disponible })
@@ -119,7 +123,7 @@ async function guardarDisponibilidad() {
     }
   }
 
-  alert("✅ Cambios de disponibilidad guardados correctamente.");
+  alert("✅ Cambios guardados correctamente.");
   const categoriaActual = document.getElementById("filtroCategoria").value;
   await cargarPlatos(categoriaActual);
 }
