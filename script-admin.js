@@ -85,7 +85,13 @@ async function guardarDisponibilidad() {
   filas.forEach(fila => {
     const nombre = fila.children[0].textContent;
     const checkbox = fila.children[3].querySelector("input[type='checkbox']");
-    const disponible = checkbox.checked;
+    const disponible = checkbox.checked; // ✅ esto es booleano
+    await supabase
+  .from("menus")
+  .update({ disponible }) // ✅ no uses comillas
+  .eq("id", cambio.id);
+
+
 
     const plato = platos.find(p => p.nombre === nombre);
     if (plato && plato.disponible !== disponible) {
