@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <script>
+    const rol = localStorage.getItem("rol");
+    if (rol !== "admin") {
+      window.location.href = "index.html";
+    }
+  </script>
+
   <header>
     <img src="assets/logo.png" alt="Logo La Casona de 17" />
     <h1>Panel de Administración</h1>
@@ -33,7 +40,6 @@
     <tbody></tbody>
   </table>
 
-  <!-- ✅ Botón para guardar disponibilidad -->
   <button onclick="guardarDisponibilidad()">Guardar cambios de disponibilidad</button>
 
   <h3>Agregar nuevo plato</h3>
@@ -49,5 +55,11 @@
   <button onclick="agregarPlato()">Agregar</button>
 
   <script type="module" src="script-admin.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("rol");
+      window.location.href = "index.html";
+    }
+  </script>
 </body>
 </html>
