@@ -207,4 +207,6 @@ function logout() {
 
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
-window.guardarDisponibilidad
+window.guardarDisponibilidad = guardarDisponibilidad;
+window.logout = logout;
+window.onload = verificarAcceso;
