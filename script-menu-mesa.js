@@ -9,7 +9,7 @@ const menuContainer = document.getElementById("menuContainer");
 
 async function cargarMenu() {
   const { data, error } = await supabase.from("menus").select("*").eq("disponible", true);
-  if (error) {
+  if (error || !data) {
     alert("❌ Error al cargar menú");
     return;
   }
@@ -33,7 +33,12 @@ async function enviarPedido() {
     return;
   }
 
-  const { data: menu } = await supabase.from("menus").select("*").eq("disponible", true);
+  const { data: menu, error } = await supabase.from("menus").select("*").eq("disponible", true);
+  if (error || !menu) {
+    alert("❌ No se pudo cargar el menú");
+    return;
+  }
+
   const pedido = [];
 
   menu.forEach(item => {
@@ -48,14 +53,14 @@ async function enviarPedido() {
     return;
   }
 
-  const { error } = await supabase.from("pedidos").insert([{
+  const { error: insertError } = await supabase.from("pedidos").insert([{
     mesa,
     tipo: "mesa",
     pedido,
     estado: "pendiente"
   }]);
 
-  if (error) {
+  if (insertError) {
     alert("❌ Error al enviar pedido");
     return;
   }
