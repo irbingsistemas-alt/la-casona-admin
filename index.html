@@ -3,20 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - La Casona</title>
+  <title>Acceso al sistema</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <img src="assets/logo.png" alt="Logo La Casona de 17" />
-    <h1>Acceso al panel</h1>
-    <p>Solo personal autorizado</p>
+    <h1>Bienvenido a La Casona de 17</h1>
+    <p>Acceso para administración y cocina</p>
   </header>
 
-  <input type="text" id="usuario" placeholder="Usuario" />
-  <input type="password" id="clave" placeholder="Contraseña" />
-  <button onclick="login()">Entrar</button>
+  <div style="max-width: 400px; margin: auto;">
+    <input type="email" id="email" placeholder="Correo" />
+    <input type="password" id="password" placeholder="Contraseña" />
+    <button onclick="login()">Entrar</button>
+    <p id="mensaje" style="color: red; margin-top: 10px;"></p>
+  </div>
 
-  <script type="module" src="script-login.js"></script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(
+      "https://ihswokmnhwaitzwjzvmy.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const mensaje = document.getElementById("mensaje");
+
+      mensaje.textContent = "";
+
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        mensaje.textContent = "❌ " + error.message;
+        return;
+      }
+
+      const user = authData.user;
+
+      const { data: perfil, error: errorPerfil } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("id", user.id)
+        .single();
+
+      if (errorPerfil || !perfil) {
+        mensaje.textContent = "❌ No se pudo obtener el rol del usuario";
+        return;
+      }
+
+      // Redirige según el rol
+      if (perfil.rol === "admin") {
+        window.location.href = "admin.html";
+      } else if (perfil.rol === "cocina") {
+        window.location.href = "cocina.html";
+      } else {
+        mensaje.textContent = "❌ Rol no autorizado";
+      }
+    }
+  </script>
 </body>
 </html>
