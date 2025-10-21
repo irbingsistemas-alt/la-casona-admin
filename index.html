@@ -13,9 +13,9 @@
   </header>
 
   <div style="max-width: 400px; margin: auto;">
-    <input type="email" id="email" placeholder="Correo" />
-    <input type="password" id="password" placeholder="Contraseña" />
-    <button onclick="login()">Entrar</button>
+    <input type="text" id="usuario" placeholder="Usuario" />
+    <input type="password" id="clave" placeholder="Contraseña" />
+    <button id="btn-login">Entrar</button>
     <p id="mensaje" style="color: red; margin-top: 10px;"></p>
   </div>
 
@@ -28,41 +28,34 @@
     );
 
     async function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const usuario = document.getElementById("usuario").value.trim();
+      const clave = document.getElementById("clave").value.trim();
       const mensaje = document.getElementById("mensaje");
 
       mensaje.textContent = "";
 
-      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        mensaje.textContent = "❌ " + error.message;
-        return;
-      }
-
-      const user = authData.user;
-
-      const { data: perfil, error: errorPerfil } = await supabase
+      const { data, error } = await supabase
         .from("usuarios")
         .select("rol")
-        .eq("id", user.id)
+        .eq("usuario", usuario)
+        .eq("clave", clave)
         .single();
 
-      if (errorPerfil || !perfil) {
-        mensaje.textContent = "❌ No se pudo obtener el rol del usuario";
+      if (error || !data) {
+        mensaje.textContent = "❌ Usuario o clave incorrecta";
         return;
       }
 
-      // Redirige según el rol
-      if (perfil.rol === "admin") {
+      if (data.rol === "admin") {
         window.location.href = "admin.html";
-      } else if (perfil.rol === "cocina") {
+      } else if (data.rol === "cocina") {
         window.location.href = "cocina.html";
       } else {
         mensaje.textContent = "❌ Rol no autorizado";
       }
     }
+
+    document.getElementById("btn-login").addEventListener("click", login);
   </script>
 </body>
 </html>
