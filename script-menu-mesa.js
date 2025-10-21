@@ -5,85 +5,184 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
-const menuContainer = document.getElementById("menuContainer");
+const menuDiv = document.getElementById("menu");
+const filtroSelect = document.getElementById("filtro");
+const cantidadesSeleccionadas = {};
+let menu = [];
 
 async function cargarMenu() {
   const { data, error } = await supabase
     .from("menus")
     .select("*")
-    .eq("disponible", true);
+    .eq("disponible", true)
+    .order("orden", { ascending: true });
 
-  if (error || !data) {
+  if (error) {
     alert("❌ Error al cargar el menú");
     return;
   }
 
-  data.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "item-menu";
-    div.innerHTML = `
-      <h3>${item.nombre}</h3>
-      <p>${item.descripcion || ""}</p>
-      <p><strong>${item.precio} CUP</strong></p>
-      <input type="number" min="0" placeholder="Cantidad" id="item-${item.id}" />
-    `;
-    menuContainer.appendChild(div);
+  menu = data;
+  const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
+
+  filtroSelect.innerHTML = '<option value="todos">Todas</option>';
+  categorias.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    filtroSelect.appendChild(option);
   });
+
+  mostrarMenuAgrupado(menu);
+}
+
+function mostrarMenuAgrupado(platos) {
+  menuDiv.innerHTML = "";
+
+  const agrupado = {};
+  platos.forEach(item => {
+    if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
+    agrupado[item.categoria].push(item);
+  });
+
+  for (const categoria in agrupado) {
+    const grupo = agrupado[categoria];
+    const grupoDiv = document.createElement("div");
+    grupoDiv.className = "categoria-grupo";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria;
+    grupoDiv.appendChild(titulo);
+
+    grupo.forEach(item => {
+      const key = item.nombre;
+      const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
+      const div = document.createElement("div");
+      div.className = "menu-item";
+      div.innerHTML = `
+        <label>
+          <strong>${item.nombre}</strong> - ${item.precio} CUP
+          <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
+        </label>
+      `;
+      grupoDiv.appendChild(div);
+    });
+
+    menuDiv.appendChild(grupoDiv);
+  }
+
+  document.querySelectorAll("input[type='number']").forEach(input => {
+    input.addEventListener("input", () => {
+      const nombre = input.dataset.name;
+      const cantidad = parseInt(input.value) || 0;
+      cantidadesSeleccionadas[nombre] = cantidad;
+      calcularTotal();
+    });
+  });
+
+  calcularTotal();
+}
+
+function filtrarMenu() {
+  const seleccion = filtroSelect.value;
+  if (seleccion === "todos") {
+    mostrarMenuAgrupado(menu);
+  } else {
+    const filtrado = menu.filter(item => item.categoria === seleccion);
+    mostrarMenuAgrupado(filtrado);
+  }
+}
+
+function calcularTotal() {
+  let total = 0;
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (plato && cantidad > 0) {
+      total += cantidad * plato.precio;
+    }
+  }
+  document.getElementById("total").textContent = total;
 }
 
 async function enviarPedido() {
   const mesa = document.getElementById("mesa").value.trim();
+
   if (!mesa) {
-    alert("⚠️ Ingresa el número de mesa");
+    alert("Por favor, ingresa el número de mesa");
     return;
   }
 
-  const { data: menu, error } = await supabase
-    .from("menus")
-    .select("*")
-    .eq("disponible", true);
-
-  if (error || !menu) {
-    alert("❌ No se pudo cargar el menú");
-    return;
-  }
-
+  let resumenHTML = `<p><strong>Mesa:</strong> ${mesa}</p><ul>`;
+  let mensaje = `Pedido para mesa ${mesa}\n\n`;
   let total = 0;
-  const resumen = [];
+  let items = [];
 
-  menu.forEach(item => {
-    const cantidad = parseInt(document.getElementById(`item-${item.id}`).value);
-    if (cantidad > 0) {
-      const subtotal = item.precio * cantidad;
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (cantidad > 0 && plato) {
+      const subtotal = cantidad * plato.precio;
+      mensaje += `- ${nombre} x${cantidad} = ${subtotal} CUP\n`;
+      resumenHTML += `<li>${nombre} x${cantidad} = ${subtotal} CUP</li>`;
       total += subtotal;
-      resumen.push(`${cantidad} x ${item.nombre}`);
+      items.push({ nombre, cantidad, subtotal });
     }
-  });
+  }
 
-  if (resumen.length === 0) {
-    alert("⚠️ Selecciona al menos un producto");
+  if (items.length === 0) {
+    alert("Selecciona al menos un plato");
     return;
   }
 
-  const { error: insertError } = await supabase.from("pedidos").insert([{
-    fecha: new Date().toISOString(),
-    total,
-    entregado: false,
-    tipo: "mesa",
-    mesa,
-    cliente: resumen.join(", "),
-    piso: null,
-    apartamento: null
-  }]);
+  mensaje += `\nTotal: ${total} CUP`;
+  resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
 
-  if (insertError) {
-    alert("❌ Error al enviar el pedido");
+  const { data: pedido, error } = await supabase
+    .from("pedidos")
+    .insert([{
+      mesa,
+      tipo: "mesa",
+      fecha: new Date().toISOString(),
+      total,
+      entregado: false
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    alert("❌ Error al guardar el pedido");
     return;
   }
 
-  alert("✅ Pedido enviado a cocina");
-  location.reload();
+  for (const item of items) {
+    await supabase.from("pedido_items").insert([{
+      pedido_id: pedido.id,
+      nombre: item.nombre,
+      cantidad: item.cantidad,
+      subtotal: item.subtotal
+    }]);
+  }
+
+  document.getElementById("resumen").innerHTML = resumenHTML;
+  document.getElementById("confirmacion").style.display = "block";
+  window.mensajeWhatsApp = mensaje;
 }
 
-window.onload = cargarMenu;
+function enviarWhatsApp() {
+  const numero = "5350971023";
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
+  window.open(url, "_blank");
+  document.getElementById("confirmacion").style.display = "none";
+}
+
+function cancelar() {
+  document.getElementById("confirmacion").style.display = "none";
+}
+
+window.filtrarMenu = filtrarMenu;
 window.enviarPedido = enviarPedido;
+window.enviarWhatsApp = enviarWhatsApp;
+window.cancelar = cancelar;
+
+cargarMenu();
