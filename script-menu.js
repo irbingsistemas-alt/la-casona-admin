@@ -31,7 +31,7 @@ async function cargarMenu() {
     filtroSelect.appendChild(option);
   });
 
-  mostrarMenu(menu.slice(0, 7)); // mostrar solo los primeros 7
+  mostrarMenu(menu.slice(0, 7));
 }
 
 function mostrarMenu(filtrado) {
