@@ -6,6 +6,7 @@ const supabase = createClient(
 );
 
 const tabla = document.querySelector("#tabla tbody");
+let platos = [];
 
 async function verificarAcceso() {
   const usuario = localStorage.getItem("usuarioActivo");
@@ -40,32 +41,27 @@ async function cargarPlatos(categoria = "") {
     return;
   }
 
+  platos = data;
   tabla.innerHTML = "";
 
   data.forEach(plato => {
     const fila = document.createElement("tr");
 
-    // Nombre
     const celdaNombre = document.createElement("td");
     celdaNombre.textContent = plato.nombre;
 
-    // Precio
     const celdaPrecio = document.createElement("td");
     celdaPrecio.textContent = `${plato.precio} CUP`;
 
-    // Categoría
     const celdaCategoria = document.createElement("td");
     celdaCategoria.textContent = plato.categoria || "";
 
-    // Disponible (checkbox)
     const celdaDisponible = document.createElement("td");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = plato.disponible;
-    checkbox.addEventListener("change", () => actualizarDisponibilidad(plato.id, checkbox.checked));
     celdaDisponible.appendChild(checkbox);
 
-    // Eliminar
     const celdaEliminar = document.createElement("td");
     const botonEliminar = document.createElement("button");
     botonEliminar.textContent = "🗑️";
@@ -82,15 +78,41 @@ async function cargarPlatos(categoria = "") {
   });
 }
 
-async function actualizarDisponibilidad(id, disponible) {
-  const { error } = await supabase
-    .from("menus")
-    .update({ disponible })
-    .eq("id", id);
+async function guardarDisponibilidad() {
+  const filas = document.querySelectorAll("#tabla tbody tr");
+  const actualizaciones = [];
 
-  if (error) {
-    alert("❌ Error al actualizar disponibilidad");
+  filas.forEach(fila => {
+    const nombre = fila.children[0].textContent;
+    const checkbox = fila.children[3].querySelector("input[type='checkbox']");
+    const disponible = checkbox.checked;
+
+    const plato = platos.find(p => p.nombre === nombre);
+    if (plato && plato.disponible !== disponible) {
+      actualizaciones.push({ id: plato.id, disponible });
+    }
+  });
+
+  if (actualizaciones.length === 0) {
+    alert("No hay cambios de disponibilidad para guardar.");
+    return;
   }
+
+  for (const cambio of actualizaciones) {
+    const { error } = await supabase
+      .from("menus")
+      .update({ disponible: cambio.disponible })
+      .eq("id", cambio.id);
+
+    if (error) {
+      alert("❌ Error al guardar cambios");
+      return;
+    }
+  }
+
+  alert("✅ Cambios de disponibilidad guardados correctamente.");
+  const categoriaActual = document.getElementById("filtroCategoria").value;
+  await cargarPlatos(categoriaActual);
 }
 
 async function cargarCategorias() {
@@ -185,6 +207,4 @@ function logout() {
 
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
-window.actualizarDisponibilidad = actualizarDisponibilidad;
-window.logout = logout;
-window.onload = verificarAcceso;
+window.guardarDisponibilidad
