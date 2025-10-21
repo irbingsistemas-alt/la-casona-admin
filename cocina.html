@@ -12,10 +12,30 @@
     <p>Solo pedidos pendientes</p>
   </header>
 
-  <div id="lista-pedidos-container">
+  <!-- Bloqueo por clave -->
+  <div id="bloqueo-cocina" style="text-align:center; margin-top:50px;">
+    <h2>🔒 Acceso restringido</h2>
+    <p>Ingresa la clave de cocina:</p>
+    <input type="password" id="clave-cocina" placeholder="Clave" />
+    <button onclick="verificarClave()">Entrar</button>
+  </div>
+
+  <!-- Contenedor oculto hasta que se desbloquee -->
+  <div id="lista-pedidos-container" style="display:none;">
     <div id="lista-pedidos"></div>
   </div>
 
-  <script type="module" src="script-cocina.js"></script>
+  <script>
+    function verificarClave() {
+      const clave = document.getElementById("clave-cocina").value.trim();
+      if (clave === "cocina17") {
+        document.getElementById("bloqueo-cocina").style.display = "none";
+        document.getElementById("lista-pedidos-container").style.display = "block";
+        import("./script-cocina.js");
+      } else {
+        alert("❌ Clave incorrecta");
+      }
+    }
+  </script>
 </body>
 </html>
