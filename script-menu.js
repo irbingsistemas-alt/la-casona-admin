@@ -31,7 +31,7 @@ async function cargarMenu() {
     filtroSelect.appendChild(option);
   });
 
-  mostrarMenu(menu);
+  mostrarMenu(menu.slice(0, 7)); // mostrar solo los primeros 7
 }
 
 function mostrarMenu(filtrado) {
@@ -65,9 +65,9 @@ function mostrarMenu(filtrado) {
 function filtrarMenu() {
   const seleccion = filtroSelect.value;
   if (seleccion === "todos") {
-    mostrarMenu(menu);
+    mostrarMenu(menu.slice(0, 7));
   } else {
-    const filtrado = menu.filter(item => item.categoria === seleccion);
+    const filtrado = menu.filter(item => item.categoria === seleccion).slice(0, 7);
     mostrarMenu(filtrado);
   }
 }
