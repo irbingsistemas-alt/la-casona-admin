@@ -24,6 +24,8 @@ async function cargarMenu() {
 
   menu = data;
   const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
+
+  filtroSelect.innerHTML = '<option value="todos">Todas</option>';
   categorias.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat;
@@ -31,24 +33,43 @@ async function cargarMenu() {
     filtroSelect.appendChild(option);
   });
 
-  mostrarMenu(menu.slice(0, 7));
+  mostrarMenuAgrupado(menu);
 }
 
-function mostrarMenu(filtrado) {
+function mostrarMenuAgrupado(platos) {
   menuDiv.innerHTML = "";
-  filtrado.forEach(item => {
-    const key = item.nombre;
-    const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
-    const div = document.createElement("div");
-    div.className = "menu-item";
-    div.innerHTML = `
-      <label>
-        <strong>${item.nombre}</strong> - ${item.precio} CUP
-        <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
-      </label>
-    `;
-    menuDiv.appendChild(div);
+
+  const agrupado = {};
+  platos.forEach(item => {
+    if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
+    agrupado[item.categoria].push(item);
   });
+
+  for (const categoria in agrupado) {
+    const grupo = agrupado[categoria];
+    const grupoDiv = document.createElement("div");
+    grupoDiv.className = "categoria-grupo";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria;
+    grupoDiv.appendChild(titulo);
+
+    grupo.forEach(item => {
+      const key = item.nombre;
+      const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
+      const div = document.createElement("div");
+      div.className = "menu-item";
+      div.innerHTML = `
+        <label>
+          <strong>${item.nombre}</strong> - ${item.precio} CUP
+          <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
+        </label>
+      `;
+      grupoDiv.appendChild(div);
+    });
+
+    menuDiv.appendChild(grupoDiv);
+  }
 
   document.querySelectorAll("input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
@@ -65,10 +86,10 @@ function mostrarMenu(filtrado) {
 function filtrarMenu() {
   const seleccion = filtroSelect.value;
   if (seleccion === "todos") {
-    mostrarMenu(menu.slice(0, 7));
+    mostrarMenuAgrupado(menu);
   } else {
-    const filtrado = menu.filter(item => item.categoria === seleccion).slice(0, 7);
-    mostrarMenu(filtrado);
+    const filtrado = menu.filter(item => item.categoria === seleccion);
+    mostrarMenuAgrupado(filtrado);
   }
 }
 
