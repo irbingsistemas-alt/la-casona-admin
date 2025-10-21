@@ -136,3 +136,14 @@ label {
   overflow-y: auto;
   margin-bottom: 20px;
 }
+.categoria-grupo {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 1rem;
+}
+
+.categoria-grupo h3 {
+  margin-top: 1rem;
+  color: #444;
+  font-size: 1.2rem;
+}
