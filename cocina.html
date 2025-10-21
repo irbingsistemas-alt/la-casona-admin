@@ -7,33 +7,29 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <script>
+    const rol = localStorage.getItem("rol");
+    if (rol !== "cocina") {
+      window.location.href = "index.html";
+    }
+  </script>
+
   <header>
     <h1>Pedidos en Cocina</h1>
-    <p>Solo usuarios autenticados</p>
+    <p>Solo usuarios con rol <strong>cocina</strong></p>
   </header>
+
+  <button onclick="logout()">Cerrar sesión</button>
 
   <div id="lista-pedidos-container">
     <div id="lista-pedidos"></div>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabase = createClient(
-      "https://ihswokmnhwaitzwjzvmy.supabase.co",
-      "public-anon-key"
-    );
-
-    const { data: session } = await supabase.auth.getSession();
-    const user = session?.session?.user;
-
-    if (!user) {
-      window.location.href = "login.html";
-    } else {
-      const script = document.createElement("script");
-      script.type = "module";
-      script.src = "script-cocina.js";
-      document.body.appendChild(script);
+  <script type="module" src="script-cocina.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("rol");
+      window.location.href = "index.html";
     }
   </script>
 </body>
