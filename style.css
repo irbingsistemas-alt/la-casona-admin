@@ -208,3 +208,41 @@ label {
     font-size: 1rem;
   }
 }
+.pedido-cocina {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.pedido-cocina h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #a52a2a;
+}
+
+.pedido-cocina p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+}
+
+.pedido-cocina ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.pedido-cocina button {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+.pedido-cocina button:hover {
+  background: #218838;
+}
