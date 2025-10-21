@@ -147,3 +147,21 @@ label {
   color: #444;
   font-size: 1.2rem;
 }
+.categoria-grupo {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.categoria-grupo h3 {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #333;
+  border-left: 4px solid #f57c00;
+  padding-left: 8px;
+}
+
+.menu-item {
+  margin: 8px 0;
+  padding-left: 12px;
+}
