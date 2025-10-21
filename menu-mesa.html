@@ -13,12 +13,29 @@
     <p>Selecciona tus platos y envía el pedido desde tu mesa</p>
   </header>
 
-  <label for="mesa">Número de mesa:</label>
-  <input type="number" id="mesa" placeholder="Ej. 5" required />
+  <section>
+    <label for="mesa"><strong>Número de mesa:</strong></label>
+    <input type="number" id="mesa" placeholder="Ej. 5" required />
+  </section>
 
-  <div id="menuContainer"></div>
+  <section>
+    <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+    <select id="filtro" onchange="filtrarMenu()"></select>
+  </section>
 
-  <button onclick="enviarPedido()">Enviar pedido</button>
+  <section id="menu"></section>
+
+  <section>
+    <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+    <button onclick="enviarPedido()">Enviar pedido</button>
+  </section>
+
+  <section id="confirmacion" style="display:none;">
+    <h2>✅ Pedido enviado</h2>
+    <div id="resumen"></div>
+    <button onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+    <button onclick="cancelar()">Cerrar</button>
+  </section>
 
   <script type="module" src="script-menu-mesa.js"></script>
 </body>
