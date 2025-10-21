@@ -46,7 +46,7 @@ async function cargarPlatos(categoria = "") {
 
   data.forEach(plato => {
     const fila = document.createElement("tr");
-    fila.dataset.id = plato.id; // ✅ guardar ID en el DOM
+    fila.dataset.id = plato.id;
 
     const celdaNombre = document.createElement("td");
     celdaNombre.textContent = plato.nombre;
@@ -84,11 +84,11 @@ async function guardarDisponibilidad() {
   const actualizaciones = [];
 
   filas.forEach(fila => {
-    const id = parseInt(fila.dataset.id);
+    const id = fila.dataset.id;
     const checkbox = fila.children[3].querySelector("input[type='checkbox']");
     const disponible = checkbox.checked;
 
-    const plato = platos.find(p => p.id === id);
+    const plato = platos.find(p => p.id == id);
     if (plato && plato.disponible !== disponible) {
       actualizaciones.push({ id, disponible });
     }
@@ -100,15 +100,24 @@ async function guardarDisponibilidad() {
   }
 
   for (const cambio of actualizaciones) {
-    const { error } = await supabase
+    console.log("Actualizando ID:", cambio.id, "→ disponible:", cambio.disponible);
+
+    const { data, error } = await supabase
       .from("menus")
       .update({ disponible: cambio.disponible })
-      .eq("id", cambio.id);
+      .eq("id", cambio.id)
+      .select(); // ✅ para verificar si se actualizó
 
     if (error) {
-      console.error("Error al actualizar:", error);
+      console.error("❌ Error al actualizar:", error);
       alert("❌ Error al guardar cambios");
       return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("⚠️ No se encontró el registro con ID:", cambio.id);
+    } else {
+      console.log("✅ Registro actualizado:", data[0]);
     }
   }
 
@@ -207,7 +216,6 @@ function logout() {
   window.location.href = "index.html";
 }
 
-// ✅ Registrar funciones para que funcionen desde el HTML
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
 window.guardarDisponibilidad = guardarDisponibilidad;
