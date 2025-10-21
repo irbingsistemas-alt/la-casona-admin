@@ -16,16 +16,22 @@ async function cargarPedidos() {
 
   if (error) {
     contenedor.innerHTML = "<p>Error al cargar pedidos</p>";
+    console.error("❌ Error al cargar pedidos:", error);
     return;
   }
 
   contenedor.innerHTML = "";
 
   for (const pedido of pedidos) {
-    const { data: items } = await supabase
+    const { data: items, error: errorItems } = await supabase
       .from("pedido_items")
       .select("nombre, cantidad")
       .eq("pedido_id", pedido.id);
+
+    if (errorItems) {
+      console.error("❌ Error al cargar items:", errorItems);
+      continue;
+    }
 
     const div = document.createElement("div");
     div.className = "pedido-cocina";
@@ -43,16 +49,18 @@ async function cargarPedidos() {
   document.querySelectorAll(".entregar-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
-      const { error } = await supabase
+
+      const { data, error } = await supabase
         .from("pedidos")
         .update({ entregado: true })
-        .match({ id });
+        .eq("id", id)
+        .select();
 
-      if (error) {
+      if (error || !data || data.length === 0) {
         console.error("❌ Error al marcar como entregado:", error);
-        alert("❌ Error al marcar como entregado");
+        alert("❌ No se pudo actualizar el pedido en Supabase");
       } else {
-        console.log("✅ Pedido actualizado:", id);
+        console.log("✅ Pedido actualizado en Supabase:", data[0]);
         btn.parentElement.remove();
       }
     });
