@@ -59,7 +59,7 @@ async function cargarPlatos(categoria = "") {
     const celdaDisponible = document.createElement("td");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.checked = plato.disponible;
+    checkbox.checked = !!plato.disponible;
     celdaDisponible.appendChild(checkbox);
 
     const celdaEliminar = document.createElement("td");
@@ -85,13 +85,7 @@ async function guardarDisponibilidad() {
   filas.forEach(fila => {
     const nombre = fila.children[0].textContent;
     const checkbox = fila.children[3].querySelector("input[type='checkbox']");
-    const disponible = checkbox.checked; // ✅ esto es booleano
-    await supabase
-  .from("menus")
-  .update({ disponible }) // ✅ no uses comillas
-  .eq("id", cambio.id);
-
-
+    const disponible = checkbox.checked;
 
     const plato = platos.find(p => p.nombre === nombre);
     if (plato && plato.disponible !== disponible) {
