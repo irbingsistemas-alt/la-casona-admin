@@ -84,7 +84,7 @@ async function guardarDisponibilidad() {
   const actualizaciones = [];
 
   filas.forEach(fila => {
-    const id = fila.dataset.id?.trim(); // ✅ aseguramos string limpio
+    const id = fila.dataset.id?.trim();
     const checkbox = fila.querySelector("input[type='checkbox']");
     const nuevoEstado = checkbox.checked;
 
@@ -109,7 +109,7 @@ async function guardarDisponibilidad() {
     const { data, error } = await supabase
       .from("menus")
       .update({ disponible: cambio.disponible })
-      .eq("id", cambio.id)
+      .match({ id: cambio.id }) // ✅ cambio aplicado aquí
       .select();
 
     if (error) {
