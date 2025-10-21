@@ -1,48 +1,69 @@
-// index.js
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - La Casona de 17</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Bienvenido a La Casona</h1>
+    <p>Inicia sesión para acceder al sistema</p>
+  </header>
 
-// ✅ Conexión con Supabase usando la clave pública (anon key)
-const supabase = createClient(
-  "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // reemplaza con tu anon key real
-);
+  <form id="loginForm">
+    <input type="text" id="usuario" placeholder="Usuario" required />
+    <input type="password" id="clave" placeholder="Contraseña" required />
+    <button type="submit">Ingresar</button>
+  </form>
 
-// ✅ Referencias al formulario y mensaje de error
-const form = document.getElementById("loginForm");
-const mensajeError = document.getElementById("mensajeError");
+  <p id="mensajeError" style="color: red;"></p>
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  mensajeError.textContent = "";
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const usuario = document.getElementById("usuario").value.trim();
-  const clave = document.getElementById("clave").value.trim();
+    const supabase = createClient(
+      "https://ihswokmnhwaitzwjzvmy.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+    );
 
-  // ✅ Consulta segura a la tabla usuarios
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select("rol")
-    .eq("usuario", usuario)
-    .eq("clave", clave)
-    .single();
+    const form = document.getElementById("loginForm");
+    const mensajeError = document.getElementById("mensajeError");
 
-  if (error || !data) {
-    mensajeError.textContent = "❌ Usuario o clave incorrecta";
-    return;
-  }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      mensajeError.textContent = "";
 
-  // ✅ Guardar sesión en localStorage
-  localStorage.setItem("usuarioActivo", usuario);
-  localStorage.setItem("rol", data.rol);
+      const usuario = document.getElementById("usuario").value.trim();
+      const clave = document.getElementById("clave").value.trim();
 
-  // ✅ Redirigir según el rol
-  if (data.rol === "admin") {
-    window.location.href = "admin.html";
-  } else if (data.rol === "cocina") {
-    window.location.href = "cocina.html";
-  } else if (data.rol === "reparto") {
-    window.location.href = "reparto.html";
-  } else {
-    mensajeError.textContent = "❌ Rol no reconocido";
-  }
-});
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("usuario", usuario)
+        .eq("clave", clave)
+        .single();
+
+      if (error || !data) {
+        mensajeError.textContent = "❌ Usuario o clave incorrecta";
+        return;
+      }
+
+      localStorage.setItem("usuarioActivo", usuario);
+      localStorage.setItem("rol", data.rol);
+
+      if (data.rol === "admin") {
+        window.location.href = "admin.html";
+      } else if (data.rol === "cocina") {
+        window.location.href = "cocina.html";
+      } else if (data.rol === "reparto") {
+        window.location.href = "reparto.html";
+      } else {
+        mensajeError.textContent = "❌ Rol no reconocido";
+      }
+    });
+  </script>
+</body>
+</html>
