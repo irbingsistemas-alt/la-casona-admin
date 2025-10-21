@@ -2,23 +2,28 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "tu-clave-publica"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
 const menuContainer = document.getElementById("menuContainer");
 
 async function cargarMenu() {
-  const { data, error } = await supabase.from("menus").select("*").eq("disponible", true);
+  const { data, error } = await supabase
+    .from("menus")
+    .select("*")
+    .eq("disponible", true);
+
   if (error || !data) {
-    alert("❌ Error al cargar menú");
+    alert("❌ Error al cargar el menú");
     return;
   }
 
   data.forEach(item => {
     const div = document.createElement("div");
+    div.className = "item-menu";
     div.innerHTML = `
       <h3>${item.nombre}</h3>
-      <p>${item.descripcion}</p>
+      <p>${item.descripcion || ""}</p>
       <p><strong>${item.precio} CUP</strong></p>
       <input type="number" min="0" placeholder="Cantidad" id="item-${item.id}" />
     `;
@@ -33,35 +38,46 @@ async function enviarPedido() {
     return;
   }
 
-  const { data: menu, error } = await supabase.from("menus").select("*").eq("disponible", true);
+  const { data: menu, error } = await supabase
+    .from("menus")
+    .select("*")
+    .eq("disponible", true);
+
   if (error || !menu) {
     alert("❌ No se pudo cargar el menú");
     return;
   }
 
-  const pedido = [];
+  let total = 0;
+  const resumen = [];
 
   menu.forEach(item => {
     const cantidad = parseInt(document.getElementById(`item-${item.id}`).value);
     if (cantidad > 0) {
-      pedido.push({ item_id: item.id, nombre: item.nombre, cantidad });
+      const subtotal = item.precio * cantidad;
+      total += subtotal;
+      resumen.push(`${cantidad} x ${item.nombre}`);
     }
   });
 
-  if (pedido.length === 0) {
+  if (resumen.length === 0) {
     alert("⚠️ Selecciona al menos un producto");
     return;
   }
 
   const { error: insertError } = await supabase.from("pedidos").insert([{
-    mesa,
+    fecha: new Date().toISOString(),
+    total,
+    entregado: false,
     tipo: "mesa",
-    pedido,
-    estado: "pendiente"
+    mesa,
+    cliente: resumen.join(", "),
+    piso: null,
+    apartamento: null
   }]);
 
   if (insertError) {
-    alert("❌ Error al enviar pedido");
+    alert("❌ Error al enviar el pedido");
     return;
   }
 
