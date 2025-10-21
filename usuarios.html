@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Usuarios - La Casona</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script>
+    const rol = localStorage.getItem("rol");
+    if (rol !== "administrador general") {
+      window.location.href = "index.html";
+    }
+  </script>
+
+  <header>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Gestión de Usuarios</h1>
+    <p>Crear, editar y eliminar usuarios del sistema</p>
+  </header>
+
+  <button onclick="logout()">Cerrar sesión</button>
+
+  <h3>Agregar nuevo usuario</h3>
+  <input type="text" id="nuevoUsuario" placeholder="Usuario" />
+  <input type="password" id="nuevaClave" placeholder="Contraseña" />
+  <select id="nuevoRol">
+    <option value="admin">admin</option>
+    <option value="cocina">cocina</option>
+    <option value="reparto">reparto</option>
+    <option value="administrador general">administrador general</option>
+  </select>
+  <button onclick="agregarUsuario()">Agregar</button>
+
+  <h3>Usuarios registrados</h3>
+  <table id="tablaUsuarios">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Rol</th>
+        <th>Editar</th>
+        <th>Eliminar</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module" src="script-usuarios.js"></script>
+</body>
+</html>
