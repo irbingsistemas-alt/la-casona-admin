@@ -224,3 +224,39 @@ label {
     font-size: 1rem;
   }
 }
+/* Compactar visualmente los platos */
+.menu-item {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Estilo compacto para el label */
+.menu-item label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+/* Input más integrado visualmente */
+.menu-item input[type="number"] {
+  width: 50px;
+  padding: 4px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #bbb;
+}
+
+/* Categoría destacada con color */
+.categoria-grupo h3 {
+  font-size: 1.1rem;
+  margin: 12px 0 6px;
+  color: #a52a2a; /* Color vino para resaltar */
+  font-weight: bold;
+  border-left: 4px solid #a52a2a;
+  padding-left: 8px;
+}
+
