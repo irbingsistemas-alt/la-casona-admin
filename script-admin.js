@@ -89,7 +89,7 @@ async function guardarDisponibilidad() {
     const disponible = checkbox.checked;
 
     const plato = platos.find(p => p.id == id);
-    if (plato && plato.disponible !== disponible) {
+    if (plato && Boolean(plato.disponible) !== Boolean(disponible)) {
       actualizaciones.push({ id, disponible });
     }
   });
@@ -100,13 +100,11 @@ async function guardarDisponibilidad() {
   }
 
   for (const cambio of actualizaciones) {
-    console.log("Actualizando ID:", cambio.id, "→ disponible:", cambio.disponible);
-
     const { data, error } = await supabase
       .from("menus")
       .update({ disponible: cambio.disponible })
       .eq("id", cambio.id)
-      .select(); // ✅ para verificar si se actualizó
+      .select();
 
     if (error) {
       console.error("❌ Error al actualizar:", error);
