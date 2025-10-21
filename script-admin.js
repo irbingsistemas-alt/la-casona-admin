@@ -46,7 +46,7 @@ async function cargarPlatos(categoria = "") {
 
   data.forEach(plato => {
     const fila = document.createElement("tr");
-    fila.dataset.id = plato.id; // ✅ guardar el ID en el DOM
+    fila.dataset.id = plato.id; // ✅ guardar ID en el DOM
 
     const celdaNombre = document.createElement("td");
     celdaNombre.textContent = plato.nombre;
@@ -84,11 +84,11 @@ async function guardarDisponibilidad() {
   const actualizaciones = [];
 
   filas.forEach(fila => {
-    const id = fila.dataset.id;
+    const id = parseInt(fila.dataset.id);
     const checkbox = fila.children[3].querySelector("input[type='checkbox']");
     const disponible = checkbox.checked;
 
-    const plato = platos.find(p => p.id == id);
+    const plato = platos.find(p => p.id === id);
     if (plato && plato.disponible !== disponible) {
       actualizaciones.push({ id, disponible });
     }
@@ -106,6 +106,7 @@ async function guardarDisponibilidad() {
       .eq("id", cambio.id);
 
     if (error) {
+      console.error("Error al actualizar:", error);
       alert("❌ Error al guardar cambios");
       return;
     }
