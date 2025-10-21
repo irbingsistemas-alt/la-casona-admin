@@ -47,10 +47,24 @@ async function cargarPlatos(categoria = "") {
       <td>${plato.nombre}</td>
       <td>${plato.precio} CUP</td>
       <td>${plato.categoria || ""}</td>
+      <td>
+        <input type="checkbox" ${plato.disponible ? "checked" : ""} onchange="actualizarDisponibilidad('${plato.id}', this.checked)" />
+      </td>
       <td><button onclick="eliminarPlato('${plato.id}')">🗑️</button></td>
     `;
     tabla.appendChild(fila);
   });
+}
+
+async function actualizarDisponibilidad(id, disponible) {
+  const { error } = await supabase
+    .from("menus")
+    .update({ disponible })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Error al actualizar disponibilidad");
+  }
 }
 
 async function cargarCategorias() {
@@ -145,5 +159,6 @@ function logout() {
 
 window.agregarPlato = agregarPlato;
 window.eliminarPlato = eliminarPlato;
+window.actualizarDisponibilidad = actualizarDisponibilidad;
 window.logout = logout;
 window.onload = verificarAcceso;
