@@ -1,6 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ✅ Conexión con Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
@@ -32,18 +31,18 @@ form.addEventListener("submit", async (e) => {
   localStorage.setItem("rol", data.rol);
 
   const destino = {
-    admin: "admin.html",
-    cocina: "cocina.html",
-    bar: "bar.html",
-    barra: "barra.html",
-    pizzeria: "pizzeria.html",
-    reparto: "reparto.html",
-    administrador: "usuarios.html",
-    dependiente: "dependientes.html"
+    admin: "modules/admin.html",
+    cocina: "modules/cocina.html",
+    bar: "modules/bar.html",
+    barra: "modules/barra.html",
+    pizzeria: "modules/pizzeria.html",
+    reparto: "modules/reparto.html",
+    administrador: "modules/usuarios.html",
+    dependiente: "modules/dependientes.html"
   };
 
   if (destino[data.rol]) {
-    window.location.href = `modules/${destino[data.rol]}`;
+    window.location.href = destino[data.rol];
   } else {
     mensajeError.textContent = "❌ Rol no reconocido";
   }
