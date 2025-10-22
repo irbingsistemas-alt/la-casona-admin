@@ -3,24 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - La Casona de 17</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Login | La Casona de 17</title>
+  <link rel="stylesheet" href="./style-base.css" />
 </head>
 <body>
-  <header>
-    <img src="assets/logo.png" alt="Logo La Casona de 17" />
-    <h1>Bienvenido a La Casona</h1>
-    <p>Inicia sesión para acceder al sistema</p>
-  </header>
+  <div class="contenedor">
+    <header>
+      <img src="./assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Bienvenido a La Casona</h1>
+      <p>Inicia sesión para acceder al sistema</p>
+    </header>
 
-  <form id="loginForm">
-    <input type="text" id="usuario" placeholder="Usuario" required />
-    <input type="password" id="clave" placeholder="Contraseña" required />
-    <button type="submit">Ingresar</button>
-  </form>
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuario" required />
+      <input type="password" id="clave" placeholder="Contraseña" required />
+      <button type="submit">Ingresar</button>
+    </form>
 
-  <p id="mensajeError" style="color: red;"></p>
+    <p id="mensajeError" style="color: red;"></p>
+  </div>
 
-  <script type="module" src="index.js"></script>
+  <script type="module" src="./index.js"></script>
 </body>
 </html>
