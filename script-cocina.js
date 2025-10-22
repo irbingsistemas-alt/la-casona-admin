@@ -149,6 +149,3 @@ async function mostrarResumenConfirmadosDelDia() {
   html += "</ul>";
   resumenFinal.innerHTML = html;
 }
-
-window.filtrarPorLocal = filtrarPorLocal;
-cargarPedidos();
