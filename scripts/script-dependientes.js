@@ -18,17 +18,16 @@ function actualizarEstiloLocal() {
 window.actualizarEstiloLocal = actualizarEstiloLocal;
 
 async function iniciarSesion() {
-  const usuario = document.getElementById("usuario").value;
-  const clave = document.getElementById("clave").value;
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
 
   const id = await autenticarUsuario(usuario, clave);
   if (!id) {
-    alert("Credenciales incorrectas o rol no autorizado");
+    alert("❌ Credenciales incorrectas o rol no autorizado");
     return;
   }
 
   usuarioAutenticado = id;
-
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
@@ -47,6 +46,7 @@ function mostrarMenu(menu) {
 
   const categorias = [...new Set(menu.map(plato => plato.categoria))];
   const filtro = document.getElementById("filtro");
+  filtro.innerHTML = '<option value="todos">Todos</option>';
   categorias.forEach(cat => {
     const opcion = document.createElement("option");
     opcion.value = cat;
@@ -87,9 +87,10 @@ function filtrarMenu() {
   });
 }
 window.filtrarMenu = filtrarMenu;
+
 function enviarPedido() {
   const local = document.getElementById("local").value;
-  const mesa = document.getElementById("mesa").value;
+  const mesa = document.getElementById("mesa").value.trim();
   const inputs = document.querySelectorAll(".menu-item input");
 
   pedidoActual = [];
@@ -105,8 +106,8 @@ function enviarPedido() {
     }
   });
 
-  if (pedidoActual.length === 0 || mesa.trim() === "") {
-    alert("Debe seleccionar al menos un plato y especificar la mesa.");
+  if (pedidoActual.length === 0 || mesa === "") {
+    alert("⚠️ Debes seleccionar al menos un plato y especificar la mesa.");
     return;
   }
 
@@ -149,6 +150,7 @@ function marcarCobrado() {
 
   const inputs = document.querySelectorAll(".menu-item input");
   inputs.forEach(input => input.value = "0");
+
   document.getElementById("total").textContent = "0";
 }
 window.marcarCobrado = marcarCobrado;
