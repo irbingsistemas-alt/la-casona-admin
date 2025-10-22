@@ -5,25 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .pedido-barra {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #f9f9f9;
-      flex-wrap: wrap;
-    }
-    .pedido-info {
-      flex: 1;
-      min-width: 250px;
-    }
-    .pedido-boton {
-      margin-left: 20px;
-    }
-  </style>
 </head>
 <body>
   <script>
@@ -37,25 +18,13 @@
   <header>
     <h1>Pedidos en Cocina</h1>
     <p>Solo usuarios con rol <strong>cocina</strong></p>
-    <button onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Resumen de pedidos sin entregar por local -->
-  <section id="resumen-locales" style="margin-top: 20px;"></section>
+  <button onclick="logout()">Cerrar sesión</button>
 
-  <!-- Filtro por local -->
-  <section style="margin-top: 10px;">
-    <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-    <select id="filtro-local" onchange="filtrarPorLocal()" style="margin-left: 10px;">
-      <option value="todos">Todos</option>
-    </select>
-  </section>
-
-  <!-- Lista de pedidos sin confirmar -->
-  <section id="lista-pedidos" style="margin-top: 20px;"></section>
-
-  <!-- Resumen de pedidos confirmados por área -->
-  <section id="resumen-confirmados" style="margin-top: 40px;"></section>
+  <div id="lista-pedidos-container">
+    <div id="lista-pedidos"></div>
+  </div>
 
   <script type="module" src="script-cocina.js"></script>
   <script>
