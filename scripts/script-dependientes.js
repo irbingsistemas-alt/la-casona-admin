@@ -1,5 +1,6 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// ✅ Conexión directa a Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
@@ -12,6 +13,7 @@ let total = 0;
 let pedidosCobrados = 0;
 let importeCobrado = 0;
 
+// ✅ Restaurar sesión si existe
 window.addEventListener("DOMContentLoaded", async () => {
   const id = localStorage.getItem("usuario_id");
   if (id) {
@@ -136,8 +138,99 @@ function filtrarMenu() {
   });
 }
 window.filtrarMenu = filtrarMenu;
+function calcularTotal() {
+  total = 0;
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (plato && cantidad > 0) {
+      total += cantidad * plato.precio;
+    }
+  }
+  document.getElementById("total").textContent = total;
+}
 
-async function cargarResumen() {
+async function enviarPedido() {
+  const local = document.getElementById("local").value;
+  const mesa = document.getElementById("mesa").value.trim();
+
+  const items = [];
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (cantidad > 0 && plato) {
+      items.push({ nombre, cantidad, precio: plato.precio });
+    }
+  }
+
+  if (items.length === 0 || mesa === "") {
+    alert("⚠️ Selecciona al menos un plato y especifica la mesa.");
+    return;
+  }
+
+  const resumen = document.getElementById("resumen");
+  resumen.innerHTML = `
+    <p><strong>Local:</strong> ${local}</p>
+    <p><strong>Mesa:</strong> ${mesa}</p>
+    <ul>
+      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
+    </ul>
+    <p><strong>Total:</strong> ${total} CUP</p>
+  `;
+
+  document.getElementById("confirmacion").style.display = "block";
+
   const { data, error } = await supabase
     .from("pedidos")
-    .
+    .insert([{
+      local,
+      mesa,
+      total,
+      entregado: false,
+      cobrado: false,
+      fecha: new Date().toISOString(),
+      usuario_id: usuarioAutenticado
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    alert("❌ Error al guardar el pedido");
+    console.error(error);
+    return;
+  }
+
+  for (const item of items) {
+    await supabase.from("pedido_items").insert([{
+      pedido_id: data.id,
+      nombre: item.nombre,
+      cantidad: item.cantidad,
+      precio: item.precio
+    }]);
+  }
+}
+window.enviarPedido = enviarPedido;
+
+function marcarCobrado() {
+  const resumen = document.getElementById("resumen");
+  resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
+
+  pedidosCobrados += 1;
+  importeCobrado += total;
+
+  document.getElementById("total-cobrados").textContent = pedidosCobrados;
+  document.getElementById("importe-cobrado").textContent = importeCobrado;
+
+  cantidadesSeleccionadas = {};
+  total = 0;
+
+  document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
+  document.getElementById("total").textContent = "0";
+}
+window.marcarCobrado = marcarCobrado;
+
+function cerrarSesion() {
+  localStorage.clear();
+  location.reload();
+}
+window.cerrarSesion = cerrarSesion;
