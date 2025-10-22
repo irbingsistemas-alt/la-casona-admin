@@ -2,64 +2,69 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // tu clave pública
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
 const tabla = document.querySelector("#tablaUsuarios tbody");
 
 async function cargarUsuarios() {
-  const { data, error } = await supabase.from("usuarios").select("*");
+  try {
+    const { data, error } = await supabase.from("usuarios").select("*");
+    if (error) throw error;
 
-  if (error) {
-    alert("❌ Error al cargar usuarios");
-    return;
-  }
+    tabla.innerHTML = "";
 
-  tabla.innerHTML = "";
+    data.forEach(usuario => {
+      const fila = document.createElement("tr");
 
-  data.forEach(usuario => {
-    const fila = document.createElement("tr");
+      // Usuario
+      const celdaUsuario = document.createElement("td");
+      celdaUsuario.textContent = usuario.usuario;
 
-    const celdaUsuario = document.createElement("td");
-    celdaUsuario.textContent = usuario.usuario;
+      // Rol
+      const celdaRol = document.createElement("td");
+      const selectRol = document.createElement("select");
+      ["admin", "cocina", "reparto", "administrador", "dependiente", "barra", "bar"].forEach(r => {
+        const option = document.createElement("option");
+        option.value = r;
+        option.textContent = r;
+        if (usuario.rol === r) option.selected = true;
+        selectRol.appendChild(option);
+      });
 
-    const celdaRol = document.createElement("td");
-    const selectRol = document.createElement("select");
-    ["admin","cocina","reparto","administrador","dependiente","barra","bar"].forEach(r => {
-      const option = document.createElement("option");
-      option.value = r;
-      option.textContent = r;
-      if (usuario.rol === r) option.selected = true;
-      selectRol.appendChild(option);
+      // Edición
+      const celdaEditar = document.createElement("td");
+      const inputClave = document.createElement("input");
+      inputClave.type = "password";
+      inputClave.placeholder = "Nueva clave";
+      inputClave.style.width = "100px";
+
+      const botonGuardar = document.createElement("button");
+      botonGuardar.textContent = "💾";
+      botonGuardar.onclick = () => editarUsuario(usuario.id, selectRol.value, inputClave.value);
+
+      celdaRol.appendChild(selectRol);
+      celdaEditar.appendChild(inputClave);
+      celdaEditar.appendChild(botonGuardar);
+
+      // Eliminación
+      const celdaEliminar = document.createElement("td");
+      const botonEliminar = document.createElement("button");
+      botonEliminar.textContent = "🗑️";
+      botonEliminar.onclick = () => eliminarUsuario(usuario.id);
+      celdaEliminar.appendChild(botonEliminar);
+
+      fila.appendChild(celdaUsuario);
+      fila.appendChild(celdaRol);
+      fila.appendChild(celdaEditar);
+      fila.appendChild(celdaEliminar);
+
+      tabla.appendChild(fila);
     });
-
-    const celdaEditar = document.createElement("td");
-    const inputClave = document.createElement("input");
-    inputClave.type = "password";
-    inputClave.placeholder = "Nueva clave";
-    inputClave.style.width = "100px";
-
-    const botonGuardar = document.createElement("button");
-    botonGuardar.textContent = "💾";
-    botonGuardar.onclick = () => editarUsuario(usuario.id, selectRol.value, inputClave.value);
-
-    celdaRol.appendChild(selectRol);
-    celdaEditar.appendChild(inputClave);
-    celdaEditar.appendChild(botonGuardar);
-
-    const celdaEliminar = document.createElement("td");
-    const botonEliminar = document.createElement("button");
-    botonEliminar.textContent = "🗑️";
-    botonEliminar.onclick = () => eliminarUsuario(usuario.id);
-    celdaEliminar.appendChild(botonEliminar);
-
-    fila.appendChild(celdaUsuario);
-    fila.appendChild(celdaRol);
-    fila.appendChild(celdaEditar);
-    fila.appendChild(celdaEliminar);
-
-    tabla.appendChild(fila);
-  });
+  } catch (err) {
+    alert("❌ Error al cargar usuarios");
+    console.error(err);
+  }
 }
 
 async function agregarUsuario() {
@@ -72,18 +77,19 @@ async function agregarUsuario() {
     return;
   }
 
-  const { error } = await supabase.from("usuarios").insert([{ usuario, clave, rol }]);
+  try {
+    const { error } = await supabase.from("usuarios").insert([{ usuario, clave, rol }]);
+    if (error) throw error;
 
-  if (error) {
+    document.getElementById("nuevoUsuario").value = "";
+    document.getElementById("nuevaClave").value = "";
+    document.getElementById("nuevoRol").value = "admin";
+
+    await cargarUsuarios();
+  } catch (err) {
     alert("❌ Error al agregar usuario");
-    return;
+    console.error(err);
   }
-
-  document.getElementById("nuevoUsuario").value = "";
-  document.getElementById("nuevaClave").value = "";
-  document.getElementById("nuevoRol").value = "admin";
-
-  await cargarUsuarios();
 }
 
 async function editarUsuario(id, nuevoRol, nuevaClave) {
@@ -91,34 +97,35 @@ async function editarUsuario(id, nuevoRol, nuevaClave) {
   if (nuevoRol) cambios.rol = nuevoRol;
   if (nuevaClave) cambios.clave = nuevaClave;
 
-  const { error } = await supabase.from("usuarios").update(cambios).eq("id", id);
+  try {
+    const { error } = await supabase.from("usuarios").update(cambios).eq("id", id);
+    if (error) throw error;
 
-  if (error) {
+    await cargarUsuarios();
+  } catch (err) {
     alert("❌ Error al editar usuario");
-    return;
+    console.error(err);
   }
-
-  await cargarUsuarios();
 }
 
 async function eliminarUsuario(id) {
-  const confirmar = confirm("¿Eliminar este usuario?");
-  if (!confirmar) return;
+  if (!confirm("¿Eliminar este usuario?")) return;
 
-  const { error } = await supabase.from("usuarios").delete().eq("id", id);
+  try {
+    const { error } = await supabase.from("usuarios").delete().eq("id", id);
+    if (error) throw error;
 
-  if (error) {
+    await cargarUsuarios();
+  } catch (err) {
     alert("❌ Error al eliminar usuario");
-    return;
+    console.error(err);
   }
-
-  await cargarUsuarios();
 }
 
 function logout() {
   localStorage.removeItem("usuarioActivo");
   localStorage.removeItem("rol");
-  window.location.href = "index.html";
+  window.location.href = "../index.html";
 }
 
 window.agregarUsuario = agregarUsuario;
