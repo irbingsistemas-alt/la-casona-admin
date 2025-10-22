@@ -1,8 +1,6 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const supabase = createClient(
+const supabase = supabase.createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 const listaDiv = document.getElementById("lista-pedidos");
@@ -34,7 +32,7 @@ async function cargarPedidos() {
   mostrarResumenLocales();
   llenarFiltroLocales();
   mostrarPedidos("todos");
-  mostrarResumenConfirmadosDelDia(); // ✅ ahora está fuera del listado
+  mostrarResumenConfirmadosDelDia();
 }
 
 function mostrarResumenLocales() {
@@ -62,11 +60,10 @@ function llenarFiltroLocales() {
     option.textContent = local;
     filtroSelect.appendChild(option);
   });
-}
 
-function filtrarPorLocal() {
-  const seleccion = filtroSelect.value;
-  mostrarPedidos(seleccion);
+  filtroSelect.addEventListener("change", () => {
+    mostrarPedidos(filtroSelect.value);
+  });
 }
 
 async function mostrarPedidos(localSeleccionado) {
@@ -102,12 +99,16 @@ async function mostrarPedidos(localSeleccionado) {
       <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
     `;
 
-    const boton = document.createElement("div");
-    boton.className = "pedido-boton";
-    boton.innerHTML = `<button onclick="confirmarPedido(${pedido.id})">✅ Confirmar</button>`;
+    const boton = document.createElement("button");
+    boton.textContent = "✅ Confirmar";
+    boton.addEventListener("click", () => confirmarPedido(pedido.id));
+
+    const botonDiv = document.createElement("div");
+    botonDiv.className = "pedido-boton";
+    botonDiv.appendChild(boton);
 
     barra.appendChild(info);
-    barra.appendChild(boton);
+    barra.appendChild(botonDiv);
     listaDiv.appendChild(barra);
   }
 }
@@ -147,6 +148,4 @@ async function mostrarResumenConfirmadosDelDia() {
   resumenFinal.innerHTML = html;
 }
 
-window.filtrarPorLocal = filtrarPorLocal;
-window.confirmarPedido = confirmarPedido;
 cargarPedidos();
