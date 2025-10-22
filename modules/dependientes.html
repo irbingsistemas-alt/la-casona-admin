@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menú - Dependientes | La Casona de 17</title>
+  <link rel="stylesheet" href="../style-base.css" />
+</head>
+<body>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Menú - La Casona de 17</h1>
+      <p>Consumo en salón (por mesa)</p>
+    </header>
+
+    <!-- Login del dependiente -->
+    <section id="login" style="margin-bottom: 20px;">
+      <h3>Inicio de sesión</h3>
+      <input type="text" id="usuario" placeholder="Usuario" />
+      <input type="password" id="clave" placeholder="Contraseña" />
+      <button onclick="iniciarSesion()">Entrar</button>
+    </section>
+
+    <!-- Contenido del menú (oculto hasta login) -->
+    <section id="contenido" style="display:none;">
+      <label for="local"><strong>Tipo de local:</strong></label>
+      <select id="local">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Bar">Bar</option>
+        <option value="Pizzería">Pizzería</option>
+      </select>
+
+      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+      <select id="filtro" onchange="filtrarMenu()">
+        <option value="todos">Todos</option>
+      </select>
+
+      <div id="menu-container">
+        <div id="menu"></div>
+      </div>
+
+      <label for="mesa"><strong>Número de mesa:</strong></label>
+      <input type="text" id="mesa" placeholder="Ej. 5" />
+      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+      <button onclick="enviarPedido()">Revisar pedido</button>
+
+      <div id="confirmacion" style="display:none; margin-top:30px;">
+        <h3>✅ Pedido enviado a cocina</h3>
+        <div id="resumen"></div>
+        <button onclick="marcarCobrado()">Cobrado</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="../scripts/script-dependientes.js"></script>
+</body>
+</html>
