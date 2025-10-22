@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     .pedido-barra {
       display: flex;
@@ -43,26 +44,23 @@
     <button onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Controles -->
   <div id="controles-cocina">
     <section id="resumen-locales"></section>
     <section>
       <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-      <select id="filtro-local" onchange="filtrarPorLocal()">
+      <select id="filtro-local">
         <option value="todos">Todos</option>
       </select>
     </section>
   </div>
 
-  <!-- Pedidos sin confirmar -->
   <div id="lista-pedidos-container">
     <div id="lista-pedidos"></div>
   </div>
 
-  <!-- Resumen final por área -->
   <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
-  <script type="module" src="script-cocina.js"></script>
+  <script src="script-cocina.js"></script>
   <script>
     function logout() {
       localStorage.removeItem("rol");
