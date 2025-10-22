@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Menú - Dependientes | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
+  <style>
+    .categoria-grupo {
+      margin-bottom: 30px;
+    }
+    .categoria-grupo h3 {
+      margin-bottom: 10px;
+    }
+    .menu-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding-bottom: 10px;
+    }
+    .menu-item {
+      min-width: 180px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f9f9f9;
+      flex-shrink: 0;
+    }
+    .menu-item input {
+      width: 40px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <div class="contenedor">
@@ -14,7 +40,7 @@
       <p>Consumo en salón (por mesa)</p>
     </header>
 
-    <section id="login" style="margin-bottom: 20px;">
+    <section id="login">
       <h3>Inicio de sesión</h3>
       <input type="text" id="usuario" placeholder="Usuario" />
       <input type="password" id="clave" placeholder="Contraseña" />
@@ -22,7 +48,7 @@
     </section>
 
     <section id="contenido" style="display:none;">
-      <div id="resumen-cobros" class="tarjeta-resumen">
+      <div id="resumen-cobros">
         <h3>💰 Cobros del día</h3>
         <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
         <p><strong>Importe total:</strong> <span id="importe-cobrado">0</span> CUP</p>
@@ -35,26 +61,21 @@
         <option value="Pizzería">Pizzería</option>
       </select>
 
-      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-      <select id="filtro" onchange="filtrarMenu()">
-        <option value="todos">Todos</option>
-      </select>
-
-      <div id="menu-container">
-        <div id="menu"></div>
-      </div>
-
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
 
       <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
       <button onclick="enviarPedido()">Revisar pedido</button>
 
+      <div id="menu"></div>
+
       <div id="confirmacion" style="display:none; margin-top:30px;">
         <h3>✅ Pedido enviado a cocina</h3>
         <div id="resumen"></div>
         <button onclick="marcarCobrado()">Cobrado</button>
       </div>
+
+      <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
     </section>
   </div>
 
