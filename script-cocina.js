@@ -94,13 +94,11 @@ async function mostrarPedidos(localSeleccionado) {
 
     const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
 
-    const contenedor = document.createElement("div");
-    contenedor.style.border = "1px solid #ccc";
-    contenedor.style.padding = "10px";
-    contenedor.style.marginBottom = "10px";
-    contenedor.style.backgroundColor = "#f9f9f9";
+    const barra = document.createElement("div");
+    barra.className = "pedido-barra";
 
     const info = document.createElement("div");
+    info.className = "pedido-info";
     info.innerHTML = `
       <p><strong>Local:</strong> ${pedido.local}</p>
       ${pedido.tipo === "mesa"
@@ -113,14 +111,17 @@ async function mostrarPedidos(localSeleccionado) {
       <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
     `;
 
+    const botonDiv = document.createElement("div");
+    botonDiv.className = "pedido-boton";
+
     const boton = document.createElement("button");
     boton.textContent = "✅ Confirmar";
-    boton.style.marginTop = "10px";
     boton.addEventListener("click", () => confirmarPedido(pedido.id));
 
-    contenedor.appendChild(info);
-    contenedor.appendChild(boton);
-    listaDiv.appendChild(contenedor);
+    botonDiv.appendChild(boton);
+    barra.appendChild(info);
+    barra.appendChild(botonDiv);
+    listaDiv.appendChild(barra);
   }
 }
 
