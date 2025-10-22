@@ -23,9 +23,8 @@
     .pedido-boton {
       margin-left: 20px;
     }
-    #resumen-locales,
-    #filtro-local {
-      margin-bottom: 20px;
+    #controles-cocina {
+      margin-bottom: 30px;
     }
   </style>
 </head>
@@ -45,13 +44,15 @@
   </header>
 
   <!-- Controles -->
-  <section id="resumen-locales"></section>
-  <section>
-    <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-    <select id="filtro-local" onchange="filtrarPorLocal()">
-      <option value="todos">Todos</option>
-    </select>
-  </section>
+  <div id="controles-cocina">
+    <section id="resumen-locales"></section>
+    <section>
+      <label for="filtro-local"><strong>Filtrar por local:</strong></label>
+      <select id="filtro-local" onchange="filtrarPorLocal()">
+        <option value="todos">Todos</option>
+      </select>
+    </section>
+  </div>
 
   <!-- Pedidos sin confirmar -->
   <div id="lista-pedidos-container">
