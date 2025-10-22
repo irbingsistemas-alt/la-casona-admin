@@ -1,4 +1,4 @@
-const supabase = supabase.createClient(
+const supabase = window.supabase.createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
@@ -114,12 +114,16 @@ async function mostrarPedidos(localSeleccionado) {
 }
 
 async function confirmarPedido(id) {
-  await supabase
+  const { error } = await supabase
     .from("pedidos")
     .update({ entregado: true })
     .eq("id", id);
 
-  cargarPedidos();
+  if (error) {
+    alert("Error al confirmar pedido: " + error.message);
+  } else {
+    cargarPedidos();
+  }
 }
 
 async function mostrarResumenConfirmadosDelDia() {
