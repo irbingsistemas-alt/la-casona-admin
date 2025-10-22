@@ -146,6 +146,8 @@ async function mostrarResumenConfirmadosDelDia() {
     .gte("fecha", isoInicio);
 
   const resumen = {};
+  let totalPedidos = 0;
+  let totalImporte = 0;
 
   for (const pedido of pedidosConfirmados || []) {
     const { data: items } = await supabase
@@ -161,13 +163,16 @@ async function mostrarResumenConfirmadosDelDia() {
     if (!resumen[pedido.local]) resumen[pedido.local] = { cantidad: 0, total: 0 };
     resumen[pedido.local].cantidad += 1;
     resumen[pedido.local].total += totalCocina;
+
+    totalPedidos += 1;
+    totalImporte += totalCocina;
   }
 
   let html = "<h3>Resumen de pedidos confirmados hoy por área (solo cocina)</h3><ul>";
   for (const local in resumen) {
     html += `<li><strong>${local}:</strong> ${resumen[local].cantidad} pedidos – ${resumen[local].total} CUP</li>`;
   }
-  html += "</ul>";
+  html += `</ul><p><strong>Total general:</strong> ${totalPedidos} pedidos – ${totalImporte} CUP</p>`;
   resumenFinal.innerHTML = html;
 }
 
