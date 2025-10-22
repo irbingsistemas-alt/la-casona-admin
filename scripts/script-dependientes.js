@@ -32,7 +32,10 @@ async function iniciarSesion() {
   dependiente = data.nombre || usuario;
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
-  cargarMenu();
+
+  await cargarMenu();
+  await mostrarResumenDelDia();
+  await mostrarPedidosDetalladosDelDia();
 }
 
 async function cargarMenu() {
@@ -184,6 +187,8 @@ async function enviarPedido() {
   }
 
   pedidoId = pedido.id;
+  localStorage.setItem("pedidoResumen", resumenHTML);
+  localStorage.setItem("pedidoId", pedidoId);
 
   for (const item of items) {
     await supabase.from("pedido_items").insert([{
@@ -212,8 +217,150 @@ async function marcarCobrado() {
   }
 
   alert("✅ Pedido marcado como cobrado");
+  localStorage.removeItem("pedidoResumen");
+  localStorage.removeItem("pedidoId");
   location.reload();
 }
+
+async function mostrarResumenDelDia() {
+  const hoy = new Date();
+  const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
+  const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
+
+  const { data: pedidosHoy, error } = await supabase
+    .from("pedidos")
+    .select("id, total, entregado, local")
+    .eq("dependiente", dependiente)
+    .gte("fecha", inicioDelDia)
+    .lte("fecha", finDelDia);
+
+  if (error) {
+    console.error("Error al cargar resumen del día", error);
+    return;
+  }
+
+  const porEntregar = pedidosHoy.filter(p => !p.entregado);
+  const cobrados = pedidosHoy.filter(p => p.entregado);
+
+  const totalPendiente = porEntregar.reduce((sum, p) => sum + p.total, 0);
+  const totalCobrado = cobrados.reduce((sum, p) => sum + p.total, 0);
+
+const resumenHTML = `
+  <h3>📋 Resumen del día</h3>
+
+  <p><strong>Pedidos por entregar:</strong> ${porEntregar.length}</p>
+  <ul>
+    ${porEntregar.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}
+  </ul>
+  <p><strong>Total pendiente:</strong> ${totalPendiente} CUP</p>
+
+  <p><strong>Pedidos cobrados:</strong> ${cobrados.length}</p>
+  <ul>
+    ${cobrados.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}
+  </ul>
+  <p><strong>Total cobrado:</strong> ${totalCobrado} CUP</p>
+`;
+async function mostrarResumenDelDia() {
+  const hoy = new Date();
+  const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
+  const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
+
+  const { data: pedidosHoy, error } = await supabase
+    .from("pedidos")
+    .select("id, total, entregado, local")
+    .eq("dependiente", dependiente)
+    .gte("fecha", inicioDelDia)
+    .lte("fecha", finDelDia);
+
+  if (error) {
+    console.error("Error al cargar resumen del día", error);
+    return;
+  }
+
+  const porEntregar = pedidosHoy.filter(p => !p.entregado);
+  const cobrados = pedidosHoy.filter(p => p.entregado);
+
+  const totalPendiente = porEntregar.reduce((sum, p) => sum + p.total, 0);
+  const totalCobrado = cobrados.reduce((sum, p) => sum + p.total, 0);
+
+  const resumenHTML = `
+    <h3>📋 Resumen del día</h3>
+    <p><strong>Pedidos por entregar:</strong> ${porEntregar.length}</p>
+    <ul>${porEntregar.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}</ul>
+    <p><strong>Total pendiente:</strong> ${totalPendiente} CUP</p>
+
+    <p><strong>Pedidos cobrados:</strong> ${cobrados.length}</p>
+    <ul>${cobrados.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}</ul>
+    <p><strong>Total cobrado:</strong> ${totalCobrado} CUP</p>
+  `;
+
+  document.getElementById("resumen-confirmados").innerHTML = resumenHTML;
+}
+
+async function mostrarPedidosDetalladosDelDia() {
+  const hoy = new Date();
+  const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
+  const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
+
+  const { data: pedidosHoy, error } = await supabase
+    .from("pedidos")
+    .select("id, fecha, local, mesa, total, entregado")
+    .eq("dependiente", dependiente)
+    .gte("fecha", inicioDelDia)
+    .lte("fecha", finDelDia)
+    .order("fecha", { ascending: true });
+
+  if (error) {
+    console.error("Error al cargar pedidos detallados", error);
+    return;
+  }
+
+  const itemsPorPedido = {};
+  for (const pedido of pedidosHoy) {
+    const { data: items } = await supabase
+      .from("pedido_items")
+      .select("nombre, cantidad, subtotal")
+      .eq("pedido_id", pedido.id);
+    itemsPorPedido[pedido.id] = items || [];
+  }
+
+  let resumenHTML = `<h3>📦 Detalle de pedidos del día</h3>`;
+  for (const pedido of pedidosHoy) {
+    const estado = pedido.entregado ? "✅ Cobrado" : "⏳ Por entregar";
+    const hora = new Date(pedido.fecha).toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' });
+    const items = itemsPorPedido[pedido.id];
+
+    resumenHTML += `
+      <div style="margin-bottom:20px;">
+        <p><strong>ID:</strong> ${pedido.id} | <strong>${estado}</strong></p>
+        <p><strong>Hora:</strong> ${hora} | <strong>Local:</strong> ${pedido.local} | <strong>Mesa:</strong> ${pedido.mesa}</p>
+        <ul>${items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
+        <p><strong>Total:</strong> ${pedido.total} CUP</p>
+      </div>
+    `;
+  }
+
+  document.getElementById("resumen-confirmados").innerHTML += resumenHTML;
+}
+
+window.onload = async () => {
+  const resumen = localStorage.getItem("pedidoResumen");
+  const id = localStorage.getItem("pedidoId");
+
+  if (resumen && id) {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("entregado")
+      .eq("id", id)
+      .single();
+
+    if (!error && data && !data.entregado) {
+      document.getElementById("resumen").innerHTML = resumen;
+      document.getElementById("confirmacion").style.display = "block";
+      pedidoId = id;
+    }
+  }
+};
 
 window.filtrarMenu = filtrarMenu;
 window.enviarPedido = enviarPedido;
