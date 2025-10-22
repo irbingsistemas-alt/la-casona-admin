@@ -10,6 +10,8 @@ let total = 0;
 let pedidosCobrados = 0;
 let importeCobrado = 0;
 let usuarioAutenticado = null;
+let menu = [];
+let cantidadesSeleccionadas = {};
 
 function actualizarEstiloLocal() {
   const local = document.getElementById("local").value;
@@ -31,8 +33,8 @@ async function iniciarSesion() {
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  const menu = await obtenerMenu();
-  mostrarMenu(menu);
+  menu = await obtenerMenu();
+  mostrarMenuAgrupado(menu);
 
   const resumen = await obtenerResumenDelDia(usuarioAutenticado);
   document.getElementById("total-cobrados").textContent = resumen.cantidad;
@@ -40,95 +42,121 @@ async function iniciarSesion() {
 }
 window.iniciarSesion = iniciarSesion;
 
-function mostrarMenu(menu) {
+function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   contenedor.innerHTML = "";
 
-  const categorias = [...new Set(menu.map(plato => plato.categoria))];
+  const categorias = [...new Set(platos.map(p => p.categoria).filter(Boolean))];
   const filtro = document.getElementById("filtro");
   filtro.innerHTML = '<option value="todos">Todos</option>';
   categorias.forEach(cat => {
-    const opcion = document.createElement("option");
-    opcion.value = cat;
-    opcion.textContent = cat;
-    filtro.appendChild(opcion);
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    filtro.appendChild(option);
   });
 
-  menu.forEach(plato => {
-    const item = document.createElement("div");
-    item.className = "menu-item";
-
-    const label = document.createElement("label");
-    const nombre = document.createElement("strong");
-    nombre.textContent = plato.nombre;
-
-    const cantidad = document.createElement("input");
-    cantidad.type = "number";
-    cantidad.min = "0";
-    cantidad.value = "0";
-    cantidad.dataset.id = plato.id;
-    cantidad.dataset.nombre = plato.nombre;
-    cantidad.dataset.precio = plato.precio;
-
-    label.appendChild(nombre);
-    label.appendChild(cantidad);
-    item.appendChild(label);
-    contenedor.appendChild(item);
+  const agrupado = {};
+  platos.forEach(item => {
+    if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
+    agrupado[item.categoria].push(item);
   });
+
+  for (const categoria in agrupado) {
+    const grupoDiv = document.createElement("div");
+    grupoDiv.className = "categoria-grupo";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria;
+    grupoDiv.appendChild(titulo);
+
+    agrupado[categoria].forEach(item => {
+      const div = document.createElement("div");
+      div.className = "menu-item";
+
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>${item.nombre}</strong>
+          <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+        </div>
+        <small>${item.precio} CUP</small>
+      `;
+
+      grupoDiv.appendChild(div);
+    });
+
+    contenedor.appendChild(grupoDiv);
+  }
+
+  document.querySelectorAll("input[type='number']").forEach(input => {
+    input.addEventListener("input", () => {
+      const nombre = input.dataset.name;
+      const cantidad = parseInt(input.value) || 0;
+      cantidadesSeleccionadas[nombre] = cantidad;
+      calcularTotal();
+    });
+  });
+
+  calcularTotal();
 }
 
 function filtrarMenu() {
-  const filtro = document.getElementById("filtro").value;
-  const items = document.querySelectorAll(".menu-item");
+  const seleccion = document.getElementById("filtro").value;
+  const grupos = document.querySelectorAll(".categoria-grupo");
 
-  items.forEach(item => {
-    const nombre = item.querySelector("strong").textContent;
-    item.style.display = filtro === "todos" || nombre.includes(filtro) ? "flex" : "none";
+  grupos.forEach(grupo => {
+    const categoria = grupo.querySelector("h3")?.textContent;
+    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
   });
 }
 window.filtrarMenu = filtrarMenu;
 
-function enviarPedido() {
+function calcularTotal() {
+  total = 0;
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (plato && cantidad > 0) {
+      total += cantidad * plato.precio;
+    }
+  }
+  document.getElementById("total").textContent = total;
+}
+
+async function enviarPedido() {
   const local = document.getElementById("local").value;
   const mesa = document.getElementById("mesa").value.trim();
-  const inputs = document.querySelectorAll(".menu-item input");
 
-  pedidoActual = [];
-  total = 0;
-
-  inputs.forEach(input => {
-    const cantidad = parseInt(input.value);
-    if (cantidad > 0) {
-      const nombre = input.dataset.nombre;
-      const precio = parseFloat(input.dataset.precio);
-      pedidoActual.push({ nombre, cantidad, precio });
-      total += cantidad * precio;
+  const items = [];
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (cantidad > 0 && plato) {
+      items.push({ nombre, cantidad, precio: plato.precio });
     }
-  });
-
-  if (pedidoActual.length === 0 || mesa === "") {
-    alert("⚠️ Debes seleccionar al menos un plato y especificar la mesa.");
-    return;
   }
 
-  document.body.setAttribute("data-local", local.toLowerCase());
+  if (items.length === 0 || mesa === "") {
+    alert("⚠️ Selecciona al menos un plato y especifica la mesa.");
+    return;
+  }
 
   const resumen = document.getElementById("resumen");
   resumen.innerHTML = `
     <p><strong>Local:</strong> ${local}</p>
     <p><strong>Mesa:</strong> ${mesa}</p>
     <ul>
-      ${pedidoActual.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
+      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
     </ul>
     <p><strong>Total:</strong> ${total} CUP</p>
   `;
 
   document.getElementById("confirmacion").style.display = "block";
 
-  enviarPedidoADatabase({
+  await enviarPedidoADatabase({
     local,
     mesa,
-    pedido: pedidoActual,
+    pedido: items,
     total,
     usuario_id: usuarioAutenticado
   });
@@ -145,12 +173,7 @@ function marcarCobrado() {
   document.getElementById("total-cobrados").textContent = pedidosCobrados;
   document.getElementById("importe-cobrado").textContent = importeCobrado;
 
-  pedidoActual = [];
+  cantidadesSeleccionadas = {};
   total = 0;
 
-  const inputs = document.querySelectorAll(".menu-item input");
-  inputs.forEach(input => input.value = "0");
-
-  document.getElementById("total").textContent = "0";
-}
-window.marcarCobrado = marcarCobrado;
+  document
