@@ -4,57 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin - La Casona</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style-base.css" />
 </head>
 <body>
   <script>
     const rol = localStorage.getItem("rol");
     const usuario = localStorage.getItem("usuarioActivo");
     if (rol !== "admin" || !usuario) {
-      window.location.href = "index.html";
+      window.location.href = "../index.html";
     }
   </script>
 
-  <header>
-    <img src="assets/logo.png" alt="Logo La Casona de 17" />
-    <h1>Panel de Administración</h1>
-    <p>Gestión de platos del menú</p>
-  </header>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Panel de Administración</h1>
+      <p>Gestión de platos del menú</p>
+      <button onclick="logout()">Cerrar sesión</button>
+    </header>
 
-  <button onclick="logout()">Cerrar sesión</button>
+    <section>
+      <h3>Filtrar por categoría</h3>
+      <select id="filtroCategoria">
+        <option value="">Todas</option>
+      </select>
+    </section>
 
-  <h3>Filtrar por categoría</h3>
-  <select id="filtroCategoria">
-    <option value="">Todas</option>
-  </select>
+    <section>
+      <table id="tabla">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Categoría</th>
+            <th>Disponible</th>
+            <th>Eliminar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="guardarDisponibilidad()">Guardar cambios de disponibilidad</button>
+    </section>
 
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Precio</th>
-        <th>Categoría</th>
-        <th>Disponible</th>
-        <th>Eliminar</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <section>
+      <h3>Agregar nuevo plato</h3>
+      <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
+      <input type="number" id="nuevoPrecio" placeholder="Precio" />
 
-  <button onclick="guardarDisponibilidad()">Guardar cambios de disponibilidad</button>
+      <label for="categoriaExistente">Categoría:</label>
+      <select id="categoriaExistente">
+        <option value="">-- Nueva categoría --</option>
+      </select>
+      <input type="text" id="nuevaCategoria" placeholder="O escribe una nueva" />
 
-  <h3>Agregar nuevo plato</h3>
-  <input type="text" id="nuevoNombre" placeholder="Nombre del plato" />
-  <input type="number" id="nuevoPrecio" placeholder="Precio" />
+      <button onclick="agregarPlato()">Agregar</button>
+    </section>
+  </div>
 
-  <label for="categoriaExistente">Categoría:</label>
-  <select id="categoriaExistente">
-    <option value="">-- Nueva categoría --</option>
-  </select>
-  <input type="text" id="nuevaCategoria" placeholder="O escribe una nueva" />
-
-  <button onclick="agregarPlato()">Agregar</button>
-
-  <script type="module" src="script-admin.js"></script>
+  <script type="module" src="../scripts/script-admin.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("rol");
+      localStorage.removeItem("usuarioActivo");
+      window.location.href = "../index.html";
+    }
+  </script>
 </body>
 </html>
