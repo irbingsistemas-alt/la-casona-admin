@@ -6,13 +6,17 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function autenticarUsuario(usuario, clave) {
   const { data, error } = await supabase
-    .from('dependientes')
-    .select('id')
+    .from('usuarios')
+    .select('id, rol')
     .eq('usuario', usuario)
     .eq('clave', clave)
     .single();
 
-  return data && !error;
+  if (error || !data || data.rol !== 'dependiente') {
+    return null;
+  }
+
+  return data.id;
 }
 
 export async function obtenerMenu() {
@@ -25,9 +29,7 @@ export async function obtenerMenu() {
   return data || [];
 }
 
-export async function enviarPedidoADatabase({ local, mesa, pedido, total }) {
-  const { data: user } = await supabase.auth.getUser();
-
+export async function enviarPedidoADatabase({ local, mesa, pedido, total, usuario_id }) {
   const { error } = await supabase
     .from('pedidos')
     .insert([
@@ -39,20 +41,18 @@ export async function enviarPedidoADatabase({ local, mesa, pedido, total }) {
         entregado: false,
         cobrado: false,
         fecha: new Date().toISOString(),
-        dependiente_id: user?.user?.id || null
+        usuario_id
       }
     ]);
 
   if (error) console.error('Error al guardar pedido:', error);
 }
 
-export async function obtenerResumenDelDia() {
-  const { data: user } = await supabase.auth.getUser();
-
+export async function obtenerResumenDelDia(usuario_id) {
   const { data, error } = await supabase
     .from('pedidos')
     .select('total')
-    .eq('dependiente_id', user?.user?.id)
+    .eq('usuario_id', usuario_id)
     .eq('cobrado', true);
 
   if (error) return { cantidad: 0, total: 0 };
