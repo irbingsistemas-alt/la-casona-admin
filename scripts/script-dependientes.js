@@ -2,6 +2,8 @@ import { obtenerMenu, enviarPedidoADatabase, autenticarUsuario } from './api.js'
 
 let pedidoActual = [];
 let total = 0;
+let pedidosCobrados = 0;
+let importeCobrado = 0;
 
 function actualizarEstiloLocal() {
   const local = document.getElementById("local").value;
@@ -116,7 +118,15 @@ function enviarPedido() {
 window.enviarPedido = enviarPedido;
 
 function marcarCobrado() {
-  document.getElementById("confirmacion").style.display = "none";
+  const resumen = document.getElementById("resumen");
+  resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
+
+  pedidosCobrados += 1;
+  importeCobrado += total;
+
+  document.getElementById("total-cobrados").textContent = pedidosCobrados;
+  document.getElementById("importe-cobrado").textContent = importeCobrado;
+
   pedidoActual = [];
   total = 0;
 
