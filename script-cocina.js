@@ -102,14 +102,18 @@ async function mostrarPedidos(localSeleccionado) {
       <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
     `;
 
-    const boton = document.createElement("div");
-    boton.className = "pedido-boton";
-    boton.innerHTML = `<button onclick="confirmarPedido(${pedido.id})">✅ Confirmar</button>`;
+const botonDiv = document.createElement("div");
+botonDiv.className = "pedido-boton";
 
-    barra.appendChild(info);
-    barra.appendChild(boton);
-    listaDiv.appendChild(barra);
-  }
+const boton = document.createElement("button");
+boton.textContent = "✅ Confirmar";
+boton.addEventListener("click", () => confirmarPedido(pedido.id));
+
+botonDiv.appendChild(boton); // ✅ el botón va dentro del contenedor
+
+barra.appendChild(info);
+barra.appendChild(botonDiv); // ✅ el contenedor va dentro de la barra
+listaDiv.appendChild(barra);
 }
 
 async function confirmarPedido(id) {
