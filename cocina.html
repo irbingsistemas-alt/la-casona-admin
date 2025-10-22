@@ -11,6 +11,13 @@
       padding: 0;
       overflow-x: hidden;
       font-family: sans-serif;
+      background-color: #fff;
+    }
+
+    .contenedor {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
     }
 
     .pedido-barra {
@@ -54,27 +61,29 @@
     }
   </script>
 
-  <header>
-    <h1>Pedidos en Cocina</h1>
-    <p>Solo usuarios con rol <strong>cocina</strong></p>
-    <button onclick="logout()">Cerrar sesión</button>
-  </header>
+  <div class="contenedor">
+    <header>
+      <h1>Pedidos en Cocina</h1>
+      <p>Solo usuarios con rol <strong>cocina</strong></p>
+      <button onclick="logout()">Cerrar sesión</button>
+    </header>
 
-  <div id="controles-cocina">
-    <section id="resumen-locales"></section>
-    <section>
-      <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-      <select id="filtro-local" onchange="filtrarPorLocal()">
-        <option value="todos">Todos</option>
-      </select>
-    </section>
+    <div id="controles-cocina">
+      <section id="resumen-locales"></section>
+      <section>
+        <label for="filtro-local"><strong>Filtrar por local:</strong></label>
+        <select id="filtro-local" onchange="filtrarPorLocal()">
+          <option value="todos">Todos</option>
+        </select>
+      </section>
+    </div>
+
+    <div id="lista-pedidos-container">
+      <div id="lista-pedidos"></div>
+    </div>
+
+    <section id="resumen-confirmados" style="margin-top: 40px;"></section>
   </div>
-
-  <div id="lista-pedidos-container">
-    <div id="lista-pedidos"></div>
-  </div>
-
-  <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
   <script type="module" src="script-cocina.js"></script>
   <script>
