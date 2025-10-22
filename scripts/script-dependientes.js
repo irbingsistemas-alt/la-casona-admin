@@ -101,7 +101,7 @@ function mostrarMenuAgrupado(platos) {
       div.innerHTML = `
         <strong>${item.nombre}</strong>
         <small>${item.precio} CUP</small>
-        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" style="width:40px;" />
       `;
       scroll.appendChild(div);
     });
@@ -137,6 +137,7 @@ async function cargarResumen() {
   document.getElementById("total-cobrados").textContent = pedidosCobrados;
   document.getElementById("importe-cobrado").textContent = importeCobrado;
 }
+
 function calcularTotal() {
   total = 0;
   for (const nombre in cantidadesSeleccionadas) {
@@ -199,7 +200,6 @@ async function enviarPedido() {
     return;
   }
 
-  // Opcional: guardar los platos en tabla secundaria
   for (const item of items) {
     await supabase.from("pedido_items").insert([{
       pedido_id: data.id,
