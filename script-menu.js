@@ -140,18 +140,20 @@ async function enviarPedido() {
   mensaje += `\nTotal: ${total} CUP`;
   resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
 
-  const { data: pedido, error } = await supabase
-    .from("pedidos")
-    .insert([{
-      cliente,
-      piso,
-      apartamento,
-      fecha: new Date().toISOString(),
-      total,
-      entregado: false
-    }])
-    .select()
-    .single();
+const { data: pedido, error } = await supabase
+  .from("pedidos")
+  .insert([{
+    cliente,
+    piso,
+    apartamento,
+    local: "FOCSA", // ← Aquí se marca automáticamente
+    tipo: "FOCSA",  // ← Puedes usarlo si estás diferenciando por tipo
+    fecha: new Date().toISOString(),
+    total,
+    entregado: false
+  }])
+  .select()
+  .single();
 
   if (error) {
     alert("❌ Error al guardar el pedido");
