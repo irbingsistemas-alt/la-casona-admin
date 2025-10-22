@@ -1,4 +1,9 @@
-import { obtenerMenu, enviarPedidoADatabase, autenticarUsuario } from './api.js';
+import {
+  obtenerMenu,
+  enviarPedidoADatabase,
+  autenticarUsuario,
+  obtenerResumenDelDia
+} from './api.js';
 
 let pedidoActual = [];
 let total = 0;
@@ -26,6 +31,10 @@ async function iniciarSesion() {
 
   const menu = await obtenerMenu();
   mostrarMenu(menu);
+
+  const resumen = await obtenerResumenDelDia();
+  document.getElementById("total-cobrados").textContent = resumen.cantidad;
+  document.getElementById("importe-cobrado").textContent = resumen.total;
 }
 window.iniciarSesion = iniciarSesion;
 
@@ -75,7 +84,6 @@ function filtrarMenu() {
   });
 }
 window.filtrarMenu = filtrarMenu;
-
 function enviarPedido() {
   const local = document.getElementById("local").value;
   const mesa = document.getElementById("mesa").value;
