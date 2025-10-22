@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clientes FOCSA | La Casona de 17</title>
+  <link rel="stylesheet" href="../style-base.css" />
+</head>
+<body>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Menú - La Casona de 17</h1>
+      <p>Clientes del Edificio FOCSA</p>
+    </header>
+
+    <section>
+      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+      <select id="filtro" onchange="filtrarMenu()">
+        <option value="todos">Todos</option>
+      </select>
+    </section>
+
+    <div id="menu-container">
+      <div id="menu"></div>
+    </div>
+
+    <section>
+      <h3>Datos del cliente</h3>
+      <p><strong>Local:</strong> Edificio FOCSA</p>
+      <input type="text" id="cliente" placeholder="Nombre del cliente" />
+      <input type="text" id="piso" placeholder="Piso (ej. 14)" />
+      <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
+      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+      <button onclick="enviarPedido()">Revisar pedido</button>
+    </section>
+
+    <section id="confirmacion" style="display:none; margin-top:30px;">
+      <h3>Confirmación del pedido</h3>
+      <div id="resumen"></div>
+      <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
+      <button onclick="cancelar()">Cancelar</button>
+    </section>
+  </div>
+
+  <script type="module" src="../scripts/script-clientes-focsa.js"></script>
+</body>
+</html>
