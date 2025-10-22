@@ -31,21 +31,30 @@ async function cargarPedidos() {
     .order("fecha", { ascending: false });
 
   pedidos = data || [];
-  mostrarResumenLocales();
+  await mostrarResumenLocales();
   llenarFiltroLocales();
   mostrarPedidos("todos");
-  mostrarResumenConfirmadosDelDia();
+  await mostrarResumenConfirmadosDelDia();
 }
 
-function mostrarResumenLocales() {
+async function mostrarResumenLocales() {
   const resumen = {};
-  pedidos.forEach(p => {
-    if (!p.entregado) {
-      resumen[p.local] = (resumen[p.local] || 0) + 1;
-    }
-  });
 
-  let html = "<h3>Pedidos sin entregar por local</h3><ul>";
+  for (const pedido of pedidos || []) {
+    if (pedido.entregado) continue;
+
+    const { data: items } = await supabase
+      .from("pedido_items")
+      .select("nombre")
+      .eq("pedido_id", pedido.id);
+
+    const tieneCocina = items?.some(i => menusCocina.includes(i.nombre));
+    if (!tieneCocina) continue;
+
+    resumen[pedido.local] = (resumen[pedido.local] || 0) + 1;
+  }
+
+  let html = "<h3>Pedidos sin entregar por local (solo cocina)</h3><ul>";
   for (const local in resumen) {
     html += `<li><strong>${local}:</strong> ${resumen[local]} pedidos</li>`;
   }
@@ -85,13 +94,11 @@ async function mostrarPedidos(localSeleccionado) {
 
     const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
 
-    const contenedor = document.createElement("div");
-    contenedor.style.border = "1px solid #ccc";
-    contenedor.style.padding = "10px";
-    contenedor.style.marginBottom = "10px";
-    contenedor.style.backgroundColor = "#f9f9f9";
+    const barra = document.createElement("div");
+    barra.className = "pedido-barra";
 
     const info = document.createElement("div");
+    info.className = "pedido-info";
     info.innerHTML = `
       <p><strong>Local:</strong> ${pedido.local}</p>
       ${pedido.tipo === "mesa"
@@ -104,14 +111,17 @@ async function mostrarPedidos(localSeleccionado) {
       <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
     `;
 
+    const botonDiv = document.createElement("div");
+    botonDiv.className = "pedido-boton";
+
     const boton = document.createElement("button");
     boton.textContent = "✅ Confirmar";
-    boton.style.marginTop = "10px";
     boton.addEventListener("click", () => confirmarPedido(pedido.id));
 
-    contenedor.appendChild(info);
-    contenedor.appendChild(boton);
-    listaDiv.appendChild(contenedor);
+    botonDiv.appendChild(boton);
+    barra.appendChild(info);
+    barra.appendChild(botonDiv);
+    listaDiv.appendChild(barra);
   }
 }
 
@@ -129,23 +139,37 @@ async function mostrarResumenConfirmadosDelDia() {
   hoy.setHours(0, 0, 0, 0);
   const isoInicio = hoy.toISOString();
 
-  const { data } = await supabase
+  const { data: pedidosConfirmados } = await supabase
     .from("pedidos")
-    .select("local, total")
+    .select("id, local, fecha, entregado")
     .eq("entregado", true)
     .gte("fecha", isoInicio);
 
   const resumen = {};
-  (data || []).forEach(p => {
-    if (!resumen[p.local]) resumen[p.local] = { cantidad: 0, total: 0 };
-    resumen[p.local].cantidad += 1;
-    resumen[p.local].total += p.total;
-  });
 
-  let html = "<h3>Resumen de pedidos confirmados hoy por área</h3><ul>";
+  for (const pedido of pedidosConfirmados || []) {
+    const { data: items } = await supabase
+      .from("pedido_items")
+      .select("nombre, subtotal")
+      .eq("pedido_id", pedido.id);
+
+    const itemsCocina = items?.filter(i => menusCocina.includes(i.nombre)) || [];
+    if (itemsCocina.length === 0) continue;
+
+    const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
+
+    if (!resumen[pedido.local]) resumen[pedido.local] = { cantidad: 0, total: 0 };
+    resumen[pedido.local].cantidad += 1;
+    resumen[pedido.local].total += totalCocina;
+  }
+
+  let html = "<h3>Resumen de pedidos confirmados hoy por área (solo cocina)</h3><ul>";
   for (const local in resumen) {
     html += `<li><strong>${local}:</strong> ${resumen[local].cantidad} pedidos – ${resumen[local].total} CUP</li>`;
   }
   html += "</ul>";
   resumenFinal.innerHTML = html;
 }
+
+window.filtrarPorLocal = filtrarPorLocal;
+cargarPedidos();
