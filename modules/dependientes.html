@@ -25,7 +25,7 @@
     <!-- Contenido del menú (oculto hasta login) -->
     <section id="contenido" style="display:none;">
       <label for="local"><strong>Tipo de local:</strong></label>
-      <select id="local">
+      <select id="local" onchange="actualizarEstiloLocal()">
         <option value="Restaurant">Restaurant</option>
         <option value="Bar">Bar</option>
         <option value="Pizzería">Pizzería</option>
@@ -51,19 +51,6 @@
         <div id="resumen"></div>
         <button onclick="marcarCobrado()">Cobrado</button>
       </div>
-
-      <!-- Resumen del día y detalle de pedidos -->
-      <section id="resumen-confirmados" style="margin-top: 40px;">
-        <div style="border-top: 2px solid #ccc; padding-top: 20px;">
-          <h2 style="margin-bottom: 10px;">📋 Resumen del día</h2>
-          <!-- Se llena dinámicamente -->
-        </div>
-
-        <div style="border-top: 2px solid #ccc; padding-top: 20px;">
-          <h2 style="margin-bottom: 10px;">📦 Detalle de pedidos</h2>
-          <!-- Se llena dinámicamente -->
-        </div>
-      </section>
     </section>
   </div>
 
