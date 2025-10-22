@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     .pedido-barra {
       display: flex;
@@ -60,8 +59,17 @@
 
   <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
-  <script src="script-cocina.js"></script>
+  <!-- ✅ Cargar Supabase primero -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- ✅ Esperar al DOM antes de cargar tu script -->
   <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const script = document.createElement("script");
+      script.src = "script-cocina.js";
+      document.body.appendChild(script);
+    });
+
     function logout() {
       localStorage.removeItem("rol");
       localStorage.removeItem("usuarioActivo");
