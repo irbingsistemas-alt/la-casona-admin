@@ -303,7 +303,6 @@ async function mostrarPedidosDetalladosDelDia() {
 
   document.getElementById("resumen-confirmados").innerHTML += resumenHTML;
 }
-
 window.onload = async () => {
   const resumen = localStorage.getItem("pedidoResumen");
   const id = localStorage.getItem("pedidoId");
