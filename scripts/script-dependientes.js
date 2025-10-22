@@ -99,18 +99,6 @@ function mostrarMenuAgrupado(platos) {
 
   calcularTotal();
 }
-
-function filtrarMenu() {
-  const seleccion = document.getElementById("filtro").value;
-  const grupos = document.querySelectorAll(".categoria-grupo");
-
-  grupos.forEach(grupo => {
-    const categoria = grupo.querySelector("h3")?.textContent;
-    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
-  });
-}
-window.filtrarMenu = filtrarMenu;
-
 function calcularTotal() {
   total = 0;
   for (const nombre in cantidadesSeleccionadas) {
@@ -176,4 +164,7 @@ function marcarCobrado() {
   cantidadesSeleccionadas = {};
   total = 0;
 
-  document
+  document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
+  document.getElementById("total").textContent = "0";
+}
+window.marcarCobrado = marcarCobrado;
