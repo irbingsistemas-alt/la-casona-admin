@@ -3,52 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Usuarios - La Casona</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Gestión de Usuarios | La Casona de 17</title>
+  <link rel="stylesheet" href="../style-base.css" />
 </head>
 <body>
   <script>
     const rol = localStorage.getItem("rol");
-    if (rol !== "administrador") {
-      window.location.href = "index.html";
+    const usuario = localStorage.getItem("usuarioActivo");
+    if (rol !== "administrador" || !usuario) {
+      window.location.href = "../index.html";
     }
   </script>
 
-  <header>
-    <img src="assets/logo.png" alt="Logo La Casona de 17" />
-    <h1>Gestión de Usuarios</h1>
-    <p>Crear, editar y eliminar usuarios del sistema</p>
-  </header>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Gestión de Usuarios</h1>
+      <p>Crear, editar y eliminar usuarios del sistema</p>
+      <button onclick="logout()">Cerrar sesión</button>
+    </header>
 
-  <button onclick="logout()">Cerrar sesión</button>
+    <section>
+      <h3>Agregar nuevo usuario</h3>
+      <input type="text" id="nuevoUsuario" placeholder="Usuario" />
+      <input type="password" id="nuevaClave" placeholder="Contraseña" />
+      <label for="nuevoRol"><strong>Rol:</strong></label>
+      <select id="nuevoRol">
+        <option value="admin">admin</option>
+        <option value="cocina">cocina</option>
+        <option value="reparto">reparto</option>
+        <option value="administrador general">administrador general</option>
+        <option value="dependiente">dependiente</option>
+        <option value="bar">bar</option>
+        <option value="barra">barra</option>
+      </select>
+      <button onclick="agregarUsuario()">Agregar</button>
+    </section>
 
-  <h3>Agregar nuevo usuario</h3>
-  <input type="text" id="nuevoUsuario" placeholder="Usuario" />
-  <input type="password" id="nuevaClave" placeholder="Contraseña" />
-  <select id="nuevoRol">
-    <option value="admin">admin</option>
-    <option value="cocina">cocina</option>
-    <option value="reparto">reparto</option>
-    <option value="administrador general">administrador general</option>
-    <option value="dependiente">dependiente</option>
-    <option value="bar">bar</option>
-    <option value="barra">barra</option>
-  </select>
-  <button onclick="agregarUsuario()">Agregar</button>
+    <section>
+      <h3>Usuarios registrados</h3>
+      <table id="tablaUsuarios">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
 
-  <h3>Usuarios registrados</h3>
-  <table id="tablaUsuarios">
-    <thead>
-      <tr>
-        <th>Usuario</th>
-        <th>Rol</th>
-        <th>Editar</th>
-        <th>Eliminar</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <script type="module" src="script-usuarios.js"></script>
+  <script type="module" src="../scripts/script-usuarios.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("rol");
+      localStorage.removeItem("usuarioActivo");
+      window.location.href = "../index.html";
+    }
+  </script>
 </body>
 </html>
