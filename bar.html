@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vista Bar</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: sans-serif;
+      background-color: #fff;
+    }
+
+    .contenedor {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .pedido-barra {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+      flex-wrap: wrap;
+    }
+
+    .pedido-info {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .pedido-boton {
+      margin-left: 20px;
+    }
+
+    #controles-bar {
+      margin-bottom: 30px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const rol = localStorage.getItem("rol");
+    const usuario = localStorage.getItem("usuarioActivo");
+    if (rol !== "bar" || !usuario) {
+      window.location.href = "index.html";
+    }
+  </script>
+
+  <div class="contenedor">
+    <header>
+      <h1>Pedidos en Bar</h1>
+      <p>Solo usuarios con rol <strong>bar</strong></p>
+      <button onclick="logout()">Cerrar sesión</button>
+    </header>
+
+    <div id="controles-bar">
+      <section id="resumen-locales"></section>
+      <section>
+        <label for="filtro-local"><strong>Filtrar por local:</strong></label>
+        <select id="filtro-local" onchange="filtrarPorLocal()">
+          <option value="todos">Todos</option>
+        </select>
+      </section>
+    </div>
+
+    <div id="lista-pedidos-container">
+      <div id="lista-pedidos"></div>
+    </div>
+
+    <section id="resumen-confirmados" style="margin-top: 40px;"></section>
+  </div>
+
+  <script type="module" src="script-bar.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem("rol");
+      localStorage.removeItem("usuarioActivo");
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
