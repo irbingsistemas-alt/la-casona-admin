@@ -13,6 +13,23 @@ let usuarioAutenticado = null;
 let menu = [];
 let cantidadesSeleccionadas = {};
 
+// ✅ Restaurar sesión si existe
+window.addEventListener("DOMContentLoaded", async () => {
+  const idGuardado = localStorage.getItem("usuario_id");
+  if (idGuardado) {
+    usuarioAutenticado = idGuardado;
+    document.getElementById("login").style.display = "none";
+    document.getElementById("contenido").style.display = "block";
+
+    menu = await obtenerMenu();
+    mostrarMenuAgrupado(menu);
+
+    const resumen = await obtenerResumenDelDia(usuarioAutenticado);
+    document.getElementById("total-cobrados").textContent = resumen.cantidad;
+    document.getElementById("importe-cobrado").textContent = resumen.total;
+  }
+});
+
 function actualizarEstiloLocal() {
   const local = document.getElementById("local").value;
   document.body.setAttribute("data-local", local.toLowerCase());
@@ -30,6 +47,8 @@ async function iniciarSesion() {
   }
 
   usuarioAutenticado = id;
+  localStorage.setItem("usuario_id", id);
+
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
@@ -76,8 +95,8 @@ function mostrarMenuAgrupado(platos) {
 
       div.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong>${item.nombre}</strong>
-          <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+          <strong style="flex:1;">${item.nombre}</strong>
+          <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" style="width:40px;" />
         </div>
         <small>${item.precio} CUP</small>
       `;
@@ -99,6 +118,17 @@ function mostrarMenuAgrupado(platos) {
 
   calcularTotal();
 }
+
+function filtrarMenu() {
+  const seleccion = document.getElementById("filtro").value;
+  const grupos = document.querySelectorAll(".categoria-grupo");
+
+  grupos.forEach(grupo => {
+    const categoria = grupo.querySelector("h3")?.textContent;
+    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
+  });
+}
+window.filtrarMenu = filtrarMenu;
 function calcularTotal() {
   total = 0;
   for (const nombre in cantidadesSeleccionadas) {
@@ -168,3 +198,9 @@ function marcarCobrado() {
   document.getElementById("total").textContent = "0";
 }
 window.marcarCobrado = marcarCobrado;
+
+function cerrarSesion() {
+  localStorage.clear();
+  location.reload();
+}
+window.cerrarSesion = cerrarSesion;
