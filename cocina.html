@@ -5,28 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .pedido-barra {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #f9f9f9;
-      flex-wrap: wrap;
-    }
-    .pedido-info {
-      flex: 1;
-      min-width: 250px;
-    }
-    .pedido-boton {
-      margin-left: 20px;
-    }
-    #controles-cocina {
-      margin-bottom: 30px;
-    }
-  </style>
 </head>
 <body>
   <script>
@@ -43,7 +21,6 @@
     <button onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Controles -->
   <div id="controles-cocina">
     <section id="resumen-locales"></section>
     <section>
@@ -54,12 +31,10 @@
     </section>
   </div>
 
-  <!-- Pedidos sin confirmar -->
   <div id="lista-pedidos-container">
     <div id="lista-pedidos"></div>
   </div>
 
-  <!-- Resumen final por área -->
   <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
   <script type="module" src="script-cocina.js"></script>
