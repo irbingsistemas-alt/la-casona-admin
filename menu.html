@@ -3,47 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vista Cocina</title>
+  <title>Menú - La Casona de 17</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <script>
-    const rol = localStorage.getItem("rol");
-    const usuario = localStorage.getItem("usuarioActivo");
-    if (rol !== "cocina" || !usuario) {
-      window.location.href = "index.html";
-    }
-  </script>
-
   <header>
-    <h1>Pedidos en Cocina</h1>
-    <p>Solo usuarios con rol <strong>cocina</strong></p>
-    <button onclick="logout()">Cerrar sesión</button>
+    <img src="assets/logo.png" alt="Logo La Casona de 17" />
+    <h1>Menú Interactivo</h1>
+    <p>Clientes del Edificio FOCSA</p>
   </header>
 
-  <!-- Resumen de pedidos por local -->
-  <section id="resumen-locales" style="margin-top: 20px;"></section>
+  <label for="filtro">Filtrar por categoría:</label>
+  <select id="filtro" onchange="filtrarMenu()">
+    <option value="todos">Todos</option>
+  </select>
 
-  <!-- Filtro por local -->
-  <section style="margin-top: 10px;">
-    <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-    <select id="filtro-local" onchange="filtrarPorLocal()" style="margin-left: 10px;">
-      <option value="todos">Todos</option>
-    </select>
-  </section>
+  <div id="menu-container" style="max-height: 420px; overflow-y: auto; margin-bottom: 20px;">
+    <div id="menu"></div>
+  </div>
 
-  <!-- Contenedor de pedidos sin scroll -->
-  <section id="lista-pedidos-container" style="margin-top: 20px;">
-    <div id="lista-pedidos"></div>
-  </section>
+  <h3>Datos del cliente</h3>
+  <p><strong>Local:</strong> Edificio FOCSA</p>
+  <input type="text" id="cliente" placeholder="Nombre del cliente" />
+  <input type="text" id="piso" placeholder="Piso (ej. 14)" />
+  <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
+  <p>Total: <span id="total">0</span> CUP</p>
+  <button onclick="enviarPedido()">Revisar pedido</button>
 
-  <script type="module" src="script-cocina.js"></script>
-  <script>
-    function logout() {
-      localStorage.removeItem("rol");
-      localStorage.removeItem("usuarioActivo");
-      window.location.href = "index.html";
-    }
-  </script>
+  <div id="confirmacion" style="display:none; margin-top:30px;">
+    <h3>Confirmación del pedido</h3>
+    <div id="resumen"></div>
+    <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
+    <button onclick="cancelar()">Cancelar</button>
+  </div>
+
+  <script type="module" src="script-menu.js"></script>
 </body>
 </html>
