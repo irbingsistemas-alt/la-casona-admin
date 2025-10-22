@@ -1,6 +1,6 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ✅ Conexión con Supabase usando la clave pública (anon key)
+// ✅ Conexión con Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
@@ -35,18 +35,18 @@ form.addEventListener("submit", async (e) => {
   localStorage.setItem("rol", data.rol);
 
   // ✅ Redirigir según el rol
-  if (data.rol === "admin") {
-    window.location.href = "admin.html";
-  } else if (data.rol === "cocina") {
-    window.location.href = "cocina.html";
-  } else if (data.rol === "bar") {
-    window.location.href = "bar.html";
-  } else if (data.rol === "pizzeria") {
-    window.location.href = "pizzeria.html";
-  } else if (data.rol === "reparto") {
-    window.location.href = "reparto.html";
-  } else if (data.rol === "administrador") {
-    window.location.href = "usuarios.html";
+  const destino = {
+    admin: "admin.html",
+    cocina: "cocina.html",
+    bar: "bar.html",
+    pizzeria: "pizzeria.html",
+    reparto: "reparto.html",
+    administrador: "usuarios.html",
+    dependiente: "dependientes.html"
+  };
+
+  if (destino[data.rol]) {
+    window.location.href = destino[data.rol];
   } else {
     mensajeError.textContent = "❌ Rol no reconocido";
   }
