@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 const listaDiv = document.getElementById("lista-pedidos");
@@ -41,20 +41,20 @@ async function mostrarResumenLocales() {
   const resumen = {};
 
   for (const pedido of pedidos || []) {
-    if (pedido.entregado) continue;
-
     const { data: items } = await supabase
       .from("pedido_items")
-      .select("nombre")
+      .select("nombre, confirmado_por_area")
       .eq("pedido_id", pedido.id);
 
-    const tieneCocina = items?.some(i => menusCocina.includes(i.nombre));
-    if (!tieneCocina) continue;
+    const tienePendiente = items?.some(i =>
+      menusCocina.includes(i.nombre) && i.confirmado_por_area !== "cocina"
+    );
+    if (!tienePendiente) continue;
 
     resumen[pedido.local] = (resumen[pedido.local] || 0) + 1;
   }
 
-  let html = "<h3>Pedidos sin entregar por local (solo cocina)</h3><ul>";
+  let html = "<h3>Pedidos pendientes por local (solo cocina)</h3><ul>";
   for (const local in resumen) {
     html += `<li><strong>${local}:</strong> ${resumen[local]} pedidos</li>`;
   }
@@ -81,15 +81,20 @@ function filtrarPorLocal() {
 async function mostrarPedidos(localSeleccionado) {
   listaDiv.innerHTML = "";
 
-  const filtrados = pedidos.filter(p => !p.entregado && (localSeleccionado === "todos" || p.local === localSeleccionado));
+  const filtrados = pedidos.filter(p =>
+    localSeleccionado === "todos" || p.local === localSeleccionado
+  );
 
   for (const pedido of filtrados) {
     const { data: items } = await supabase
       .from("pedido_items")
-      .select("nombre, cantidad, subtotal")
+      .select("id, nombre, cantidad, subtotal, confirmado_por_area")
       .eq("pedido_id", pedido.id);
 
-    const itemsCocina = items?.filter(i => menusCocina.includes(i.nombre)) || [];
+    const itemsCocina = items?.filter(i =>
+      menusCocina.includes(i.nombre) && i.confirmado_por_area !== "cocina"
+    ) || [];
+
     if (itemsCocina.length === 0) continue;
 
     const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
@@ -116,20 +121,26 @@ async function mostrarPedidos(localSeleccionado) {
 
     const boton = document.createElement("button");
     boton.textContent = "✅ Confirmar";
-    boton.addEventListener("click", () => confirmarPedido(pedido.id));
+    boton.addEventListener("click", () => confirmarPedido(itemsCocina.map(i => i.id)));
 
     botonDiv.appendChild(boton);
     barra.appendChild(info);
     barra.appendChild(botonDiv);
     listaDiv.appendChild(barra);
   }
+
+  if (listaDiv.innerHTML.trim() === "") {
+    listaDiv.innerHTML = "<p>No hay pedidos pendientes del área cocina.</p>";
+  }
 }
 
-async function confirmarPedido(id) {
-  await supabase
-    .from("pedidos")
-    .update({ entregado: true })
-    .eq("id", id);
+async function confirmarPedido(ids) {
+  if (ids.length > 0) {
+    await supabase
+      .from("pedido_items")
+      .update({ confirmado_por_area: "cocina" })
+      .in("id", ids);
+  }
 
   cargarPedidos();
 }
@@ -141,8 +152,7 @@ async function mostrarResumenConfirmadosDelDia() {
 
   const { data: pedidosConfirmados } = await supabase
     .from("pedidos")
-    .select("id, local, fecha, entregado")
-    .eq("entregado", true)
+    .select("id, local, fecha")
     .gte("fecha", isoInicio);
 
   const resumen = {};
@@ -152,10 +162,13 @@ async function mostrarResumenConfirmadosDelDia() {
   for (const pedido of pedidosConfirmados || []) {
     const { data: items } = await supabase
       .from("pedido_items")
-      .select("nombre, subtotal")
+      .select("nombre, subtotal, confirmado_por_area")
       .eq("pedido_id", pedido.id);
 
-    const itemsCocina = items?.filter(i => menusCocina.includes(i.nombre)) || [];
+    const itemsCocina = items?.filter(i =>
+      menusCocina.includes(i.nombre) && i.confirmado_por_area === "cocina"
+    ) || [];
+
     if (itemsCocina.length === 0) continue;
 
     const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
