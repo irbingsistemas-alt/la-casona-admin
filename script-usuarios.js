@@ -25,7 +25,7 @@ async function cargarUsuarios() {
 
     const celdaRol = document.createElement("td");
     const selectRol = document.createElement("select");
-    ["admin", "cocina", "reparto", "administrador"].forEach(r => {
+    ["admin","cocina","reparto","administrador","dependiente","barra","bar"].forEach(r => {
       const option = document.createElement("option");
       option.value = r;
       option.textContent = r;
