@@ -6,6 +6,13 @@
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: sans-serif;
+    }
+
     .pedido-barra {
       display: flex;
       justify-content: space-between;
@@ -16,15 +23,25 @@
       background-color: #f9f9f9;
       flex-wrap: wrap;
     }
+
     .pedido-info {
       flex: 1;
       min-width: 250px;
     }
+
     .pedido-boton {
       margin-left: 20px;
     }
+
     #controles-cocina {
       margin-bottom: 30px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
     }
   </style>
 </head>
