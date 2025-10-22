@@ -4,60 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-      font-family: sans-serif;
-      background-color: #fff;
-    }
-
-    .contenedor {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .pedido-barra {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #f9f9f9;
-      flex-wrap: wrap;
-    }
-
-    .pedido-info {
-      flex: 1;
-      min-width: 250px;
-    }
-
-    .pedido-boton {
-      margin-left: 20px;
-    }
-
-    #controles-cocina {
-      margin-bottom: 30px;
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="../style-base.css" />
 </head>
 <body>
   <script>
     const rol = localStorage.getItem("rol");
     const usuario = localStorage.getItem("usuarioActivo");
     if (rol !== "cocina" || !usuario) {
-      window.location.href = "index.html";
+      window.location.href = "../index.html";
     }
   </script>
 
@@ -85,12 +39,12 @@
     <section id="resumen-confirmados" style="margin-top: 40px;"></section>
   </div>
 
-  <script type="module" src="script-cocina.js"></script>
+  <script type="module" src="../scripts/script-cocina.js"></script>
   <script>
     function logout() {
       localStorage.removeItem("rol");
       localStorage.removeItem("usuarioActivo");
-      window.location.href = "index.html";
+      window.location.href = "../index.html";
     }
   </script>
 </body>
