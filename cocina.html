@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vista Cocina</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .pedido-barra {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+      flex-wrap: wrap;
+    }
+    .pedido-info {
+      flex: 1;
+      min-width: 250px;
+    }
+    .pedido-boton {
+      margin-left: 20px;
+    }
+  </style>
 </head>
 <body>
   <script>
@@ -18,23 +37,25 @@
   <header>
     <h1>Pedidos en Cocina</h1>
     <p>Solo usuarios con rol <strong>cocina</strong></p>
+    <button onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <button onclick="logout()">Cerrar sesión</button>
-
-  <!-- Resumen de pedidos por local -->
-  <div id="resumen-locales" style="margin-top: 20px;"></div>
+  <!-- Resumen de pedidos sin entregar por local -->
+  <section id="resumen-locales" style="margin-top: 20px;"></section>
 
   <!-- Filtro por local -->
-  <label for="filtro-local"><strong>Filtrar por local:</strong></label>
-  <select id="filtro-local" onchange="filtrarPorLocal()" style="margin-bottom: 20px;">
-    <option value="todos">Todos</option>
-  </select>
+  <section style="margin-top: 10px;">
+    <label for="filtro-local"><strong>Filtrar por local:</strong></label>
+    <select id="filtro-local" onchange="filtrarPorLocal()" style="margin-left: 10px;">
+      <option value="todos">Todos</option>
+    </select>
+  </section>
 
-  <!-- Contenedor con scroll vertical -->
-  <div id="lista-pedidos-container" style="max-height: 500px; overflow-y: auto;">
-    <div id="lista-pedidos"></div>
-  </div>
+  <!-- Lista de pedidos sin confirmar -->
+  <section id="lista-pedidos" style="margin-top: 20px;"></section>
+
+  <!-- Resumen de pedidos confirmados por área -->
+  <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
   <script type="module" src="script-cocina.js"></script>
   <script>
