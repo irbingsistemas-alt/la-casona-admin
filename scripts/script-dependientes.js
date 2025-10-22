@@ -202,7 +202,6 @@ async function enviarPedido() {
   document.getElementById("resumen").innerHTML = resumenHTML;
   document.getElementById("confirmacion").style.display = "block";
 }
-
 async function marcarCobrado() {
   if (!pedidoId) return;
 
@@ -222,44 +221,6 @@ async function marcarCobrado() {
   location.reload();
 }
 
-async function mostrarResumenDelDia() {
-  const hoy = new Date();
-  const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
-  const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
-
-  const { data: pedidosHoy, error } = await supabase
-    .from("pedidos")
-    .select("id, total, entregado, local")
-    .eq("dependiente", dependiente)
-    .gte("fecha", inicioDelDia)
-    .lte("fecha", finDelDia);
-
-  if (error) {
-    console.error("Error al cargar resumen del día", error);
-    return;
-  }
-
-  const porEntregar = pedidosHoy.filter(p => !p.entregado);
-  const cobrados = pedidosHoy.filter(p => p.entregado);
-
-  const totalPendiente = porEntregar.reduce((sum, p) => sum + p.total, 0);
-  const totalCobrado = cobrados.reduce((sum, p) => sum + p.total, 0);
-
-const resumenHTML = `
-  <h3>📋 Resumen del día</h3>
-
-  <p><strong>Pedidos por entregar:</strong> ${porEntregar.length}</p>
-  <ul>
-    ${porEntregar.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}
-  </ul>
-  <p><strong>Total pendiente:</strong> ${totalPendiente} CUP</p>
-
-  <p><strong>Pedidos cobrados:</strong> ${cobrados.length}</p>
-  <ul>
-    ${cobrados.map(p => `<li><strong>${p.local}</strong> - ${p.total} CUP</li>`).join("")}
-  </ul>
-  <p><strong>Total cobrado:</strong> ${totalCobrado} CUP</p>
-`;
 async function mostrarResumenDelDia() {
   const hoy = new Date();
   const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
