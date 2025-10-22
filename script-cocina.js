@@ -6,7 +6,9 @@ const supabase = createClient(
 );
 
 const listaDiv = document.getElementById("lista-pedidos");
-const container = document.getElementById("lista-pedidos-container");
+const resumenDiv = document.getElementById("resumen-locales");
+const filtroSelect = document.getElementById("filtro-local");
+const resumenFinal = document.getElementById("resumen-confirmados");
 
 let menusCocina = [];
 let pedidos = [];
@@ -30,9 +32,8 @@ async function cargarPedidos() {
 
   pedidos = data;
   mostrarResumenLocales();
-  mostrarFiltroLocales();
+  llenarFiltroLocales();
   mostrarPedidos("todos");
-  mostrarResumenConfirmadosDelDia();
 }
 
 function mostrarResumenLocales() {
@@ -43,21 +44,28 @@ function mostrarResumenLocales() {
     }
   });
 
-  const div = document.createElement("div");
-  div.innerHTML = "<h3>Pedidos sin entregar por local</h3><ul>" +
-    Object.entries(resumen).map(([local, count]) => `<li><strong>${local}:</strong> ${count}</li>`).join("") +
-    "</ul>";
-  container.prepend(div);
+  let html = "<h3>Pedidos sin entregar por local</h3><ul>";
+  for (const local in resumen) {
+    html += `<li><strong>${local}:</strong> ${resumen[local]} pedidos</li>`;
+  }
+  html += "</ul>";
+  resumenDiv.innerHTML = html;
 }
 
-function mostrarFiltroLocales() {
+function llenarFiltroLocales() {
   const locales = [...new Set(pedidos.map(p => p.local))];
-  const select = document.createElement("select");
-  select.id = "filtro-local";
-  select.innerHTML = `<option value="todos">Todos los locales</option>` +
-    locales.map(local => `<option value="${local}">${local}</option>`).join("");
-  select.onchange = () => mostrarPedidos(select.value);
-  container.prepend(select);
+  filtroSelect.innerHTML = `<option value="todos">Todos</option>`;
+  locales.forEach(local => {
+    const option = document.createElement("option");
+    option.value = local;
+    option.textContent = local;
+    filtroSelect.appendChild(option);
+  });
+}
+
+function filtrarPorLocal() {
+  const seleccion = filtroSelect.value;
+  mostrarPedidos(seleccion);
 }
 
 async function mostrarPedidos(localSeleccionado) {
@@ -76,25 +84,33 @@ async function mostrarPedidos(localSeleccionado) {
 
     const totalCocina = itemsCocina.reduce((sum, i) => sum + i.subtotal, 0);
 
-    listaDiv.innerHTML += `
-      <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid #ccc; padding:10px; margin-bottom:10px; background:#f9f9f9;">
-        <div>
-          <p><strong>Local:</strong> ${pedido.local}</p>
-          ${pedido.tipo === "mesa"
-            ? `<p><strong>Mesa:</strong> ${pedido.mesa}</p>`
-            : `<p><strong>Cliente:</strong> ${pedido.cliente}</p>
-               <p><strong>Piso:</strong> ${pedido.piso}</p>
-               <p><strong>Apto:</strong> ${pedido.apartamento}</p>`}
-          <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString()}</p>
-          <ul>${itemsCocina.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
-          <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
-        </div>
-        <div>
-          <button onclick="confirmarPedido(${pedido.id})">✅ Confirmar</button>
-        </div>
-      </div>
+    const barra = document.createElement("div");
+    barra.className = "pedido-barra";
+
+    const info = document.createElement("div");
+    info.className = "pedido-info";
+    info.innerHTML = `
+      <p><strong>Local:</strong> ${pedido.local}</p>
+      ${pedido.tipo === "mesa"
+        ? `<p><strong>Mesa:</strong> ${pedido.mesa}</p>`
+        : `<p><strong>Cliente:</strong> ${pedido.cliente}</p>
+           <p><strong>Piso:</strong> ${pedido.piso}</p>
+           <p><strong>Apto:</strong> ${pedido.apartamento}</p>`}
+      <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString()}</p>
+      <ul>${itemsCocina.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
+      <p><strong>Total cocina:</strong> ${totalCocina} CUP</p>
     `;
+
+    const boton = document.createElement("div");
+    boton.className = "pedido-boton";
+    boton.innerHTML = `<button onclick="confirmarPedido(${pedido.id})">✅ Confirmar</button>`;
+
+    barra.appendChild(info);
+    barra.appendChild(boton);
+    listaDiv.appendChild(barra);
   }
+
+  mostrarResumenConfirmadosDelDia();
 }
 
 async function confirmarPedido(id) {
@@ -124,14 +140,14 @@ async function mostrarResumenConfirmadosDelDia() {
     resumen[p.local].total += p.total;
   });
 
-  listaDiv.innerHTML += `
-    <div style="margin-top:30px; border-top:1px solid #ccc; padding-top:10px;">
-      <h3>Resumen final por área (confirmados hoy)</h3>
-      <ul>${Object.entries(resumen).map(([local, r]) =>
-        `<li><strong>${local}:</strong> ${r.cantidad} pedidos – ${r.total} CUP</li>`).join("")}</ul>
-    </div>
-  `;
+  let html = "<h3>Resumen de pedidos confirmados hoy por área</h3><ul>";
+  for (const local in resumen) {
+    html += `<li><strong>${local}:</strong> ${resumen[local].cantidad} pedidos – ${resumen[local].total} CUP</li>`;
+  }
+  html += "</ul>";
+  resumenFinal.innerHTML = html;
 }
 
+window.filtrarPorLocal = filtrarPorLocal;
 window.confirmarPedido = confirmarPedido;
 cargarPedidos();
