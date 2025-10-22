@@ -34,6 +34,7 @@ async function cargarPedidos() {
   mostrarResumenLocales();
   llenarFiltroLocales();
   mostrarPedidos("todos");
+  mostrarResumenConfirmadosDelDia(); // ✅ ahora está fuera del listado
 }
 
 function mostrarResumenLocales() {
@@ -109,8 +110,6 @@ async function mostrarPedidos(localSeleccionado) {
     barra.appendChild(boton);
     listaDiv.appendChild(barra);
   }
-
-  mostrarResumenConfirmadosDelDia();
 }
 
 async function confirmarPedido(id) {
