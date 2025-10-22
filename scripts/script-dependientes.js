@@ -9,6 +9,7 @@ let pedidoActual = [];
 let total = 0;
 let pedidosCobrados = 0;
 let importeCobrado = 0;
+let usuarioAutenticado = null;
 
 function actualizarEstiloLocal() {
   const local = document.getElementById("local").value;
@@ -20,11 +21,13 @@ async function iniciarSesion() {
   const usuario = document.getElementById("usuario").value;
   const clave = document.getElementById("clave").value;
 
-  const acceso = await autenticarUsuario(usuario, clave);
-  if (!acceso) {
-    alert("Credenciales incorrectas");
+  const id = await autenticarUsuario(usuario, clave);
+  if (!id) {
+    alert("Credenciales incorrectas o rol no autorizado");
     return;
   }
+
+  usuarioAutenticado = id;
 
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
@@ -32,7 +35,7 @@ async function iniciarSesion() {
   const menu = await obtenerMenu();
   mostrarMenu(menu);
 
-  const resumen = await obtenerResumenDelDia();
+  const resumen = await obtenerResumenDelDia(usuarioAutenticado);
   document.getElementById("total-cobrados").textContent = resumen.cantidad;
   document.getElementById("importe-cobrado").textContent = resumen.total;
 }
@@ -121,7 +124,13 @@ function enviarPedido() {
 
   document.getElementById("confirmacion").style.display = "block";
 
-  enviarPedidoADatabase({ local, mesa, pedido: pedidoActual, total });
+  enviarPedidoADatabase({
+    local,
+    mesa,
+    pedido: pedidoActual,
+    total,
+    usuario_id: usuarioAutenticado
+  });
 }
 window.enviarPedido = enviarPedido;
 
