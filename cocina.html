@@ -44,10 +44,8 @@
     <button onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Resumen de pedidos sin entregar por local -->
+  <!-- Controles -->
   <section id="resumen-locales"></section>
-
-  <!-- Filtro por local -->
   <section>
     <label for="filtro-local"><strong>Filtrar por local:</strong></label>
     <select id="filtro-local" onchange="filtrarPorLocal()">
@@ -55,10 +53,13 @@
     </select>
   </section>
 
-  <!-- Contenedor de pedidos -->
+  <!-- Pedidos sin confirmar -->
   <div id="lista-pedidos-container">
     <div id="lista-pedidos"></div>
   </div>
+
+  <!-- Resumen final por área -->
+  <section id="resumen-confirmados" style="margin-top: 40px;"></section>
 
   <script type="module" src="script-cocina.js"></script>
   <script>
