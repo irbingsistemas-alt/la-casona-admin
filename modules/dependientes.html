@@ -22,8 +22,14 @@
       <button onclick="iniciarSesion()">Entrar</button>
     </section>
 
-    <!-- Contenido del menú (oculto hasta login) -->
+    <!-- Contenido del menú -->
     <section id="contenido" style="display:none;">
+      <div id="resumen-cobros" style="margin: 20px 0; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <h3>💰 Cobros del día</h3>
+        <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
+        <p><strong>Importe total:</strong> <span id="importe-cobrado">0</span> CUP</p>
+      </div>
+
       <label for="local"><strong>Tipo de local:</strong></label>
       <select id="local" onchange="actualizarEstiloLocal()">
         <option value="Restaurant">Restaurant</option>
