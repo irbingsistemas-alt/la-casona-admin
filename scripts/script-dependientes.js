@@ -57,7 +57,6 @@ async function iniciarSesion() {
   await cargarMenu();
   await cargarResumen();
 }
-}
 window.iniciarSesion = iniciarSesion;
 
 async function cargarMenu() {
