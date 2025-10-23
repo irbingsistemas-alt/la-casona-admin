@@ -1,15 +1,32 @@
-import {
-  obtenerMenu,
-  enviarPedidoADatabase,
-  autenticarUsuario,
-  obtenerResumenDelDia
-} from './api.js';
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-let pedidoActual = [];
-let total = 0;
-let pedidosCobrados = 0;
-let importeCobrado = 0;
+const supabase = createClient(
+  "https://ihswokmnhwaitzwjzvmy.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // clave pública
+);
+
 let usuarioAutenticado = null;
+let menu = [];
+let cantidadesSeleccionadas = {};
+let total = 0;
+let pedidoActualId = null;
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const id = localStorage.getItem("usuario_id");
+  if (id) {
+    usuarioAutenticado = id;
+    document.getElementById("login").style.display = "none";
+    document.getElementById("contenido").style.display = "block";
+    await cargarMenu();
+    await cargarResumen();
+
+    const pendiente = localStorage.getItem("pedido_pendiente");
+    if (pendiente) {
+      pedidoActualId = pendiente;
+      await mostrarPedidoPendiente(pendiente);
+    }
+  }
+});
 
 function actualizarEstiloLocal() {
   const local = document.getElementById("local").value;
@@ -18,138 +35,258 @@ function actualizarEstiloLocal() {
 window.actualizarEstiloLocal = actualizarEstiloLocal;
 
 async function iniciarSesion() {
-  const usuario = document.getElementById("usuario").value;
-  const clave = document.getElementById("clave").value;
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
 
-  const id = await autenticarUsuario(usuario, clave);
-  if (!id) {
-    alert("Credenciales incorrectas o rol no autorizado");
+  const { data, error } = await supabase.rpc("login_dependiente", {
+    usuario_input: usuario,
+    clave_input: clave
+  });
+
+  if (error || !data || data.length === 0 || data[0].rol !== "dependiente") {
+    alert("❌ Credenciales incorrectas o rol no autorizado");
     return;
   }
 
-  usuarioAutenticado = id;
+  usuarioAutenticado = data[0].id;
+  localStorage.setItem("usuario_id", data[0].id);
 
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  const menu = await obtenerMenu();
-  mostrarMenu(menu);
-
-  const resumen = await obtenerResumenDelDia(usuarioAutenticado);
-  document.getElementById("total-cobrados").textContent = resumen.cantidad;
-  document.getElementById("importe-cobrado").textContent = resumen.total;
+  await cargarMenu();
+  await cargarResumen();
 }
 window.iniciarSesion = iniciarSesion;
 
-function mostrarMenu(menu) {
-  const contenedor = document.getElementById("menu");
-  contenedor.innerHTML = "";
+async function cargarMenu() {
+  const { data, error } = await supabase
+    .from("menus")
+    .select("nombre, precio, categoria")
+    .eq("activo", true)
+    .order("categoria", { ascending: true });
 
-  const categorias = [...new Set(menu.map(plato => plato.categoria))];
-  const filtro = document.getElementById("filtro");
-  categorias.forEach(cat => {
-    const opcion = document.createElement("option");
-    opcion.value = cat;
-    opcion.textContent = cat;
-    filtro.appendChild(opcion);
-  });
-
-  menu.forEach(plato => {
-    const item = document.createElement("div");
-    item.className = "menu-item";
-
-    const label = document.createElement("label");
-    const nombre = document.createElement("strong");
-    nombre.textContent = plato.nombre;
-
-    const cantidad = document.createElement("input");
-    cantidad.type = "number";
-    cantidad.min = "0";
-    cantidad.value = "0";
-    cantidad.dataset.id = plato.id;
-    cantidad.dataset.nombre = plato.nombre;
-    cantidad.dataset.precio = plato.precio;
-
-    label.appendChild(nombre);
-    label.appendChild(cantidad);
-    item.appendChild(label);
-    contenedor.appendChild(item);
-  });
-}
-
-function filtrarMenu() {
-  const filtro = document.getElementById("filtro").value;
-  const items = document.querySelectorAll(".menu-item");
-
-  items.forEach(item => {
-    const nombre = item.querySelector("strong").textContent;
-    item.style.display = filtro === "todos" || nombre.includes(filtro) ? "flex" : "none";
-  });
-}
-window.filtrarMenu = filtrarMenu;
-function enviarPedido() {
-  const local = document.getElementById("local").value;
-  const mesa = document.getElementById("mesa").value;
-  const inputs = document.querySelectorAll(".menu-item input");
-
-  pedidoActual = [];
-  total = 0;
-
-  inputs.forEach(input => {
-    const cantidad = parseInt(input.value);
-    if (cantidad > 0) {
-      const nombre = input.dataset.nombre;
-      const precio = parseFloat(input.dataset.precio);
-      pedidoActual.push({ nombre, cantidad, precio });
-      total += cantidad * precio;
-    }
-  });
-
-  if (pedidoActual.length === 0 || mesa.trim() === "") {
-    alert("Debe seleccionar al menos un plato y especificar la mesa.");
+  if (error || !data) {
+    alert("❌ Error al cargar el menú");
     return;
   }
 
-  document.body.setAttribute("data-local", local.toLowerCase());
+  menu = data;
+  mostrarMenuAgrupado(menu);
+}
 
+function mostrarMenuAgrupado(platos) {
+  const contenedor = document.getElementById("menu");
+  contenedor.innerHTML = "";
+
+  const filtro = document.getElementById("filtro");
+  filtro.innerHTML = '<option value="todos">Todos</option>';
+
+  const agrupado = {};
+  platos.forEach(p => {
+    if (!agrupado[p.categoria]) {
+      agrupado[p.categoria] = [];
+      const option = document.createElement("option");
+      option.value = p.categoria;
+      option.textContent = p.categoria;
+      filtro.appendChild(option);
+    }
+    agrupado[p.categoria].push(p);
+  });
+
+  for (const categoria in agrupado) {
+    const grupo = document.createElement("div");
+    grupo.className = "categoria-grupo";
+    grupo.setAttribute("data-categoria", categoria);
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria;
+    grupo.appendChild(titulo);
+
+    agrupado[categoria].forEach(item => {
+      const div = document.createElement("div");
+      div.className = "menu-item";
+      div.innerHTML = `
+        <div>${item.nombre}</div>
+        <div class="precio">${item.precio} CUP</div>
+        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+      `;
+      grupo.appendChild(div);
+    });
+
+    contenedor.appendChild(grupo);
+  }
+
+  document.querySelectorAll("input[type='number']").forEach(input => {
+    input.addEventListener("input", () => {
+      const nombre = input.dataset.name;
+      const cantidad = parseInt(input.value) || 0;
+      cantidadesSeleccionadas[nombre] = cantidad;
+      calcularTotal();
+    });
+  });
+
+  calcularTotal();
+}
+
+function filtrarMenu() {
+  const seleccion = document.getElementById("filtro").value;
+  const grupos = document.querySelectorAll(".categoria-grupo");
+
+  grupos.forEach(grupo => {
+    const categoria = grupo.getAttribute("data-categoria");
+    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
+  });
+}
+window.filtrarMenu = filtrarMenu;
+
+function calcularTotal() {
+  total = 0;
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (plato && cantidad > 0) {
+      total += cantidad * plato.precio;
+    }
+  }
+  document.getElementById("total").textContent = total;
+}
+
+async function enviarPedido() {
+  const local = document.getElementById("local").value;
+  const mesa = document.getElementById("mesa").value.trim();
+
+  const items = [];
+  for (const nombre in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[nombre];
+    const plato = menu.find(p => p.nombre === nombre);
+    if (cantidad > 0 && plato) {
+      items.push({ nombre, cantidad, precio: plato.precio });
+    }
+  }
+
+  if (items.length === 0 || mesa === "") {
+    alert("⚠️ Selecciona al menos un plato y especifica la mesa.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("pedidos")
+    .insert([{
+      local,
+      mesa,
+      total,
+      entregado: false,
+      cobrado: false,
+      fecha: new Date().toISOString(),
+      usuario_id: usuarioAutenticado
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    alert("❌ Error al guardar el pedido");
+    console.error(error);
+    return;
+  }
+
+  pedidoActualId = data.id;
+  localStorage.setItem("pedido_pendiente", data.id);
+
+  for (const item of items) {
+    await supabase.from("pedido_items").insert([{
+      pedido_id: data.id,
+      nombre: item.nombre,
+      cantidad: item.cantidad,
+      precio: item.precio
+    }]);
+  }
+
+  mostrarResumenPedido(data.local, data.mesa, items, data.total);
+}
+
+function mostrarResumenPedido(local, mesa, items, total) {
   const resumen = document.getElementById("resumen");
   resumen.innerHTML = `
     <p><strong>Local:</strong> ${local}</p>
     <p><strong>Mesa:</strong> ${mesa}</p>
     <ul>
-      ${pedidoActual.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
+      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
     </ul>
     <p><strong>Total:</strong> ${total} CUP</p>
   `;
-
   document.getElementById("confirmacion").style.display = "block";
-
-  enviarPedidoADatabase({
-    local,
-    mesa,
-    pedido: pedidoActual,
-    total,
-    usuario_id: usuarioAutenticado
-  });
 }
-window.enviarPedido = enviarPedido;
+async function mostrarPedidoPendiente(id) {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("local, mesa, total")
+    .eq("id", id)
+    .eq("cobrado", false)
+    .single();
 
-function marcarCobrado() {
+  if (error || !data) return;
+
+  const { data: items } = await supabase
+    .from("pedido_items")
+    .select("nombre, cantidad, precio")
+    .eq("pedido_id", id);
+
+  mostrarResumenPedido(data.local, data.mesa, items, data.total);
+}
+
+async function marcarCobrado() {
+  if (!pedidoActualId) {
+    alert("⚠️ No hay pedido activo para cobrar.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ cobrado: true })
+    .eq("id", pedidoActualId);
+
+  if (error) {
+    alert("❌ Error al marcar como cobrado");
+    console.error(error);
+    return;
+  }
+
+  localStorage.removeItem("pedido_pendiente");
+  pedidoActualId = null;
+
   const resumen = document.getElementById("resumen");
   resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
 
-  pedidosCobrados += 1;
-  importeCobrado += total;
-
-  document.getElementById("total-cobrados").textContent = pedidosCobrados;
-  document.getElementById("importe-cobrado").textContent = importeCobrado;
-
-  pedidoActual = [];
+  cantidadesSeleccionadas = {};
   total = 0;
-
-  const inputs = document.querySelectorAll(".menu-item input");
-  inputs.forEach(input => input.value = "0");
+  document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
   document.getElementById("total").textContent = "0";
+
+  await cargarResumen();
 }
 window.marcarCobrado = marcarCobrado;
 
+async function cargarResumen() {
+  const id = localStorage.getItem("usuario_id");
+
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("total")
+    .eq("usuario_id", id)
+    .eq("cobrado", true);
+
+  if (error || !data) return;
+
+  const pedidosCobrados = data.length;
+  const importeCobrado = data.reduce((sum, p) => sum + p.total, 0);
+
+  document.getElementById("total-cobrados").textContent = pedidosCobrados;
+  document.getElementById("importe-cobrado").textContent = importeCobrado;
+}
+
+function cerrarSesion() {
+  localStorage.clear();
+  location.reload();
+}
+window.cerrarSesion = cerrarSesion;
