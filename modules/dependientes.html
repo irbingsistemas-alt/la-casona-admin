@@ -3,63 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dependientas</title>
+  <title>Menú - Dependientas | La Casona de 17</title>
+  <link rel="stylesheet" href="../style-base.css" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    #contenido { display: none; }
-    .menu-item { display: flex; justify-content: space-between; margin: 4px 0; }
-    .categoria-grupo { max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; }
-    input[type="number"] { width: 60px; }
-    #resumen ul { padding-left: 1rem; }
+    .categoria-grupo {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 30px;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #ddd;
+      gap: 10px;
+    }
+    .menu-item input {
+      width: 40px;
+      text-align: center;
+    }
+    .menu-item div {
+      flex: 1;
+    }
+    .menu-item .precio {
+      width: 80px;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
-  <div id="login">
-    <h2>🔐 Iniciar sesión</h2>
-    <input type="text" id="usuario" placeholder="Usuario" />
-    <input type="password" id="clave" placeholder="Contraseña" />
-    <button onclick="iniciarSesion()">Entrar</button>
-  </div>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Menú - La Casona de 17</h1>
+      <p>Consumo en salón (por mesa)</p>
+    </header>
 
-  <div id="contenido">
-    <h2>🍽️ Registro de pedidos</h2>
+    <!-- Login -->
+    <section id="login">
+      <h3>Inicio de sesión</h3>
+      <input type="text" id="usuario" placeholder="Usuario" />
+      <input type="password" id="clave" placeholder="Contraseña" />
+      <button onclick="iniciarSesion()">Entrar</button>
+    </section>
 
-    <label>Local:
+    <!-- Contenido operativo -->
+    <section id="contenido" style="display:none;">
+      <div id="resumen-cobros">
+        <h3>📊 Resumen del día</h3>
+        <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
+        <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
+        <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
+        <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
+        <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
+      </div>
+
+      <label for="local"><strong>Tipo de local:</strong></label>
       <select id="local" onchange="actualizarEstiloLocal()">
-        <option value="Salón">Salón</option>
-        <option value="Terraza">Terraza</option>
+        <option value="Restaurant">Restaurant</option>
         <option value="Bar">Bar</option>
+        <option value="Pizzería">Pizzería</option>
       </select>
-    </label>
 
-    <label>Mesa:
-      <input type="text" id="mesa" placeholder="Ej: 5" />
-    </label>
+      <label for="mesa"><strong>Número de mesa:</strong></label>
+      <input type="text" id="mesa" placeholder="Ej. 5" />
 
-    <div id="menu"></div>
+      <!-- Menú sin agrupamiento por categoría -->
+      <div id="menu"></div>
 
-    <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
-    <p><strong>Ítems seleccionados:</strong> <span id="cantidad-items">0</span></p>
-    <button onclick="enviarPedido()">Enviar pedido</button>
-    <button onclick="limpiarSeleccion()">Limpiar selección</button>
+      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+      <p><strong>Ítems seleccionados:</strong> <span id="cantidad-items">0</span></p>
+      <button onclick="enviarPedido()">Revisar pedido</button>
+      <button onclick="limpiarSeleccion()">Limpiar selección</button>
 
-    <div id="confirmacion" style="display:none;">
-      <h3 style="color:green;">✅ Pedido enviado a cocina</h3>
-      <div id="resumen"></div>
-      <button onclick="marcarCobrado()">Marcar como cobrado</button>
-    </div>
+      <!-- Confirmación persistente -->
+      <div id="confirmacion" style="display:none; margin-top:30px;">
+        <h3 style="color:green;">✅ Pedido enviado a cocina</h3>
+        <div id="resumen"></div>
+        <button onclick="marcarCobrado()">Cobrado</button>
+      </div>
 
-    <h3>📊 Resumen del día</h3>
-    <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
-    <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
-    <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
-    <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
-    <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
-
-    <button onclick="cerrarSesion()">Cerrar sesión</button>
+      <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
+    </section>
   </div>
 
-  <script type="module" src="script-dependientas-parte1.js"></script>
-  <script type="module" src="script-dependientas-parte2.js"></script>
+  <!-- Script principal -->
+  <script type="module" src="../scripts/script-dependientas-parte1.js"></script>
+  <script type="module" src="../scripts/script-dependientas-parte2.js"></script>
 </body>
 </html>
