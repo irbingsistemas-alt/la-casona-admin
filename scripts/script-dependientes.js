@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // clave pública
 );
 
 let usuarioAutenticado = null;
@@ -14,9 +14,9 @@ let importeCobrado = 0;
 let pedidoActualId = null;
 
 window.addEventListener("DOMContentLoaded", async () => {
-  const id = localStorage.getItem("usuario_id");
-  if (id) {
-    usuarioAutenticado = id;
+  const { data } = await supabase.auth.getUser();
+  if (data?.user?.id) {
+    usuarioAutenticado = data.user.id;
     document.getElementById("login").style.display = "none";
     document.getElementById("contenido").style.display = "block";
     await cargarMenu();
@@ -31,24 +31,20 @@ function actualizarEstiloLocal() {
 window.actualizarEstiloLocal = actualizarEstiloLocal;
 
 async function iniciarSesion() {
-  const usuario = document.getElementById("usuario").value.trim();
+  const correo = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select("id, rol")
-    .eq("usuario", usuario)
-    .eq("clave", clave)
-    .single();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: correo,
+    password: clave
+  });
 
-  if (error || !data || data.rol !== "dependiente") {
-    alert("❌ Credenciales incorrectas o rol no autorizado");
+  if (error || !data.session) {
+    alert("❌ Credenciales incorrectas");
     return;
   }
 
-  usuarioAutenticado = data.id;
-  localStorage.setItem("usuario_id", data.id);
-
+  usuarioAutenticado = data.user.id;
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
@@ -137,6 +133,7 @@ function filtrarMenu() {
   });
 }
 window.filtrarMenu = filtrarMenu;
+
 function calcularTotal() {
   total = 0;
   for (const nombre in cantidadesSeleccionadas) {
@@ -244,10 +241,13 @@ async function marcarCobrado() {
 window.marcarCobrado = marcarCobrado;
 
 async function cargarResumen() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+
   const { data, error } = await supabase
     .from("pedidos")
     .select("total")
-    .eq("usuario_id", usuarioAutenticado)
+    .eq("usuario_id", userId)
     .eq("cobrado", true);
 
   if (error || !data) return;
@@ -260,6 +260,7 @@ async function cargarResumen() {
 }
 
 function cerrarSesion() {
+  supabase.auth.signOut();
   localStorage.clear();
   location.reload();
 }
