@@ -20,14 +20,18 @@
       align-items: center;
       padding: 6px 0;
       border-bottom: 1px dashed #ddd;
+      gap: 10px;
     }
     .menu-item input {
       width: 40px;
       text-align: center;
     }
-    .menu-item small {
-      margin-left: 10px;
-      color: #666;
+    .menu-item div {
+      flex: 1;
+    }
+    .menu-item .precio {
+      width: 80px;
+      text-align: right;
     }
   </style>
 </head>
@@ -44,7 +48,6 @@
       <input type="text" id="usuario" placeholder="Usuario" />
       <input type="password" id="clave" placeholder="Contraseña" />
       <button onclick="iniciarSesion()">Entrar</button>
-      <button onclick="cerrarSesion()">Cerrar sesión</button>
     </section>
 
     <section id="contenido" style="display:none;">
@@ -69,16 +72,18 @@
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
 
+      <div id="menu"></div>
+
       <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
       <button onclick="enviarPedido()">Revisar pedido</button>
-
-      <div id="menu"></div>
 
       <div id="confirmacion" style="display:none; margin-top:30px;">
         <h3>✅ Pedido enviado a cocina</h3>
         <div id="resumen"></div>
         <button onclick="marcarCobrado()">Cobrado</button>
       </div>
+
+      <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
     </section>
   </div>
 
