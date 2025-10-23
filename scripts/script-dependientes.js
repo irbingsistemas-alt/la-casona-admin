@@ -1,9 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ✅ Conexión directa a Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 let usuarioAutenticado = null;
@@ -12,8 +11,8 @@ let cantidadesSeleccionadas = {};
 let total = 0;
 let pedidosCobrados = 0;
 let importeCobrado = 0;
+let pedidoActualId = null;
 
-// ✅ Restaurar sesión si existe
 window.addEventListener("DOMContentLoaded", async () => {
   const id = localStorage.getItem("usuario_id");
   if (id) {
@@ -106,9 +105,9 @@ function mostrarMenuAgrupado(platos) {
       const div = document.createElement("div");
       div.className = "menu-item";
       div.innerHTML = `
-        <strong>${item.nombre}</strong>
-        <small>${item.precio} CUP</small>
-        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" style="width:40px;" />
+        <div>${item.nombre}</div>
+        <div class="precio">${item.precio} CUP</div>
+        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
       `;
       grupo.appendChild(div);
     });
@@ -200,6 +199,8 @@ async function enviarPedido() {
     return;
   }
 
+  pedidoActualId = data.id;
+
   for (const item of items) {
     await supabase.from("pedido_items").insert([{
       pedido_id: data.id,
@@ -211,23 +212,52 @@ async function enviarPedido() {
 }
 window.enviarPedido = enviarPedido;
 
-function marcarCobrado() {
+async function marcarCobrado() {
+  if (!pedidoActualId) {
+    alert("⚠️ No hay pedido activo para cobrar.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ cobrado: true })
+    .eq("id", pedidoActualId);
+
+  if (error) {
+    alert("❌ Error al marcar como cobrado");
+    console.error(error);
+    return;
+  }
+
   const resumen = document.getElementById("resumen");
   resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
 
-  pedidosCobrados += 1;
-  importeCobrado += total;
-
-  document.getElementById("total-cobrados").textContent = pedidosCobrados;
-  document.getElementById("importe-cobrado").textContent = importeCobrado;
-
   cantidadesSeleccionadas = {};
   total = 0;
+  pedidoActualId = null;
 
   document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
   document.getElementById("total").textContent = "0";
+
+  await cargarResumen();
 }
 window.marcarCobrado = marcarCobrado;
+
+async function cargarResumen() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("total")
+    .eq("usuario_id", usuarioAutenticado)
+    .eq("cobrado", true);
+
+  if (error || !data) return;
+
+  pedidosCobrados = data.length;
+  importeCobrado = data.reduce((sum, p) => sum + p.total, 0);
+
+  document.getElementById("total-cobrados").textContent = pedidosCobrados;
+  document.getElementById("importe-cobrado").textContent = importeCobrado;
+}
 
 function cerrarSesion() {
   localStorage.clear();
