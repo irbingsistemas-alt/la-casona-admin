@@ -14,9 +14,9 @@ let importeCobrado = 0;
 let pedidoActualId = null;
 
 window.addEventListener("DOMContentLoaded", async () => {
-  const { data } = await supabase.auth.getUser();
-  if (data?.user?.id) {
-    usuarioAutenticado = data.user.id;
+  const id = localStorage.getItem("usuario_id");
+  if (id) {
+    usuarioAutenticado = id;
     document.getElementById("login").style.display = "none";
     document.getElementById("contenido").style.display = "block";
     await cargarMenu();
@@ -31,20 +31,24 @@ function actualizarEstiloLocal() {
 window.actualizarEstiloLocal = actualizarEstiloLocal;
 
 async function iniciarSesion() {
-  const correo = document.getElementById("usuario").value.trim();
+  const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: correo,
-    password: clave
-  });
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("id, rol")
+    .eq("usuario", usuario)
+    .eq("clave", clave)
+    .single();
 
-  if (error || !data.session) {
-    alert("❌ Credenciales incorrectas");
+  if (error || !data || data.rol !== "dependiente") {
+    alert("❌ Credenciales incorrectas o rol no autorizado");
     return;
   }
 
-  usuarioAutenticado = data.user.id;
+  usuarioAutenticado = data.id;
+  localStorage.setItem("usuario_id", data.id);
+
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
@@ -241,13 +245,12 @@ async function marcarCobrado() {
 window.marcarCobrado = marcarCobrado;
 
 async function cargarResumen() {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
+  const id = localStorage.getItem("usuario_id");
 
   const { data, error } = await supabase
     .from("pedidos")
     .select("total")
-    .eq("usuario_id", userId)
+    .eq("usuario_id", id)
     .eq("cobrado", true);
 
   if (error || !data) return;
@@ -260,7 +263,6 @@ async function cargarResumen() {
 }
 
 function cerrarSesion() {
-  supabase.auth.signOut();
   localStorage.clear();
   location.reload();
 }
