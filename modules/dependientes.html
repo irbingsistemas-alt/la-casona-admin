@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="../style-base.css" />
   <style>
     .categoria-grupo {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
+      border: 1px solid #ccc;
       margin-bottom: 30px;
     }
     .categoria-grupo h3 {
@@ -43,6 +47,7 @@
       <p>Consumo en salón (por mesa)</p>
     </header>
 
+    <!-- Login -->
     <section id="login">
       <h3>Inicio de sesión</h3>
       <input type="text" id="usuario" placeholder="Usuario" />
@@ -50,6 +55,7 @@
       <button onclick="iniciarSesion()">Entrar</button>
     </section>
 
+    <!-- Contenido operativo -->
     <section id="contenido" style="display:none;">
       <div id="resumen-cobros">
         <h3>💰 Cobros del día</h3>
@@ -72,11 +78,13 @@
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
 
+      <!-- Menú con barra vertical por categoría -->
       <div id="menu"></div>
 
       <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
       <button onclick="enviarPedido()">Revisar pedido</button>
 
+      <!-- Confirmación persistente -->
       <div id="confirmacion" style="display:none; margin-top:30px;">
         <h3>✅ Pedido enviado a cocina</h3>
         <div id="resumen"></div>
