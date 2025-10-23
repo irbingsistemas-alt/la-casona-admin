@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // clave pública
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
 let usuarioAutenticado = null;
@@ -28,13 +28,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-function actualizarEstiloLocal() {
+window.actualizarEstiloLocal = function () {
   const local = document.getElementById("local").value;
   document.body.setAttribute("data-local", local.toLowerCase());
-}
-window.actualizarEstiloLocal = actualizarEstiloLocal;
+};
 
-async function iniciarSesion() {
+window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
@@ -56,8 +55,7 @@ async function iniciarSesion() {
 
   await cargarMenu();
   await cargarResumen();
-}
-window.iniciarSesion = iniciarSesion;
+};
 
 async function cargarMenu() {
   const { data, error } = await supabase
@@ -129,7 +127,7 @@ function mostrarMenuAgrupado(platos) {
   calcularTotal();
 }
 
-function filtrarMenu() {
+window.filtrarMenu = function () {
   const seleccion = document.getElementById("filtro").value;
   const grupos = document.querySelectorAll(".categoria-grupo");
 
@@ -137,8 +135,7 @@ function filtrarMenu() {
     const categoria = grupo.getAttribute("data-categoria");
     grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
   });
-}
-window.filtrarMenu = filtrarMenu;
+};
 
 function calcularTotal() {
   total = 0;
@@ -151,8 +148,7 @@ function calcularTotal() {
   }
   document.getElementById("total").textContent = total;
 }
-
-async function enviarPedido() {
+window.enviarPedido = async function () {
   const local = document.getElementById("local").value;
   const mesa = document.getElementById("mesa").value.trim();
 
@@ -203,7 +199,7 @@ async function enviarPedido() {
   }
 
   mostrarResumenPedido(data.local, data.mesa, items, data.total);
-}
+};
 
 function mostrarResumenPedido(local, mesa, items, total) {
   const resumen = document.getElementById("resumen");
@@ -217,6 +213,7 @@ function mostrarResumenPedido(local, mesa, items, total) {
   `;
   document.getElementById("confirmacion").style.display = "block";
 }
+
 async function mostrarPedidoPendiente(id) {
   const { data, error } = await supabase
     .from("pedidos")
@@ -235,7 +232,7 @@ async function mostrarPedidoPendiente(id) {
   mostrarResumenPedido(data.local, data.mesa, items, data.total);
 }
 
-async function marcarCobrado() {
+window.marcarCobrado = async function () {
   if (!pedidoActualId) {
     alert("⚠️ No hay pedido activo para cobrar.");
     return;
@@ -264,8 +261,7 @@ async function marcarCobrado() {
   document.getElementById("total").textContent = "0";
 
   await cargarResumen();
-}
-window.marcarCobrado = marcarCobrado;
+};
 
 async function cargarResumen() {
   const id = localStorage.getItem("usuario_id");
@@ -285,8 +281,7 @@ async function cargarResumen() {
   document.getElementById("importe-cobrado").textContent = importeCobrado;
 }
 
-function cerrarSesion() {
+window.cerrarSesion = function () {
   localStorage.clear();
   location.reload();
-}
-window.cerrarSesion = cerrarSesion;
+};
