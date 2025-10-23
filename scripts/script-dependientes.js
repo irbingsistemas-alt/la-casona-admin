@@ -9,8 +9,6 @@ let usuarioAutenticado = null;
 let menu = [];
 let cantidadesSeleccionadas = {};
 let total = 0;
-let pedidosCobrados = 0;
-let importeCobrado = 0;
 let pedidoActualId = null;
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -21,6 +19,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("contenido").style.display = "block";
     await cargarMenu();
     await cargarResumen();
+
+    const pendiente = localStorage.getItem("pedido_pendiente");
+    if (pendiente) {
+      pedidoActualId = pendiente;
+      await mostrarPedidoPendiente(pendiente);
+    }
   }
 });
 
@@ -168,18 +172,6 @@ async function enviarPedido() {
     return;
   }
 
-  const resumen = document.getElementById("resumen");
-  resumen.innerHTML = `
-    <p><strong>Local:</strong> ${local}</p>
-    <p><strong>Mesa:</strong> ${mesa}</p>
-    <ul>
-      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
-    </ul>
-    <p><strong>Total:</strong> ${total} CUP</p>
-  `;
-
-  document.getElementById("confirmacion").style.display = "block";
-
   const { data, error } = await supabase
     .from("pedidos")
     .insert([{
@@ -201,6 +193,7 @@ async function enviarPedido() {
   }
 
   pedidoActualId = data.id;
+  localStorage.setItem("pedido_pendiente", data.id);
 
   for (const item of items) {
     await supabase.from("pedido_items").insert([{
@@ -210,8 +203,39 @@ async function enviarPedido() {
       precio: item.precio
     }]);
   }
+
+  mostrarResumenPedido(data.local, data.mesa, items, data.total);
 }
-window.enviarPedido = enviarPedido;
+
+function mostrarResumenPedido(local, mesa, items, total) {
+  const resumen = document.getElementById("resumen");
+  resumen.innerHTML = `
+    <p><strong>Local:</strong> ${local}</p>
+    <p><strong>Mesa:</strong> ${mesa}</p>
+    <ul>
+      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
+    </ul>
+    <p><strong>Total:</strong> ${total} CUP</p>
+  `;
+  document.getElementById("confirmacion").style.display = "block";
+}
+async function mostrarPedidoPendiente(id) {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("local, mesa, total")
+    .eq("id", id)
+    .eq("cobrado", false)
+    .single();
+
+  if (error || !data) return;
+
+  const { data: items } = await supabase
+    .from("pedido_items")
+    .select("nombre, cantidad, precio")
+    .eq("pedido_id", id);
+
+  mostrarResumenPedido(data.local, data.mesa, items, data.total);
+}
 
 async function marcarCobrado() {
   if (!pedidoActualId) {
@@ -230,13 +254,14 @@ async function marcarCobrado() {
     return;
   }
 
+  localStorage.removeItem("pedido_pendiente");
+  pedidoActualId = null;
+
   const resumen = document.getElementById("resumen");
   resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
 
   cantidadesSeleccionadas = {};
   total = 0;
-  pedidoActualId = null;
-
   document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
   document.getElementById("total").textContent = "0";
 
@@ -255,8 +280,8 @@ async function cargarResumen() {
 
   if (error || !data) return;
 
-  pedidosCobrados = data.length;
-  importeCobrado = data.reduce((sum, p) => sum + p.total, 0);
+  const pedidosCobrados = data.length;
+  const importeCobrado = data.reduce((sum, p) => sum + p.total, 0);
 
   document.getElementById("total-cobrados").textContent = pedidosCobrados;
   document.getElementById("importe-cobrado").textContent = importeCobrado;
