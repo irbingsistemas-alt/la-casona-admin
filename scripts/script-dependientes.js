@@ -37,18 +37,19 @@ window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
-  const { data, error } = await supabase.rpc("login_dependiente", {
-    usuario_input: usuario,
-    clave_input: clave
-  });
+const { data, error } = await supabase.rpc("login_dependiente", {
+  usuario_input: usuario,
+  clave_input: clave
+}).single();
 
-  if (error || !data || data.length === 0 || data[0].rol !== "dependiente") {
-    alert("❌ Credenciales incorrectas o rol no autorizado");
-    return;
-  }
+if (error || !data || data.rol !== "dependiente") {
+  alert("❌ Credenciales incorrectas o rol no autorizado");
+  console.error("Login error:", error);
+  return;
+}
 
-  usuarioAutenticado = data[0].id;
-  localStorage.setItem("usuario_id", data[0].id);
+usuarioAutenticado = data.id;
+localStorage.setItem("usuario_id", data.id);
 
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
