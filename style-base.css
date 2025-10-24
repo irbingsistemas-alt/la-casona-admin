@@ -209,3 +209,70 @@ label {
   text-align: right;
   font-weight: bold;
 }
+/* Estados de visibilidad */
+.contenido-oculto { display: none; }
+
+/* Mensajes */
+.mensaje-error { color: #b00020; margin-top: 6px; }
+
+/* Contenedor de menú con scroll */
+.menu-scroll {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+/* Grupo por categoría */
+.categoria-grupo {
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #ddd;
+  margin-bottom: 15px;
+}
+.categoria-grupo h3 {
+  margin: 10px 0 5px;
+  font-size: 1rem;
+  color: #444;
+}
+
+/* Ítems del menú */
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.menu-item input {
+  width: 36px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.menu-item .precio {
+  width: 70px;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Confirmación persistente */
+.confirmacion-oculta { display: none; }
+.confirmacion-ok { color: green; }
+
+/* Bloques */
+.bloque-pendientes { margin-top: 30px; }
+
+/* Botonera */
+.botonera { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Botón salir */
+.btn-salir { margin-top: 20px; }
+
+/* Botón cobrar en pendientes */
+.btn-cobrar {
+  background: #28a745;
+}
+.btn-cobrar:hover {
+  background: #218838;
+}
