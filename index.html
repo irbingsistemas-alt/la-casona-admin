@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | La Casona de 17</title>
   <link rel="stylesheet" href="./style-base.css" />
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
 </head>
 <body>
   <div class="contenedor">
@@ -14,15 +15,21 @@
       <p>Inicia sesión para acceder al sistema</p>
     </header>
 
+    <!-- Formulario de login -->
     <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario" required />
-      <input type="password" id="clave" placeholder="Contraseña" required />
-      <button type="submit">Ingresar</button>
+      <label for="usuario"><strong>Usuario</strong></label>
+      <input type="text" id="usuario" placeholder="Usuario" required autocomplete="off" />
+
+      <label for="clave"><strong>Contraseña</strong></label>
+      <input type="password" id="clave" placeholder="Contraseña" required autocomplete="off" />
+
+      <button type="submit" id="btnLogin">Ingresar</button>
     </form>
 
-    <p id="mensajeError" style="color: red;"></p>
+    <p id="mensajeError" class="mensaje-error"></p>
   </div>
 
+  <!-- Script principal -->
   <script type="module" src="./index.js"></script>
 </body>
 </html>
