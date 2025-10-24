@@ -107,3 +107,29 @@ tbody tr:hover {
     color: #555;
   }
 }
+/* === Encabezado del login === */
+.header-login {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-login {
+  max-width: 180px;   /* controla el tamaño máximo */
+  height: auto;       /* mantiene proporción */
+  display: block;
+  margin: 0 auto 15px auto; /* centra horizontalmente y da espacio abajo */
+  border-radius: 12px;      /* opcional: esquinas redondeadas */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* opcional: sombra ligera */
+}
+
+.header-login h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: #a52a2a;
+}
+
+.header-login p {
+  margin: 5px 0 0;
+  color: #555;
+  font-weight: 500;
+}
