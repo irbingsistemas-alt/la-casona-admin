@@ -276,3 +276,9 @@ label {
 .btn-cobrar:hover {
   background: #218838;
 }
+/* Mensajes de error */
+.mensaje-error {
+  color: #b00020;
+  margin-top: 8px;
+  font-weight: 500;
+}
