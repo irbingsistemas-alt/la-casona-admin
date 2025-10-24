@@ -289,3 +289,54 @@ async function cargarResumen() {
   document.getElementById("total-pendientes").textContent = pendientes;
   document.getElementById("importe-pendiente").textContent = totalPendiente;
 }
+
+async function mostrarPedidosPendientes() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("id, mesa, local, total")
+    .eq("usuario_id", usuarioAutenticado)
+    .eq("cobrado", false)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
+
+  if (error) {
+    console.warn("Error al cargar pedidos pendientes:", error);
+    return;
+  }
+
+  let html = "<h3>🕒 Pedidos pendientes</h3>";
+  if (pedidos.length === 0) {
+    html += "<p>No hay pedidos pendientes.</p>";
+  } else {
+    html += "<ul>";
+    pedidos.forEach(p => {
+      html += `
+        <li>
+          <strong>Mesa ${p.mesa}</strong> (${p.local}) – ${p.total} CUP
+          <button onclick="cerrarPedido(${p.id})">Cobrar</button>
+        </li>
+      `;
+    });
+    html += "</ul>";
+  }
+
+  const contenedor = document.getElementById("pedidos-pendientes");
+  if (contenedor) contenedor.innerHTML = html;
+}
+
+async function cerrarPedido(pedidoId) {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ cobrado: true })
+    .eq("id", pedidoId);
+
+  if (!error) {
+    alert("✅ Pedido marcado como cobrado.");
+    await cargarResumen();
+    await mostrarPedidosPendientes();
+  } else {
+    alert("❌ Error al cerrar el pedido.");
+  }
+}
