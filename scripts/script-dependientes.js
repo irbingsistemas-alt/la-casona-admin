@@ -19,12 +19,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("contenido").style.display = "block";
     await cargarMenu();
     await cargarResumen();
-
-    const pendiente = localStorage.getItem("pedido_pendiente");
-    if (pendiente) {
-      pedidoActualId = pendiente;
-      await mostrarPedidoPendiente(pendiente);
-    }
+    await mostrarPedidosPendientes();
   }
 
   const hoy = new Date().toLocaleDateString("es-ES", {
@@ -69,14 +64,15 @@ window.iniciarSesion = async function () {
 
   await cargarMenu();
   await cargarResumen();
+  await mostrarPedidosPendientes();
 };
 
 async function cargarMenu() {
   const { data, error } = await supabase
     .from("menus")
-    .select("nombre, precio")
+    .select("nombre, precio, categoria")
     .eq("activo", true)
-    .order("nombre", { ascending: true });
+    .order("categoria", { ascending: true });
 
   if (error || !data) {
     alert("❌ Error al cargar el menú");
@@ -84,28 +80,50 @@ async function cargarMenu() {
   }
 
   menu = data;
-  mostrarMenuPlano(menu);
+  mostrarMenuAgrupado(menu);
 }
 
-function mostrarMenuPlano(platos) {
+function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   contenedor.innerHTML = "";
 
-  const grupo = document.createElement("div");
-  grupo.className = "categoria-grupo";
+  const filtro = document.getElementById("filtro");
+  filtro.innerHTML = '<option value="todos">Todos</option>';
 
-  platos.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "menu-item";
-    div.innerHTML = `
-      <div>${item.nombre}</div>
-      <div class="precio">${item.precio} CUP</div>
-      <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
-    `;
-    grupo.appendChild(div);
+  const agrupado = {};
+  platos.forEach(p => {
+    if (!agrupado[p.categoria]) {
+      agrupado[p.categoria] = [];
+      const option = document.createElement("option");
+      option.value = p.categoria;
+      option.textContent = p.categoria;
+      filtro.appendChild(option);
+    }
+    agrupado[p.categoria].push(p);
   });
 
-  contenedor.appendChild(grupo);
+  for (const categoria in agrupado) {
+    const grupo = document.createElement("div");
+    grupo.className = "categoria-grupo";
+    grupo.setAttribute("data-categoria", categoria);
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria;
+    grupo.appendChild(titulo);
+
+    agrupado[categoria].forEach(item => {
+      const div = document.createElement("div");
+      div.className = "menu-item";
+      div.innerHTML = `
+        <div>${item.nombre}</div>
+        <div class="precio">${item.precio} CUP</div>
+        <input type="number" min="0" value="0" data-name="${item.nombre}" data-price="${item.precio}" />
+      `;
+      grupo.appendChild(div);
+    });
+
+    contenedor.appendChild(grupo);
+  }
 
   document.querySelectorAll("input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
@@ -118,6 +136,16 @@ function mostrarMenuPlano(platos) {
 
   calcularTotal();
 }
+
+window.filtrarMenu = function () {
+  const seleccion = document.getElementById("filtro").value;
+  const grupos = document.querySelectorAll(".categoria-grupo");
+
+  grupos.forEach(grupo => {
+    const categoria = grupo.getAttribute("data-categoria");
+    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
+  });
+};
 
 function calcularTotal() {
   total = 0;
@@ -191,39 +219,42 @@ window.enviarPedido = async function () {
     }]);
   }
 
-  mostrarResumenPedido(data.local, data.mesa, items, data.total);
+  await mostrarPedidosPendientes();
 };
 
-function mostrarResumenPedido(local, mesa, items, total) {
-  const resumen = document.getElementById("resumen");
-  resumen.innerHTML = `
-    <p><strong>Local:</strong> ${local}</p>
-    <p><strong>Mesa:</strong> ${mesa}</p>
-    <ul>
-      ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
-    </ul>
-    <p><strong>Total:</strong> ${total} CUP</p>
-  `;
-  document.getElementById("confirmacion").style.display = "block";
-  document.getElementById("confirmacion").scrollIntoView({ behavior: "smooth" });
-}
+async function mostrarPedidosPendientes() {
+  const id = localStorage.getItem("usuario_id");
 
-async function mostrarPedidoPendiente(id) {
-  const { data, error } = await supabase
+  const { data: pedidos, error } = await supabase
     .from("pedidos")
-    .select("local, mesa, total")
-    .eq("id", id)
+    .select("id, local, mesa, total, fecha")
+    .eq("usuario_id", id)
     .eq("cobrado", false)
-    .single();
+    .order("fecha", { ascending: true });
 
-  if (error || !data) return;
+  if (error || !pedidos || pedidos.length === 0) return;
 
-  const { data: items } = await supabase
-    .from("pedido_items")
-    .select("nombre, cantidad, precio")
-    .eq("pedido_id", id);
+  const resumen = document.getElementById("resumen");
+  resumen.innerHTML = "";
 
-  mostrarResumenPedido(data.local, data.mesa, items, data.total);
+  for (const pedido of pedidos) {
+    const { data: items } = await supabase
+      .from("pedido_items")
+      .select("nombre, cantidad, precio")
+      .eq("pedido_id", pedido.id);
+
+    const bloque = document.createElement("div");
+    bloque.innerHTML = `
+      <h4>🧾 Pedido ${pedido.id.slice(0, 8)} — ${pedido.local} / Mesa ${pedido.mesa}</h4>
+      <ul>
+        ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
+      </ul>
+      <p><strong>Total:</strong> ${pedido.total} CUP</p>
+    `;
+    resumen.appendChild(bloque);
+  }
+
+  document.getElementById("confirmacion").style.display = "block";
 }
 
 window.marcarCobrado = async function () {
@@ -246,9 +277,6 @@ window.marcarCobrado = async function () {
   localStorage.removeItem("pedido_pendiente");
   pedidoActualId = null;
 
-  const resumen = document.getElementById("resumen");
-  resumen.innerHTML += `<p style="color:green;"><strong>✅ Pedido cobrado</strong></p>`;
-
   cantidadesSeleccionadas = {};
   total = 0;
   document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
@@ -256,6 +284,7 @@ window.marcarCobrado = async function () {
   document.getElementById("cantidad-items").textContent = "0";
 
   await cargarResumen();
+  await mostrarPedidosPendientes();
 };
 
 async function cargarResumen() {
