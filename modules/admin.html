@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Módulo de Administración</title>
+  <link rel="stylesheet" href="../style-base.css">
   <script type="module" src="admin.js"></script>
 </head>
 <body>
@@ -19,8 +20,16 @@
       <option value="cocina">Cocina</option>
       <option value="bar">Bar</option>
       <option value="gerente">Gerente</option>
+      <option value="admin">Admin</option>
     </select>
     <button type="submit">Crear</button>
+  </form>
+
+  <h2>Cambiar Clave</h2>
+  <form id="cambiarForm">
+    <input type="text" id="usuarioClave" placeholder="Usuario" required>
+    <input type="password" id="nuevaClaveUsuario" placeholder="Nueva clave" required>
+    <button type="submit">Cambiar Clave</button>
   </form>
 
   <h2>Usuarios Existentes</h2>
