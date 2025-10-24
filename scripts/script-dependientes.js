@@ -29,26 +29,33 @@ window.iniciarSesion = async function () {
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  await cargarMenu();
-  await cargarResumen();
-  await mostrarPedidosPendientes();
+  await Promise.all([
+    cargarMenu(),
+    cargarResumen(),
+    mostrarPedidosPendientes()
+  ]);
 };
 
 async function cargarMenu() {
+  const cache = localStorage.getItem("menu_cache");
+  if (cache) {
+    menu = JSON.parse(cache);
+    mostrarMenuAgrupado(menu);
+    actualizarFiltroCategorias(menu);
+  }
+
   const { data, error } = await supabase
     .from("menus")
     .select("nombre, precio, categoria")
     .eq("disponible", true)
     .order("categoria", { ascending: true });
 
-  if (error) {
-    alert("❌ Error al cargar el menú.");
-    return;
+  if (!error && data) {
+    menu = data;
+    localStorage.setItem("menu_cache", JSON.stringify(menu));
+    mostrarMenuAgrupado(menu);
+    actualizarFiltroCategorias(menu);
   }
-
-  menu = data;
-  mostrarMenuAgrupado(menu);
-  actualizarFiltroCategorias(menu);
 }
 
 function mostrarMenuAgrupado(platos) {
@@ -196,7 +203,7 @@ window.enviarPedido = async function () {
       .insert([{
         local,
         mesa,
-        total,
+        total: items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),
         entregado: false,
         cobrado: false,
         fecha: new Date().toISOString(),
@@ -248,3 +255,37 @@ window.cerrarSesion = function () {
   document.getElementById("resumen").innerHTML = "";
   document.getElementById("usuario-conectado").textContent = "";
 };
+
+async function cargarResumen() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("cobrado, total")
+    .eq("usuario_id", usuarioAutenticado)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
+
+  if (error) {
+    console.warn("Error al cargar resumen:", error);
+    return;
+  }
+
+  let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
+
+  pedidos.forEach(p => {
+    if (p.cobrado) {
+      cobrados++;
+      totalCobrado += p.total;
+    } else {
+      pendientes++;
+      totalPendiente += p.total;
+    }
+  });
+
+  document.getElementById("fecha-resumen").textContent = hoy;
+  document.getElementById("total-cobrados").textContent = cobrados;
+  document.getElementById("importe-cobrado").textContent = totalCobrado;
+  document.getElementById("total-pendientes").textContent = pendientes;
+  document.getElementById("importe-pendiente").textContent = totalPendiente;
+}
