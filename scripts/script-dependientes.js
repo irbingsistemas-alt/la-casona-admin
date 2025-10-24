@@ -58,6 +58,7 @@ window.iniciarSesion = async function () {
 
   usuarioAutenticado = data.id;
   localStorage.setItem("usuario_id", data.id);
+  document.getElementById("usuario-conectado").textContent = data.usuario;
 
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
@@ -243,9 +244,15 @@ async function mostrarPedidosPendientes() {
       .select("nombre, cantidad, precio")
       .eq("pedido_id", pedido.id);
 
+    const hora = new Date(pedido.fecha).toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
     const bloque = document.createElement("div");
     bloque.innerHTML = `
-      <h4>🧾 Pedido ${pedido.id.slice(0, 8)} — ${pedido.local} / Mesa ${pedido.mesa}</h4>
+      <h4>🧾 Pedido ${pedido.id.slice(0, 8)} — ${pedido.local} / Mesa ${pedido.mesa} — ${hora}</h4>
       <ul>
         ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
       </ul>
@@ -289,12 +296,15 @@ window.marcarCobrado = async function () {
 
 async function cargarResumen() {
   const id = localStorage.getItem("usuario_id");
+  const hoy = new Date().toISOString().split("T")[0];
 
   const { data: pendientes } = await supabase
     .from("pedidos")
     .select("total")
     .eq("usuario_id", id)
-    .eq("cobrado", false);
+    .eq("cobrado", false)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
 
   const pedidosPendientes = pendientes?.length || 0;
   const importePendiente = pendientes?.reduce((sum, p) => sum + p.total, 0) || 0;
@@ -306,7 +316,9 @@ async function cargarResumen() {
     .from("pedidos")
     .select("total")
     .eq("usuario_id", id)
-    .eq("cobrado", true);
+    .eq("cobrado", true)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
 
   const pedidosCobrados = cobrados?.length || 0;
   const importeCobrado = cobrados?.reduce((sum, p) => sum + p.total, 0) || 0;
