@@ -1,12 +1,12 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabase = createClient(
+export const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "TU_ANON_KEY_AQUI" // ⚠️ Sustituye con tu anon key real
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWUI" // ⚠️ Sustituye con tu anon key real
 );
 
 // Validar sesión y rol
-const usuario = localStorage.getItem("usuario");
+export const usuario = localStorage.getItem("usuario");
 const rol = localStorage.getItem("rol");
 
 if (!usuario || !rol || (rol !== "admin" && rol !== "gerente")) {
@@ -31,7 +31,8 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
   const { error } = await supabase.rpc("crear_usuario", {
     p_usuario: nuevoUsuario,
     p_clave: nuevaClave,
-    p_rol: nuevoRol
+    p_rol: nuevoRol,
+    p_admin: usuario
   });
 
   if (error) {
@@ -39,7 +40,7 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
   } else {
     alert("Usuario creado con éxito");
     document.getElementById("crearForm").reset();
-    cargarUsuarios();
+    window.dispatchEvent(new Event("recargarDatos"));
   }
 });
 
@@ -51,7 +52,8 @@ document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
 
   const { error } = await supabase.rpc("cambiar_clave", {
     p_usuario: usuarioClave,
-    p_clave: nuevaClaveUsuario
+    p_clave: nuevaClaveUsuario,
+    p_admin: usuario
   });
 
   if (error) {
@@ -59,45 +61,6 @@ document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
   } else {
     alert("Clave actualizada con éxito para " + usuarioClave);
     document.getElementById("cambiarForm").reset();
+    window.dispatchEvent(new Event("recargarDatos"));
   }
 });
-
-// Cargar usuarios
-async function cargarUsuarios() {
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select("usuario, roles(nombre)")
-    .order("usuario");
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  const tbody = document.getElementById("tablaUsuarios");
-  tbody.innerHTML = "";
-  data.forEach(u => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${u.usuario}</td>
-      <td>${u.roles.nombre}</td>
-      <td>
-        <button onclick="borrarUsuario('${u.usuario}')">Borrar</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-window.borrarUsuario = async (usuario) => {
-  if (!confirm("¿Seguro que quieres borrar " + usuario + "?")) return;
-  const { error } = await supabase.rpc("borrar_usuario", { p_usuario: usuario });
-  if (error) {
-    alert("Error borrando usuario: " + error.message);
-  } else {
-    alert("Usuario borrado");
-    cargarUsuarios();
-  }
-};
-
-cargarUsuarios();
