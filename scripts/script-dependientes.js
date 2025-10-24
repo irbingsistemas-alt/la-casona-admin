@@ -8,6 +8,15 @@ let menu = [];
 let usuarioAutenticado = null;
 let cantidadesSeleccionadas = {};
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
@@ -39,7 +48,7 @@ window.iniciarSesion = async function () {
 async function cargarMenu() {
   const { data, error } = await supabase
     .from("menus")
-    .select("nombre, precio, categoria")
+    .select("id, nombre, precio, categoria")
     .eq("disponible", true)
     .order("categoria", { ascending: true });
 
@@ -67,15 +76,15 @@ function mostrarMenuAgrupado(platos) {
   for (const categoria in grupos) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-    grupo.innerHTML = `<h3>${categoria}</h3>`;
+    grupo.innerHTML = `<h3>${escapeHtml(categoria)}</h3>`;
 
     grupos[categoria].forEach(plato => {
       const item = document.createElement("div");
       item.className = "menu-item";
       item.innerHTML = `
-        <div>${plato.nombre}</div>
+        <div>${escapeHtml(plato.nombre)}</div>
         <div class="precio">${plato.precio} CUP</div>
-        <input type="number" min="0" value="0" onchange="actualizarCantidad('${plato.nombre}', this.value)" />
+        <input type="number" min="0" value="0" onchange="actualizarCantidad('${plato.id}', this.value)" />
       `;
       grupo.appendChild(item);
     });
@@ -106,10 +115,10 @@ window.filtrarMenu = function () {
   }
 };
 
-window.actualizarCantidad = function (nombre, cantidad) {
-  cantidadesSeleccionadas[nombre] = parseInt(cantidad);
-  const total = Object.entries(cantidadesSeleccionadas).reduce((sum, [nombre, cantidad]) => {
-    const plato = menu.find(p => p.nombre === nombre);
+window.actualizarCantidad = function (menuId, cantidad) {
+  cantidadesSeleccionadas[menuId] = parseInt(cantidad);
+  const total = Object.entries(cantidadesSeleccionadas).reduce((sum, [id, cantidad]) => {
+    const plato = menu.find(p => p.id === id);
     return sum + (plato ? plato.precio * cantidad : 0);
   }, 0);
   const items = Object.values(cantidadesSeleccionadas).reduce((sum, c) => sum + c, 0);
@@ -122,11 +131,11 @@ window.enviarPedido = async function () {
   const hoy = new Date().toISOString().split("T")[0];
 
   const items = [];
-  for (const nombre in cantidadesSeleccionadas) {
-    const cantidad = cantidadesSeleccionadas[nombre];
-    const plato = menu.find(p => p.nombre === nombre);
+  for (const menuId in cantidadesSeleccionadas) {
+    const cantidad = cantidadesSeleccionadas[menuId];
+    const plato = menu.find(p => p.id === menuId);
     if (cantidad > 0 && plato) {
-      items.push({ nombre, cantidad, precio: plato.precio });
+      items.push({ menu_id: menuId, nombre: plato.nombre, cantidad, precio: plato.precio });
     }
   }
 
@@ -156,22 +165,19 @@ window.enviarPedido = async function () {
       const { data: existente } = await supabase
         .from("pedido_items")
         .select("id, cantidad")
-        .eq("pedido_id", pedidoId)
-        .eq("nombre", item.nombre)
+        .filter("pedido_id", "eq", pedidoId)
+        .filter("menu_id", "eq", item.menu_id)
         .single();
 
       if (existente) {
-        if (item.cantidad === 0) {
-          await supabase.from("pedido_items").delete().eq("id", existente.id);
-        } else {
-          await supabase
-            .from("pedido_items")
-            .update({ cantidad: item.cantidad, precio: item.precio })
-            .eq("id", existente.id);
-        }
+        await supabase
+          .from("pedido_items")
+          .update({ cantidad: item.cantidad, precio: item.precio })
+          .eq("id", existente.id);
       } else {
         await supabase.from("pedido_items").insert([{
           pedido_id: pedidoId,
+          menu_id: item.menu_id,
           nombre: item.nombre,
           cantidad: item.cantidad,
           precio: item.precio
@@ -194,7 +200,7 @@ window.enviarPedido = async function () {
   } else {
     mensaje = "🆕 Nuevo pedido creado.";
     const total = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("pedidos")
       .insert([{
         local,
@@ -213,6 +219,7 @@ window.enviarPedido = async function () {
     for (const item of items) {
       await supabase.from("pedido_items").insert([{
         pedido_id: pedidoId,
+        menu_id: item.menu_id,
         nombre: item.nombre,
         cantidad: item.cantidad,
         precio: item.precio
@@ -225,7 +232,7 @@ window.enviarPedido = async function () {
     <p>${mensaje}</p>
     <p><strong>Mesa:</strong> ${mesa}</p>
     <p><strong>Local:</strong> ${local}</p>
-    <p><strong>Platos:</strong> ${items.map(i => `${i.nombre} (${i.cantidad})`).join(", ")}</p>
+    <p><strong>Platos:</strong> ${items.map(i => `${escapeHtml(i.nombre)} (${i.cantidad})`).join(", ")}</p>
   `;
 
   document.getElementById("usuario-conectado").textContent = localStorage.getItem("usuario_nombre") || "";
@@ -310,8 +317,8 @@ async function mostrarPedidosPendientes() {
     pedidos.forEach(p => {
       html += `
         <li>
-          <strong>Mesa ${p.mesa}</strong> (${p.local}) – ${p.total} CUP
-          <button onclick="cerrarPedido(${p.id})">Cobrar</button>
+          <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${p.total} CUP
+          <button onclick="cerrarPedido('${p.id}')">Cobrar</button>
         </li>
       `;
     });
