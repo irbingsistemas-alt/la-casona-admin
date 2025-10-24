@@ -9,7 +9,6 @@ let usuarioAutenticado = null;
 let menu = [];
 let cantidadesSeleccionadas = {};
 let total = 0;
-let pedidoActualId = null;
 
 window.addEventListener("DOMContentLoaded", async () => {
   const id = localStorage.getItem("usuario_id");
@@ -31,11 +30,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("fecha-resumen").textContent = hoy;
 });
 
-window.actualizarEstiloLocal = function () {
-  const local = document.getElementById("local").value;
-  document.body.setAttribute("data-local", local.toLowerCase());
-};
-
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
@@ -52,7 +46,6 @@ window.iniciarSesion = async function () {
 
   if (error || !data || data.rol !== "dependiente") {
     alert("❌ Credenciales incorrectas o rol no autorizado");
-    console.error("Login error:", error);
     return;
   }
 
@@ -88,25 +81,15 @@ function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   contenedor.innerHTML = "";
 
-  const filtro = document.getElementById("filtro");
-  filtro.innerHTML = '<option value="todos">Todos</option>';
-
   const agrupado = {};
   platos.forEach(p => {
-    if (!agrupado[p.categoria]) {
-      agrupado[p.categoria] = [];
-      const option = document.createElement("option");
-      option.value = p.categoria;
-      option.textContent = p.categoria;
-      filtro.appendChild(option);
-    }
+    if (!agrupado[p.categoria]) agrupado[p.categoria] = [];
     agrupado[p.categoria].push(p);
   });
 
   for (const categoria in agrupado) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-    grupo.setAttribute("data-categoria", categoria);
 
     const titulo = document.createElement("h3");
     titulo.textContent = categoria;
@@ -137,16 +120,6 @@ function mostrarMenuAgrupado(platos) {
 
   calcularTotal();
 }
-
-window.filtrarMenu = function () {
-  const seleccion = document.getElementById("filtro").value;
-  const grupos = document.querySelectorAll(".categoria-grupo");
-
-  grupos.forEach(grupo => {
-    const categoria = grupo.getAttribute("data-categoria");
-    grupo.style.display = seleccion === "todos" || categoria === seleccion ? "block" : "none";
-  });
-};
 
 function calcularTotal() {
   total = 0;
@@ -204,12 +177,8 @@ window.enviarPedido = async function () {
 
   if (error) {
     alert("❌ Error al guardar el pedido");
-    console.error(error);
     return;
   }
-
-  pedidoActualId = data.id;
-  localStorage.setItem("pedido_pendiente", data.id);
 
   for (const item of items) {
     await supabase.from("pedido_items").insert([{
@@ -220,20 +189,19 @@ window.enviarPedido = async function () {
     }]);
   }
 
+  await cargarResumen();
   await mostrarPedidosPendientes();
 };
 
 async function mostrarPedidosPendientes() {
   const id = localStorage.getItem("usuario_id");
 
-  const { data: pedidos, error } = await supabase
+  const { data: pedidos } = await supabase
     .from("pedidos")
     .select("id, local, mesa, total, fecha")
     .eq("usuario_id", id)
     .eq("cobrado", false)
     .order("fecha", { ascending: true });
-
-  if (error || !pedidos || pedidos.length === 0) return;
 
   const resumen = document.getElementById("resumen");
   resumen.innerHTML = "";
@@ -257,6 +225,7 @@ async function mostrarPedidosPendientes() {
         ${items.map(p => `<li>${p.nombre} x${p.cantidad} = ${p.precio * p.cantidad} CUP</li>`).join("")}
       </ul>
       <p><strong>Total:</strong> ${pedido.total} CUP</p>
+      <button onclick="marcarPedidoCobrado('${pedido.id}')">Cobrar este pedido</button>
     `;
     resumen.appendChild(bloque);
   }
@@ -264,31 +233,16 @@ async function mostrarPedidosPendientes() {
   document.getElementById("confirmacion").style.display = "block";
 }
 
-window.marcarCobrado = async function () {
-  if (!pedidoActualId) {
-    alert("⚠️ No hay pedido activo para cobrar.");
-    return;
-  }
-
+window.marcarPedidoCobrado = async function (id) {
   const { error } = await supabase
     .from("pedidos")
     .update({ cobrado: true })
-    .eq("id", pedidoActualId);
+    .eq("id", id);
 
   if (error) {
     alert("❌ Error al marcar como cobrado");
-    console.error(error);
     return;
   }
-
-  localStorage.removeItem("pedido_pendiente");
-  pedidoActualId = null;
-
-  cantidadesSeleccionadas = {};
-  total = 0;
-  document.querySelectorAll(".menu-item input").forEach(input => input.value = "0");
-  document.getElementById("total").textContent = "0";
-  document.getElementById("cantidad-items").textContent = "0";
 
   await cargarResumen();
   await mostrarPedidosPendientes();
@@ -306,10 +260,10 @@ async function cargarResumen() {
     .gte("fecha", `${hoy}T00:00:00`)
     .lte("fecha", `${hoy}T23:59:59`);
 
-  const pedidosPendientes = pendientes?.length || 0;
+  const totalPendientes = pendientes?.length || 0;
   const importePendiente = pendientes?.reduce((sum, p) => sum + p.total, 0) || 0;
 
-  document.getElementById("total-pendientes").textContent = pedidosPendientes;
+  document.getElementById("total-pendientes").textContent = totalPendientes;
   document.getElementById("importe-pendiente").textContent = importePendiente;
 
   const { data: cobrados } = await supabase
@@ -320,10 +274,10 @@ async function cargarResumen() {
     .gte("fecha", `${hoy}T00:00:00`)
     .lte("fecha", `${hoy}T23:59:59`);
 
-  const pedidosCobrados = cobrados?.length || 0;
+  const totalCobrados = cobrados?.length || 0;
   const importeCobrado = cobrados?.reduce((sum, p) => sum + p.total, 0) || 0;
 
-  document.getElementById("total-cobrados").textContent = pedidosCobrados;
+  document.getElementById("total-cobrados").textContent = totalCobrados;
   document.getElementById("importe-cobrado").textContent = importeCobrado;
 }
 
