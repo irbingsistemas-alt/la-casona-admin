@@ -2,10 +2,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "TU_ANON_KEY"
+  "TU_ANON_KEY_AQUI" // ⚠️ Sustituye con tu anon key real
 );
 
-// Validar sesión
+// Validar sesión y rol
 const usuario = localStorage.getItem("usuario");
 const rol = localStorage.getItem("rol");
 
@@ -24,7 +24,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Crear usuario
 document.getElementById("crearForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nuevoUsuario = document.getElementById("nuevoUsuario").value;
+  const nuevoUsuario = document.getElementById("nuevoUsuario").value.toLowerCase();
   const nuevaClave = document.getElementById("nuevaClave").value;
   const nuevoRol = document.getElementById("nuevoRol").value;
 
@@ -38,7 +38,27 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
     alert("Error creando usuario: " + error.message);
   } else {
     alert("Usuario creado con éxito");
+    document.getElementById("crearForm").reset();
     cargarUsuarios();
+  }
+});
+
+// Cambiar clave
+document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const usuarioClave = document.getElementById("usuarioClave").value.toLowerCase();
+  const nuevaClaveUsuario = document.getElementById("nuevaClaveUsuario").value;
+
+  const { error } = await supabase.rpc("cambiar_clave", {
+    p_usuario: usuarioClave,
+    p_clave: nuevaClaveUsuario
+  });
+
+  if (error) {
+    alert("Error cambiando clave: " + error.message);
+  } else {
+    alert("Clave actualizada con éxito para " + usuarioClave);
+    document.getElementById("cambiarForm").reset();
   }
 });
 
