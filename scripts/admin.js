@@ -1,12 +1,12 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-export const supabase = createClient(
+const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWUI" // ⚠️ Sustituye con tu anon key real
+  "TU_ANON_KEY_AQUI" // ⚠️ Sustituye con tu anon key real
 );
 
 // Validar sesión y rol
-export const usuario = localStorage.getItem("usuario");
+const usuario = localStorage.getItem("usuario");
 const rol = localStorage.getItem("rol");
 
 if (!usuario || !rol || (rol !== "admin" && rol !== "gerente")) {
@@ -40,7 +40,8 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
   } else {
     alert("Usuario creado con éxito");
     document.getElementById("crearForm").reset();
-    window.dispatchEvent(new Event("recargarDatos"));
+    cargarUsuarios();
+    cargarLogs();
   }
 });
 
@@ -61,10 +62,9 @@ document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
   } else {
     alert("Clave actualizada con éxito para " + usuarioClave);
     document.getElementById("cambiarForm").reset();
-    window.dispatchEvent(new Event("recargarDatos"));
+    cargarLogs();
   }
 });
-import { supabase, usuario } from "./admin-parte1.js";
 
 // Cargar usuarios
 async function cargarUsuarios() {
@@ -138,9 +138,3 @@ async function cargarLogs() {
 // Inicializar
 cargarUsuarios();
 cargarLogs();
-
-// Recargar cuando se cree/edite usuario
-window.addEventListener("recargarDatos", () => {
-  cargarUsuarios();
-  cargarLogs();
-});
