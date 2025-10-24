@@ -3,35 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Area - Dependientes | La Casona de 17</title>
+  <title>Menú - Dependientas | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
   <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
   <style>
-    .categoria-grupo {
-      max-height: 300px;
+    /* Scroll único para todo el menú */
+    #menu {
+      max-height: 500px;
       overflow-y: auto;
       padding-right: 10px;
       border: 1px solid #ccc;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
+
+    /* Agrupación por categoría */
+    .categoria-grupo {
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #ddd;
+      margin-bottom: 15px;
+    }
+
+    .categoria-grupo h3 {
+      margin: 10px 0 5px;
+      font-size: 1rem;
+      color: #444;
+    }
+
+    /* Ítems del menú */
     .menu-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px dashed #ddd;
+      padding: 4px 0;
       gap: 10px;
+      font-size: 0.9rem;
     }
+
     .menu-item input {
-      width: 40px;
+      width: 36px;
       text-align: center;
+      font-size: 0.9rem;
     }
+
     .menu-item div {
       flex: 1;
     }
+
     .menu-item .precio {
-      width: 80px;
+      width: 70px;
       text-align: right;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -74,6 +95,12 @@
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
 
+      <!-- Filtro por categoría -->
+      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+      <select id="filtro" onchange="filtrarMenu()">
+        <option value="todos">Todos</option>
+      </select>
+
       <!-- Menú agrupado por categoría -->
       <div id="menu"></div>
 
@@ -93,6 +120,6 @@
   </div>
 
   <!-- Script principal -->
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+  <script type="module" src="../scripts/script-dependientas.js"></script>
 </body>
 </html>
