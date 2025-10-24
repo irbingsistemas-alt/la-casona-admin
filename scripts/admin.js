@@ -64,3 +64,83 @@ document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
     window.dispatchEvent(new Event("recargarDatos"));
   }
 });
+import { supabase, usuario } from "./admin-parte1.js";
+
+// Cargar usuarios
+async function cargarUsuarios() {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("usuario, roles(nombre)")
+    .order("usuario");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const tbody = document.getElementById("tablaUsuarios");
+  tbody.innerHTML = "";
+  data.forEach(u => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.usuario}</td>
+      <td>${u.roles.nombre}</td>
+      <td>
+        <button onclick="borrarUsuario('${u.usuario}')">Borrar</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.borrarUsuario = async (usuarioAfectado) => {
+  if (!confirm("¿Seguro que quieres borrar " + usuarioAfectado + "?")) return;
+  const { error } = await supabase.rpc("borrar_usuario", { 
+    p_usuario: usuarioAfectado, 
+    p_admin: usuario 
+  });
+  if (error) {
+    alert("Error borrando usuario: " + error.message);
+  } else {
+    alert("Usuario borrado");
+    cargarUsuarios();
+    cargarLogs();
+  }
+};
+
+// Cargar logs
+async function cargarLogs() {
+  const { data, error } = await supabase
+    .from("logs_admin")
+    .select("*")
+    .order("fecha", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const tbody = document.getElementById("tablaLogs");
+  tbody.innerHTML = "";
+  data.forEach(l => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${l.accion}</td>
+      <td>${l.usuario_afectado}</td>
+      <td>${l.realizado_por}</td>
+      <td>${new Date(l.fecha).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Inicializar
+cargarUsuarios();
+cargarLogs();
+
+// Recargar cuando se cree/edite usuario
+window.addEventListener("recargarDatos", () => {
+  cargarUsuarios();
+  cargarLogs();
+});
