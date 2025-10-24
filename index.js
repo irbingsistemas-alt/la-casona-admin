@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // tu anon key
 );
 
 const form = document.getElementById("loginForm");
@@ -16,10 +16,7 @@ form.addEventListener("submit", async (e) => {
   const clave = document.getElementById("clave").value.trim();
 
   const { data, error } = await supabase
-    .from("usuarios")
-    .select("rol")
-    .eq("usuario", usuario)
-    .eq("clave", clave)
+    .rpc("login_usuario", { usuario_input: usuario, clave_input: clave })
     .single();
 
   if (error || !data) {
@@ -27,7 +24,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  localStorage.setItem("usuarioActivo", usuario);
+  localStorage.setItem("usuarioActivo", data.usuario);
   localStorage.setItem("rol", data.rol);
 
   const destino = {
@@ -37,7 +34,7 @@ form.addEventListener("submit", async (e) => {
     barra: "modules/barra.html",
     pizzeria: "modules/pizzeria.html",
     reparto: "modules/reparto.html",
-    administrador: "modules/usuarios.html",
+    gerente: "modules/usuarios.html",   // nuevo rol
     dependiente: "modules/dependientes.html"
   };
 
