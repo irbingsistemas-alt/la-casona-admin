@@ -6,52 +6,6 @@
   <title>Menú - Dependientas | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
   <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
-  <style>
-    #menu {
-      max-height: 500px;
-      overflow-y: auto;
-      padding-right: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-    }
-
-    .categoria-grupo {
-      padding-bottom: 10px;
-      border-bottom: 1px dashed #ddd;
-      margin-bottom: 15px;
-    }
-
-    .categoria-grupo h3 {
-      margin: 10px 0 5px;
-      font-size: 1rem;
-      color: #444;
-    }
-
-    .menu-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
-      gap: 10px;
-      font-size: 0.9rem;
-    }
-
-    .menu-item input {
-      width: 36px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    .menu-item div {
-      flex: 1;
-    }
-
-    .menu-item .precio {
-      width: 70px;
-      text-align: right;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
   <div class="contenedor">
@@ -64,13 +18,16 @@
     <!-- Login -->
     <section id="login">
       <h3>Inicio de sesión</h3>
+      <label for="usuario"><strong>Usuario</strong></label>
       <input type="text" id="usuario" placeholder="Usuario" autocomplete="off" />
+      <label for="clave"><strong>Contraseña</strong></label>
       <input type="password" id="clave" placeholder="Contraseña" autocomplete="off" />
-      <button onclick="iniciarSesion()">Entrar</button>
+      <button id="btnEntrar">Entrar</button>
+      <p id="loginError" class="mensaje-error"></p>
     </section>
 
     <!-- Contenido operativo -->
-    <section id="contenido" style="display:none;">
+    <section id="contenido" class="contenido-oculto">
       <p><strong>Usuario conectado:</strong> <span id="usuario-conectado"></span></p>
 
       <div id="resumen-cobros">
@@ -94,28 +51,31 @@
 
       <!-- Filtro por categoría -->
       <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-      <select id="filtro" onchange="filtrarMenu()">
+      <select id="filtro">
         <option value="todos">Todos</option>
       </select>
 
       <!-- Menú agrupado por categoría -->
-      <div id="menu"></div>
+      <div id="menu" class="menu-scroll"></div>
 
       <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
       <p><strong>Platos seleccionados:</strong> <span id="cantidad-items">0</span></p>
-      <button onclick="enviarPedido()">Revisar pedido</button>
-      <button onclick="limpiarSeleccion()">Limpiar selección</button>
+
+      <div class="botonera">
+        <button id="btnRevisarPedido">Revisar pedido</button>
+        <button id="btnLimpiarSeleccion">Limpiar selección</button>
+      </div>
 
       <!-- Confirmación persistente -->
-      <div id="confirmacion" style="display:none; margin-top:30px;">
-        <h3 style="color:green;">✅ Pedido procesado</h3>
+      <div id="confirmacion" class="confirmacion-oculta">
+        <h3 class="confirmacion-ok">✅ Pedido procesado</h3>
         <div id="resumen"></div>
       </div>
 
       <!-- Pedidos pendientes -->
-      <div id="pedidos-pendientes" style="margin-top:30px;"></div>
+      <div id="pedidos-pendientes" class="bloque-pendientes"></div>
 
-      <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
+      <button id="btnCerrarSesion" class="btn-salir">Cerrar sesión</button>
     </section>
   </div>
 
