@@ -1,7 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // tu anon key
 );
 
 let menu = [];
@@ -17,34 +18,33 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
-window.iniciarSesion = async function () {
+// Login seguro con RPC
+async function iniciarSesion() {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
+  const loginError = document.getElementById("loginError");
+  loginError.textContent = "";
 
-  const { data, error } = await supabase.rpc("login_dependiente", {
-    usuario_input: usuario,
-    clave_input: clave
-  }).single();
+  const { data, error } = await supabase
+    .rpc("login_usuario", { usuario_input: usuario, clave_input: clave })
+    .single();
 
   if (error || !data) {
-    alert("❌ Usuario o contraseña incorrectos.");
+    loginError.textContent = "❌ Usuario o contraseña incorrectos.";
     return;
   }
 
   usuarioAutenticado = data.id;
   localStorage.setItem("usuario_nombre", data.usuario);
-
   document.getElementById("usuario-conectado").textContent = data.usuario;
-  document.getElementById("login").style.display = "none";
-  document.getElementById("contenido").style.display = "block";
 
-  await Promise.all([
-    cargarMenu(),
-    cargarResumen(),
-    mostrarPedidosPendientes()
-  ]);
-};
+  document.getElementById("login").classList.add("contenido-oculto");
+  document.getElementById("contenido").classList.remove("contenido-oculto");
 
+  await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
+}
+
+// Cargar menú disponible
 async function cargarMenu() {
   const { data, error } = await supabase
     .from("menus")
@@ -53,15 +53,16 @@ async function cargarMenu() {
     .order("categoria", { ascending: true });
 
   if (error) {
-    alert("❌ Error al cargar el menú.");
+    console.warn("❌ Error al cargar el menú:", error);
     return;
   }
 
-  menu = data;
+  menu = data || [];
   mostrarMenuAgrupado(menu);
   actualizarFiltroCategorias(menu);
 }
 
+// Render del menú agrupado y listeners
 function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   contenedor.innerHTML = "";
@@ -84,19 +85,38 @@ function mostrarMenuAgrupado(platos) {
       item.innerHTML = `
         <div>${escapeHtml(plato.nombre)}</div>
         <div class="precio">${plato.precio} CUP</div>
-        <input type="number" min="0" value="0" onchange="actualizarCantidad('${plato.id}', this.value)" />
+        <input type="number" min="0" value="0" data-menu-id="${plato.id}" />
       `;
       grupo.appendChild(item);
     });
 
     contenedor.appendChild(grupo);
   }
+
+  // Listeners para inputs
+  contenedor.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener("input", (e) => {
+      const menuId = e.target.dataset.menuId;
+      const cantidad = parseInt(e.target.value) || 0;
+      cantidadesSeleccionadas[menuId] = cantidad;
+
+      const total = Object.entries(cantidadesSeleccionadas).reduce((sum, [id, cant]) => {
+        const plato = menu.find(p => p.id === id);
+        return sum + (plato ? plato.precio * cant : 0);
+      }, 0);
+
+      const items = Object.values(cantidadesSeleccionadas).reduce((sum, c) => sum + c, 0);
+      document.getElementById("total").textContent = total;
+      document.getElementById("cantidad-items").textContent = items;
+    });
+  });
 }
 
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
   const categorias = [...new Set(platos.map(p => p.categoria))];
   filtro.innerHTML = `<option value="todos">Todos</option>`;
+
   categorias.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat;
@@ -105,7 +125,7 @@ function actualizarFiltroCategorias(platos) {
   });
 }
 
-window.filtrarMenu = function () {
+function filtrarMenu() {
   const seleccion = document.getElementById("filtro").value;
   if (seleccion === "todos") {
     mostrarMenuAgrupado(menu);
@@ -113,19 +133,10 @@ window.filtrarMenu = function () {
     const filtrado = menu.filter(p => p.categoria === seleccion);
     mostrarMenuAgrupado(filtrado);
   }
-};
+}
 
-window.actualizarCantidad = function (menuId, cantidad) {
-  cantidadesSeleccionadas[menuId] = parseInt(cantidad);
-  const total = Object.entries(cantidadesSeleccionadas).reduce((sum, [id, cantidad]) => {
-    const plato = menu.find(p => p.id === id);
-    return sum + (plato ? plato.precio * cantidad : 0);
-  }, 0);
-  const items = Object.values(cantidadesSeleccionadas).reduce((sum, c) => sum + c, 0);
-  document.getElementById("total").textContent = total;
-  document.getElementById("cantidad-items").textContent = items;
-};
-window.enviarPedido = async function () {
+// Crear/actualizar pedido
+async function enviarPedido() {
   const local = document.getElementById("local").value;
   const mesa = document.getElementById("mesa").value.trim();
   const hoy = new Date().toISOString().split("T")[0];
@@ -155,7 +166,7 @@ window.enviarPedido = async function () {
     .lte("fecha", `${hoy}T23:59:59`);
 
   let pedidoId;
-  let mensaje = "";
+  let mensaje;
 
   if (existentes && existentes.length > 0) {
     pedidoId = existentes[0].id;
@@ -165,8 +176,8 @@ window.enviarPedido = async function () {
       const { data: existente } = await supabase
         .from("pedido_items")
         .select("id, cantidad")
-        .filter("pedido_id", "eq", pedidoId)
-        .filter("menu_id", "eq", item.menu_id)
+        .eq("pedido_id", pedidoId)
+        .eq("menu_id", item.menu_id)
         .single();
 
       if (existente) {
@@ -190,7 +201,7 @@ window.enviarPedido = async function () {
       .select("cantidad, precio")
       .eq("pedido_id", pedidoId);
 
-    const nuevoTotal = actualizados.reduce((sum, p) => sum + p.cantidad * p.precio, 0);
+    const nuevoTotal = (actualizados || []).reduce((sum, p) => sum + p.cantidad * p.precio, 0);
 
     await supabase
       .from("pedidos")
@@ -200,6 +211,7 @@ window.enviarPedido = async function () {
   } else {
     mensaje = "🆕 Nuevo pedido creado.";
     const total = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+
     const { data } = await supabase
       .from("pedidos")
       .insert([{
@@ -227,41 +239,43 @@ window.enviarPedido = async function () {
     }
   }
 
-  document.getElementById("confirmacion").style.display = "block";
-  document.getElementById("resumen").innerHTML = `
+  const resumenEl = document.getElementById("resumen");
+  const confirmacionEl = document.getElementById("confirmacion");
+  confirmacionEl.classList.remove("confirmacion-oculta");
+
+  resumenEl.innerHTML = `
     <p>${mensaje}</p>
-    <p><strong>Mesa:</strong> ${mesa}</p>
-    <p><strong>Local:</strong> ${local}</p>
+    <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
+    <p><strong>Local:</strong> ${escapeHtml(local)}</p>
     <p><strong>Platos:</strong> ${items.map(i => `${escapeHtml(i.nombre)} (${i.cantidad})`).join(", ")}</p>
   `;
 
   document.getElementById("usuario-conectado").textContent = localStorage.getItem("usuario_nombre") || "";
   await cargarResumen();
   await mostrarPedidosPendientes();
-};
+}
 
-window.limpiarSeleccion = function () {
+function limpiarSeleccion() {
   cantidadesSeleccionadas = {};
-  document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
+  document.querySelectorAll("#menu input[type='number']").forEach(input => (input.value = 0));
   document.getElementById("total").textContent = "0";
   document.getElementById("cantidad-items").textContent = "0";
-};
+}
 
-window.cerrarSesion = function () {
+function cerrarSesion() {
   usuarioAutenticado = null;
   localStorage.removeItem("usuario_nombre");
   document.getElementById("usuario").value = "";
   document.getElementById("clave").value = "";
-  document.getElementById("login").style.display = "block";
-  document.getElementById("contenido").style.display = "none";
-  document.getElementById("confirmacion").style.display = "none";
+  document.getElementById("login").classList.remove("contenido-oculto");
+  document.getElementById("contenido").classList.add("contenido-oculto");
+  document.getElementById("confirmacion").classList.add("confirmacion-oculta");
   document.getElementById("resumen").innerHTML = "";
   document.getElementById("usuario-conectado").textContent = "";
-};
+}
 
 async function cargarResumen() {
   const hoy = new Date().toISOString().split("T")[0];
-
   const { data: pedidos, error } = await supabase
     .from("pedidos")
     .select("cobrado, total")
@@ -276,7 +290,7 @@ async function cargarResumen() {
 
   let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
 
-  pedidos.forEach(p => {
+  (pedidos || []).forEach(p => {
     if (p.cobrado) {
       cobrados++;
       totalCobrado += p.total;
@@ -295,7 +309,6 @@ async function cargarResumen() {
 
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
-
   const { data: pedidos, error } = await supabase
     .from("pedidos")
     .select("id, mesa, local, total")
@@ -310,7 +323,7 @@ async function mostrarPedidosPendientes() {
   }
 
   let html = "<h3>🕒 Pedidos pendientes</h3>";
-  if (pedidos.length === 0) {
+  if (!pedidos || pedidos.length === 0) {
     html += "<p>No hay pedidos pendientes.</p>";
   } else {
     html += "<ul>";
@@ -318,7 +331,7 @@ async function mostrarPedidosPendientes() {
       html += `
         <li>
           <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${p.total} CUP
-          <button onclick="cerrarPedido('${p.id}')">Cobrar</button>
+          <button class="btn-cobrar" data-pedido-id="${p.id}">Cobrar</button>
         </li>
       `;
     });
@@ -326,10 +339,18 @@ async function mostrarPedidosPendientes() {
   }
 
   const contenedor = document.getElementById("pedidos-pendientes");
-  if (contenedor) contenedor.innerHTML = html;
+  if (contenedor) {
+    contenedor.innerHTML = html;
+    contenedor.querySelectorAll(".btn-cobrar").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const pedidoId = e.currentTarget.dataset.pedidoId;
+        await cerrarPedido(pedidoId);
+      });
+    });
+  }
 }
 
-window.cerrarPedido = async function (pedidoId) {
+async function cerrarPedido(pedidoId) {
   const { error } = await supabase
     .from("pedidos")
     .update({ cobrado: true })
@@ -342,4 +363,13 @@ window.cerrarPedido = async function (pedidoId) {
   } else {
     alert("❌ Error al cerrar el pedido.");
   }
-};
+}
+
+// Listeners globales
+document.getElementById("btnEntrar").addEventListener("click", iniciarSesion);
+document.getElementById("filtro").addEventListener("change", filtrarMenu);
+document.getElementById("btnRevisarPedido").addEventListener("click", enviarPedido);
+document.getElementById("btnLimpiarSeleccion").addEventListener("click", limpiarSeleccion);
+document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
+
+// Carga inicial de menú para vista (opcional si quieres que se vea sin login)
