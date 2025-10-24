@@ -25,19 +25,9 @@ header {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   margin-bottom: 20px;
 }
-header img {
-  height: 70px;
-  margin-bottom: 10px;
-}
-header h1 {
-  margin: 0;
-  font-size: 22px;
-}
-header p {
-  margin: 0;
-  font-weight: 500;
-  color: #555;
-}
+header img { height: 70px; margin-bottom: 10px; }
+header h1 { margin: 0; font-size: 22px; }
+header p { margin: 0; font-weight: 500; color: #555; }
 
 /* === Botones === */
 button {
@@ -50,9 +40,8 @@ button {
   font-weight: bold;
   margin-top: 10px;
 }
-button:hover {
-  background: #8b1a1a;
-}
+button:hover { background: #8b1a1a; }
+button:focus { outline: 2px solid #a52a2a; outline-offset: 2px; }
 
 /* === Filtros y formularios === */
 input, select {
@@ -69,7 +58,7 @@ label {
 }
 
 /* === Lista de pedidos === */
-.pedido-barra, .pedido-cocina {
+.pedido-card {
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -77,20 +66,10 @@ label {
   margin-bottom: 16px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.pedido-info p {
-  margin: 4px 0;
-  font-size: 0.9rem;
-}
-.pedido-info ul {
-  padding-left: 20px;
-  margin: 8px 0;
-}
-.pedido-boton button {
-  background: #28a745;
-}
-.pedido-boton button:hover {
-  background: #218838;
-}
+.pedido-info p { margin: 4px 0; font-size: 0.9rem; }
+.pedido-info ul { padding-left: 20px; margin: 8px 0; }
+.pedido-boton button { background: #28a745; }
+.pedido-boton button:hover { background: #218838; }
 
 /* === Resúmenes === */
 #resumen-locales, #resumen-confirmados {
@@ -100,9 +79,7 @@ label {
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   margin-bottom: 20px;
 }
-#resumen-locales ul, #resumen-confirmados ul {
-  padding-left: 20px;
-}
+#resumen-locales ul, #resumen-confirmados ul { padding-left: 20px; }
 
 /* === Scroll para listas largas === */
 #lista-pedidos-container {
@@ -128,8 +105,7 @@ label {
   max-height: 300px;
   overflow-y: auto;
 }
-#tabla thead tr,
-#tabla tbody tr {
+#tabla thead tr, #tabla tbody tr {
   display: table;
   width: 100%;
   table-layout: fixed;
@@ -143,79 +119,16 @@ label {
 
 /* === Responsive para móviles === */
 @media screen and (max-width: 600px) {
-  body {
-    padding: 20px 10px;
-    font-size: 0.9rem;
-  }
-  header img {
-    height: 60px;
-  }
-  header h1 {
-    font-size: 1.2rem;
-  }
-  header p {
-    font-size: 0.95rem;
-  }
-  button {
-    width: 100%;
-    font-size: 1rem;
-  }
-}
-/* Contenedor general con scroll único */
-#menu {
-  max-height: 500px;
-  overflow-y: auto;
-  padding-right: 10px;
-  border: 1px solid #ccc;
-  margin-bottom: 20px;
+  body { padding: 20px 10px; font-size: 0.9rem; }
+  header img { height: 60px; }
+  header h1 { font-size: 1.2rem; }
+  header p { font-size: 0.95rem; }
+  button { width: 100%; font-size: 1rem; }
+  input, select { font-size: 1rem; }
+  #tabla tbody { max-height: unset; }
 }
 
-/* Grupo por categoría (sin scroll individual) */
-.categoria-grupo {
-  padding-bottom: 10px;
-  border-bottom: 1px dashed #ddd;
-  margin-bottom: 15px;
-}
-
-/* Título de categoría */
-.categoria-grupo h3 {
-  margin: 10px 0 5px;
-  font-size: 1rem;
-  color: #444;
-}
-
-/* Ítems del menú */
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-  gap: 10px;
-  font-size: 0.9rem;
-}
-
-.menu-item input {
-  width: 36px;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.menu-item div {
-  flex: 1;
-}
-
-.menu-item .precio {
-  width: 70px;
-  text-align: right;
-  font-weight: bold;
-}
-/* Estados de visibilidad */
-.contenido-oculto { display: none; }
-
-/* Mensajes */
-.mensaje-error { color: #b00020; margin-top: 6px; }
-
-/* Contenedor de menú con scroll */
+/* === Menú === */
 .menu-scroll {
   max-height: 500px;
   overflow-y: auto;
@@ -223,8 +136,6 @@ label {
   border: 1px solid #ccc;
   margin-bottom: 20px;
 }
-
-/* Grupo por categoría */
 .categoria-grupo {
   padding-bottom: 10px;
   border-bottom: 1px dashed #ddd;
@@ -235,8 +146,6 @@ label {
   font-size: 1rem;
   color: #444;
 }
-
-/* Ítems del menú */
 .menu-item {
   display: flex;
   justify-content: space-between;
@@ -256,29 +165,15 @@ label {
   font-weight: bold;
 }
 
-/* Confirmación persistente */
+/* === Estados y mensajes === */
+.contenido-oculto { display: none; }
+.mensaje-error { color: #b00020; margin-top: 6px; }
 .confirmacion-oculta { display: none; }
 .confirmacion-ok { color: green; }
 
-/* Bloques */
+/* === Bloques y botones === */
 .bloque-pendientes { margin-top: 30px; }
-
-/* Botonera */
 .botonera { display: flex; gap: 10px; flex-wrap: wrap; }
-
-/* Botón salir */
 .btn-salir { margin-top: 20px; }
-
-/* Botón cobrar en pendientes */
-.btn-cobrar {
-  background: #28a745;
-}
-.btn-cobrar:hover {
-  background: #218838;
-}
-/* Mensajes de error */
-.mensaje-error {
-  color: #b00020;
-  margin-top: 8px;
-  font-weight: 500;
-}
+.btn-cobrar { background: #28a745; }
+.btn-cobrar:hover { background: #218838; }
