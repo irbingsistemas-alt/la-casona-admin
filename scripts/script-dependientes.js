@@ -29,9 +29,11 @@ window.iniciarSesion = async function () {
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  await cargarMenu();
-  await cargarResumen();
-  await mostrarPedidosPendientes();
+  await Promise.all([
+    cargarMenu(),
+    cargarResumen(),
+    mostrarPedidosPendientes()
+  ]);
 };
 
 async function cargarMenu() {
@@ -191,6 +193,7 @@ window.enviarPedido = async function () {
 
   } else {
     mensaje = "🆕 Nuevo pedido creado.";
+    const total = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
@@ -248,3 +251,88 @@ window.cerrarSesion = function () {
   document.getElementById("resumen").innerHTML = "";
   document.getElementById("usuario-conectado").textContent = "";
 };
+
+async function cargarResumen() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("cobrado, total")
+    .eq("usuario_id", usuarioAutenticado)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
+
+  if (error) {
+    console.warn("Error al cargar resumen:", error);
+    return;
+  }
+
+  let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
+
+  pedidos.forEach(p => {
+    if (p.cobrado) {
+      cobrados++;
+      totalCobrado += p.total;
+    } else {
+      pendientes++;
+      totalPendiente += p.total;
+    }
+  });
+
+  document.getElementById("fecha-resumen").textContent = hoy;
+  document.getElementById("total-cobrados").textContent = cobrados;
+  document.getElementById("importe-cobrado").textContent = totalCobrado;
+  document.getElementById("total-pendientes").textContent = pendientes;
+  document.getElementById("importe-pendiente").textContent = totalPendiente;
+}
+
+async function mostrarPedidosPendientes() {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("id, mesa, local, total")
+    .eq("usuario_id", usuarioAutenticado)
+    .eq("cobrado", false)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
+
+  if (error) {
+    console.warn("Error al cargar pedidos pendientes:", error);
+    return;
+  }
+
+  let html = "<h3>🕒 Pedidos pendientes</h3>";
+  if (pedidos.length === 0) {
+    html += "<p>No hay pedidos pendientes.</p>";
+  } else {
+    html += "<ul>";
+    pedidos.forEach(p => {
+      html += `
+        <li>
+          <strong>Mesa ${p.mesa}</strong> (${p.local}) – ${p.total} CUP
+          <button onclick="cerrarPedido(${p.id})">Cobrar</button>
+        </li>
+      `;
+    });
+    html += "</ul>";
+  }
+
+  const contenedor = document.getElementById("pedidos-pendientes");
+  if (contenedor) contenedor.innerHTML = html;
+}
+
+async function cerrarPedido(pedidoId) {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ cobrado: true })
+    .eq("id", pedidoId);
+
+  if (!error) {
+    alert("✅ Pedido marcado como cobrado.");
+    await cargarResumen();
+    await mostrarPedidosPendientes();
+  } else {
+    alert("❌ Error al cerrar el pedido.");
+  }
+}
