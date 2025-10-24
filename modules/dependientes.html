@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menú - Dependientes | La Casona de 17</title>
+  <title>Menú - Dependientas | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
   <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
   <style>
@@ -53,6 +53,8 @@
 
     <!-- Contenido operativo -->
     <section id="contenido" style="display:none;">
+      <p><strong>Usuario conectado:</strong> <span id="usuario-conectado"></span></p>
+
       <div id="resumen-cobros">
         <h3>📊 Resumen del día</h3>
         <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
@@ -72,17 +74,22 @@
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
 
-      <!-- Menú sin agrupamiento por categoría -->
+      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+      <select id="filtro" onchange="filtrarMenu()">
+        <option value="todos">Todos</option>
+      </select>
+
+      <!-- Menú agrupado por categoría -->
       <div id="menu"></div>
 
       <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
-      <p><strong>Ítems seleccionados:</strong> <span id="cantidad-items">0</span></p>
+      <p><strong>Platos seleccionados:</strong> <span id="cantidad-items">0</span></p>
       <button onclick="enviarPedido()">Revisar pedido</button>
       <button onclick="limpiarSeleccion()">Limpiar selección</button>
 
       <!-- Confirmación persistente -->
       <div id="confirmacion" style="display:none; margin-top:30px;">
-        <h3 style="color:green;">✅ Pedido enviado a cocina</h3>
+        <h3 style="color:green;">✅ Pedidos enviados a cocina</h3>
         <div id="resumen"></div>
         <button onclick="marcarCobrado()">Cobrado</button>
       </div>
@@ -92,6 +99,6 @@
   </div>
 
   <!-- Script principal -->
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+  <script type="module" src="../scripts/script-dependientas.js"></script>
 </body>
 </html>
