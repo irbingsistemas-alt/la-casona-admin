@@ -64,8 +64,8 @@
     <!-- Login -->
     <section id="login">
       <h3>Inicio de sesión</h3>
-      <input type="text" id="usuario" placeholder="Usuario" />
-      <input type="password" id="clave" placeholder="Contraseña" />
+      <input type="text" id="usuario" placeholder="Usuario" autocomplete="off" />
+      <input type="password" id="clave" placeholder="Contraseña" autocomplete="off" />
       <button onclick="iniciarSesion()">Entrar</button>
     </section>
 
@@ -111,6 +111,9 @@
         <h3 style="color:green;">✅ Pedido procesado</h3>
         <div id="resumen"></div>
       </div>
+
+      <!-- Pedidos pendientes -->
+      <div id="pedidos-pendientes" style="margin-top:30px;"></div>
 
       <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
     </section>
