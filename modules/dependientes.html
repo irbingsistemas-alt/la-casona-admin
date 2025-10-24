@@ -65,7 +65,7 @@
       </div>
 
       <label for="local"><strong>Tipo de local:</strong></label>
-      <select id="local" onchange="actualizarEstiloLocal()">
+      <select id="local">
         <option value="Restaurant">Restaurant</option>
         <option value="Bar">Bar</option>
         <option value="Pizzería">Pizzería</option>
@@ -73,11 +73,6 @@
 
       <label for="mesa"><strong>Número de mesa:</strong></label>
       <input type="text" id="mesa" placeholder="Ej. 5" />
-
-      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-      <select id="filtro" onchange="filtrarMenu()">
-        <option value="todos">Todos</option>
-      </select>
 
       <!-- Menú agrupado por categoría -->
       <div id="menu"></div>
@@ -91,7 +86,6 @@
       <div id="confirmacion" style="display:none; margin-top:30px;">
         <h3 style="color:green;">✅ Pedidos enviados a cocina</h3>
         <div id="resumen"></div>
-        <button onclick="marcarCobrado()">Cobrado</button>
       </div>
 
       <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
@@ -99,6 +93,6 @@
   </div>
 
   <!-- Script principal -->
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+  <script type="module" src="../scripts/script-dependientas.js"></script>
 </body>
 </html>
