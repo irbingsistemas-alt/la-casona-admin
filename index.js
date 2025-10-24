@@ -1,46 +1,67 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// ⚠️ Sustituye con tu anon key real desde Project Settings → API → anon public
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // tu anon key
+  "TU_ANON_KEY_AQUI"
 );
 
-const form = document.getElementById("loginForm");
-const mensajeError = document.getElementById("mensajeError");
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  mensajeError.textContent = "";
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-  const usuario = document.getElementById("usuario").value.trim();
-  const clave = document.getElementById("clave").value.trim();
+      // Normalizar usuario a minúsculas
+      const usuario_input = document.getElementById("usuario").value.toLowerCase();
+      const clave_input = document.getElementById("clave").value;
 
-  const { data, error } = await supabase
-    .rpc("login_usuario", { usuario_input: usuario, clave_input: clave })
-    .single();
+      try {
+        const { data, error } = await supabase.rpc("login_usuario", {
+          usuario_input,
+          clave_input,
+        });
 
-  if (error || !data) {
-    mensajeError.textContent = "❌ Usuario o clave incorrecta";
-    return;
-  }
+        if (error) {
+          console.error("Error RPC:", error);
+          alert("Error en el servidor. Intenta de nuevo.");
+          return;
+        }
 
-  localStorage.setItem("usuarioActivo", data.usuario);
-  localStorage.setItem("rol", data.rol);
+        if (!data || data.length === 0) {
+          alert("Usuario o contraseña incorrectos.");
+          return;
+        }
 
-  const destino = {
-    admin: "modules/admin.html",
-    cocina: "modules/cocina.html",
-    bar: "modules/bar.html",
-    barra: "modules/barra.html",
-    pizzeria: "modules/pizzeria.html",
-    reparto: "modules/reparto.html",
-    gerente: "modules/usuarios.html",   // nuevo rol
-    dependiente: "modules/dependientes.html"
-  };
+        const usuario = data[0];
 
-  if (destino[data.rol]) {
-    window.location.href = destino[data.rol];
-  } else {
-    mensajeError.textContent = "❌ Rol no reconocido";
+        // Guardar sesión en localStorage
+        localStorage.setItem("usuario", usuario.usuario);
+        localStorage.setItem("rol", usuario.rol);
+
+        // Redirigir según rol
+        switch (usuario.rol) {
+          case "dependiente":
+            window.location.href = "modules/dependientes.html";
+            break;
+          case "cocina":
+            window.location.href = "modules/cocina.html";
+            break;
+          case "bar":
+            window.location.href = "modules/bar.html";
+            break;
+          case "admin":
+          case "gerente":
+            window.location.href = "modules/admin.html";
+            break;
+          default:
+            alert("Rol no reconocido: " + usuario.rol);
+        }
+      } catch (err) {
+        console.error("Excepción:", err);
+        alert("Error inesperado. Revisa la consola.");
+      }
+    });
   }
 });
