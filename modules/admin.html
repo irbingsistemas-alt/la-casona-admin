@@ -4,48 +4,74 @@
   <meta charset="UTF-8">
   <title>Módulo de Administración</title>
   <link rel="stylesheet" href="../style-base.css">
-  <script type="module" src="admin.js"></script>
-  </head>
+  <!-- Carga del JS único -->
+  <script type="module" src="scripts/admin.js"></script>
+</head>
 <body>
-  <h1>Administración de Usuarios</h1>
-  <p>Conectado como: <span id="usuarioConectado"></span></p>
-  <button id="logoutBtn">Cerrar sesión</button>
+  <div class="contenedor">
+    <h1>Administración de Usuarios</h1>
+    <p>Conectado como: <span id="usuarioConectado"></span></p>
+    <button id="logoutBtn">Cerrar sesión</button>
 
-  <h2>Crear Usuario</h2>
-  <form id="crearForm">
-    <input type="text" id="nuevoUsuario" placeholder="Usuario" required>
-    <input type="password" id="nuevaClave" placeholder="Clave" required>
-    <select id="nuevoRol">
-      <option value="dependiente">Dependiente</option>
-      <option value="cocina">Cocina</option>
-      <option value="bar">Bar</option>
-      <option value="gerente">Gerente</option>
-      <option value="admin">Admin</option>
-    </select>
-    <button type="submit">Crear</button>
-  </form>
+    <!-- Crear usuario -->
+    <h2>Crear Usuario</h2>
+    <form id="crearForm">
+      <label for="nuevoUsuario">Usuario</label>
+      <input type="text" id="nuevoUsuario" placeholder="Usuario" required>
 
-  <h2>Cambiar Clave</h2>
-  <form id="cambiarForm">
-    <input type="text" id="usuarioClave" placeholder="Usuario" required>
-    <input type="password" id="nuevaClaveUsuario" placeholder="Nueva clave" required>
-    <button type="submit">Cambiar Clave</button>
-  </form>
+      <label for="nuevaClave">Clave</label>
+      <input type="password" id="nuevaClave" placeholder="Clave" required>
 
-  <h2>Usuarios Existentes</h2>
-  <table border="1">
-    <thead>
-      <tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
-    </thead>
-    <tbody id="tablaUsuarios"></tbody>
-  </table>
+      <label for="nuevoRol">Rol</label>
+      <select id="nuevoRol">
+        <option value="dependiente">Dependiente</option>
+        <option value="cocina">Cocina</option>
+        <option value="bar">Bar</option>
+        <option value="gerente">Gerente</option>
+        <option value="admin">Admin</option>
+      </select>
 
-  <h2>Historial de Acciones</h2>
-  <table border="1">
-    <thead>
-      <tr><th>Acción</th><th>Usuario afectado</th><th>Realizado por</th><th>Fecha</th></tr>
-    </thead>
-    <tbody id="tablaLogs"></tbody>
-  </table>
+      <button type="submit">Crear</button>
+    </form>
+
+    <!-- Cambiar clave -->
+    <h2>Cambiar Clave</h2>
+    <form id="cambiarForm">
+      <label for="usuarioClave">Usuario</label>
+      <input type="text" id="usuarioClave" placeholder="Usuario" required>
+
+      <label for="nuevaClaveUsuario">Nueva clave</label>
+      <input type="password" id="nuevaClaveUsuario" placeholder="Nueva clave" required>
+
+      <button type="submit">Cambiar Clave</button>
+    </form>
+
+    <!-- Usuarios existentes -->
+    <h2>Usuarios Existentes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaUsuarios"></tbody>
+    </table>
+
+    <!-- Historial de acciones -->
+    <h2>Historial de Acciones</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Acción</th>
+          <th>Usuario afectado</th>
+          <th>Realizado por</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="tablaLogs"></tbody>
+    </table>
+  </div>
 </body>
 </html>
