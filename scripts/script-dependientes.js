@@ -329,7 +329,7 @@ async function mostrarPedidosPendientes() {
   if (contenedor) contenedor.innerHTML = html;
 }
 
-async function cerrarPedido(pedidoId) {
+window.cerrarPedido = async function (pedidoId) {
   const { error } = await supabase
     .from("pedidos")
     .update({ cobrado: true })
@@ -342,4 +342,4 @@ async function cerrarPedido(pedidoId) {
   } else {
     alert("❌ Error al cerrar el pedido.");
   }
-}
+};
