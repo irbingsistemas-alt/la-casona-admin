@@ -3,9 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <title>Módulo de Administración</title>
-  <link rel="stylesheet" href="../style-base.css">
+  <!-- Estilos embebidos -->
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .contenedor {
+      max-width: 900px;
+      width: 100%;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #a52a2a;
+      margin-bottom: 20px;
+    }
+    h2 {
+      margin-top: 30px;
+      color: #444;
+      border-bottom: 2px solid #a52a2a;
+      padding-bottom: 6px;
+    }
+    button {
+      background: #a52a2a;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: background 0.2s ease;
+    }
+    button:hover { background: #8b1a1a; }
+    form {
+      background: #fafafa;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    input, select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    thead {
+      background: #a52a2a;
+      color: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr:hover { background: #f5f5f5; }
+  </style>
   <!-- Carga del JS único -->
-  <script type="module" src="scripts/admin.js"></script>
+  <script type="module" src="./scripts/admin.js"></script>
 </head>
 <body>
   <div class="contenedor">
