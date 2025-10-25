@@ -3,64 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dependientes | La Casona de 17</title>
-  <link rel="stylesheet" href="https://irbingsistemas-alt.github.io/la-casona-admin/style-base.css" />
+  <title>Panel de dependientes</title>
+  <link rel="stylesheet" href="style-base.css" />
 </head>
 <body>
-  <div class="contenedor">
-    <div class="bloque-seccion" id="login">
-      <img src="../assets/logo.png" alt="Logo" class="logo-login" />
-      <h1>La Casona de 17</h1>
-      <form>
-        <input type="text" id="usuario" placeholder="Usuario" />
-        <input type="password" id="clave" placeholder="Contraseña" />
-        <button type="button" id="btnEntrar">Entrar</button>
-        <div id="loginError" class="mensaje-error"></div>
-      </form>
-    </div>
-
-    <div class="bloque-seccion contenido-oculto" id="contenido">
-      <h2>Resumen del día</h2>
-      <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
-      <p><strong>Usuario conectado:</strong> <span id="usuario-conectado"></span></p>
-      <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
-      <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
-      <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
-
-      <h2>Menú</h2>
-      <button onclick="cargarMenu()">Actualizar menú</button>
-      <select id="filtro"></select>
-      <div id="menu"></div>
-
-      <h2>Pedido</h2>
-      <input type="text" id="local" placeholder="Tipo de comida (ej. Almuerzo)" />
-      <input type="text" id="mesa" placeholder="Mesa" />
-      <div class="botonera">
-        <button id="btnRevisarPedido">Revisar pedido</button>
-        <button id="btnLimpiarSeleccion" class="btn-secundario">Limpiar selección</button>
-        <button id="btnCerrarSesion" class="btn-secundario">Cerrar sesión</button>
-      </div>
-      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
-      <p><strong>Items:</strong> <span id="cantidad-items">0</span></p>
-
-      <div id="confirmacion" class="confirmacion-oculta">
-        <h3>Confirmación</h3>
-        <div id="resumen"></div>
-      </div>
-
-      <h2>Pedidos pendientes</h2>
-      <div id="pedidos-pendientes"></div>
-    </div>
-
-    <div id="modal-detalle" class="contenido-oculto">
-      <h3>Detalle del pedido</h3>
-      <div id="detalle-pedido"></div>
-      <button onclick="cerrarModalDetalle()" class="btn-secundario">Cerrar</button>
-    </div>
-
-    <div id="mensajeSistema"></div>
+  <div id="login-panel">
+    <img src="assets/logo.png" alt="Logo" id="logo-login" />
+    <h2>Iniciar sesión</h2>
+    <input type="text" id="usuario" placeholder="Usuario" />
+    <input type="password" id="clave" placeholder="Contraseña" />
+    <button id="btn-login">Entrar</button>
+    <p id="login-error" class="error"></p>
   </div>
 
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+  <div id="main-panel" style="display: none;">
+    <header>
+      <img src="assets/logo.png" alt="Logo" id="logo" />
+      <span id="bienvenida"></span>
+      <button id="btn-logout">Cerrar sesión</button>
+    </header>
+
+    <section id="menu-panel">
+      <h3>Menú disponible</h3>
+      <div id="menu-contenedor" class="scrollable-menu"></div>
+      <div id="totales">
+        <p>Total: <span id="total-cup">0</span> CUP</p>
+        <p>Cantidad de ítems: <span id="total-items">0</span></p>
+        <button id="btn-limpiar">Limpiar selección</button>
+      </div>
+    </section>
+
+    <section id="pedidos-panel">
+      <h3>Pedidos pendientes</h3>
+      <div id="pedidos-contenedor"></div>
+    </section>
+
+    <section id="resumen-panel">
+      <h3>Resumen del día</h3>
+      <p>Fecha: <span id="resumen-fecha"></span></p>
+      <p>Usuario conectado: <span id="resumen-usuario"></span></p>
+      <p>Pedidos cobrados: <span id="resumen-cobrados"></span></p>
+      <p>Importe cobrado: <span id="resumen-cobrado"></span> CUP</p>
+      <p>Pedidos pendientes: <span id="resumen-pendientes"></span></p>
+      <p>Importe pendiente: <span id="resumen-pendiente"></span> CUP</p>
+    </section>
+
+    <div id="modal-detalles" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span id="modal-close">&times;</span>
+        <h3>Detalles del pedido</h3>
+        <div id="detalle-contenedor"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="dependientes.js"></script>
 </body>
 </html>
