@@ -1,8 +1,9 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// Inicializar Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // ⚠️ Sustituye con tu anon key real
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
 // Validar sesión y rol
@@ -24,9 +25,15 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Crear usuario
 document.getElementById("crearForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const nuevoUsuario = document.getElementById("nuevoUsuario").value.toLowerCase();
-  const nuevaClave = document.getElementById("nuevaClave").value;
+
+  const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
+  const nuevaClave = document.getElementById("nuevaClave").value.trim();
   const nuevoRol = document.getElementById("nuevoRol").value;
+
+  if (!nuevoUsuario || !nuevaClave || !nuevoRol) {
+    alert("Completa todos los campos para crear el usuario.");
+    return;
+  }
 
   const { error } = await supabase.rpc("crear_usuario", {
     p_usuario: nuevoUsuario,
@@ -36,9 +43,9 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
   });
 
   if (error) {
-    alert("Error creando usuario: " + error.message);
+    alert("❌ Error creando usuario: " + error.message);
   } else {
-    alert("Usuario creado con éxito");
+    alert("✅ Usuario creado con éxito");
     document.getElementById("crearForm").reset();
     cargarUsuarios();
     cargarLogs();
@@ -48,19 +55,26 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
 // Cambiar clave
 document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const usuarioClave = document.getElementById("usuarioClave").value.toLowerCase();
-  const nuevaClaveUsuario = document.getElementById("nuevaClaveUsuario").value;
 
-  const { error } = await supabase.rpc("cambiar_clave", {
+  const usuarioClave = document.getElementById("usuarioClave").value.trim().toLowerCase();
+  const nuevaClaveUsuario = document.getElementById("nuevaClaveUsuario").value.trim();
+
+  if (!usuarioClave || !nuevaClaveUsuario) {
+    alert("Completa ambos campos para cambiar la clave.");
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("cambiar_clave", {
     p_usuario: usuarioClave,
     p_clave: nuevaClaveUsuario,
     p_admin: usuario
   });
 
   if (error) {
-    alert("Error cambiando clave: " + error.message);
+    alert("❌ Error cambiando clave: " + error.message);
   } else {
-    alert("Clave actualizada con éxito para " + usuarioClave);
+    const mensaje = data?.mensaje || "Clave actualizada con éxito para " + usuarioClave;
+    alert("🔐 " + mensaje);
     document.getElementById("cambiarForm").reset();
     cargarLogs();
   }
@@ -74,7 +88,7 @@ async function cargarUsuarios() {
     .order("usuario");
 
   if (error) {
-    console.error(error);
+    console.error("Error cargando usuarios:", error);
     return;
   }
 
@@ -93,16 +107,19 @@ async function cargarUsuarios() {
   });
 }
 
+// Borrar usuario
 window.borrarUsuario = async (usuarioAfectado) => {
   if (!confirm("¿Seguro que quieres borrar " + usuarioAfectado + "?")) return;
-  const { error } = await supabase.rpc("borrar_usuario", { 
-    p_usuario: usuarioAfectado, 
-    p_admin: usuario 
+
+  const { error } = await supabase.rpc("borrar_usuario", {
+    p_usuario: usuarioAfectado,
+    p_admin: usuario
   });
+
   if (error) {
-    alert("Error borrando usuario: " + error.message);
+    alert("❌ Error borrando usuario: " + error.message);
   } else {
-    alert("Usuario borrado");
+    alert("🗑️ Usuario borrado");
     cargarUsuarios();
     cargarLogs();
   }
@@ -117,7 +134,7 @@ async function cargarLogs() {
     .limit(20);
 
   if (error) {
-    console.error(error);
+    console.error("Error cargando logs:", error);
     return;
   }
 
