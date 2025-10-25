@@ -3,37 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | La Casona de 17</title>
-  <link rel="stylesheet" href="./style-base.css" />
-  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
+  <title>Inicio | La Casona de 17</title>
+  <link rel="stylesheet" href="https://irbingsistemas-alt.github.io/la-casona-admin/style-base.css" />
 </head>
 <body>
   <div class="contenedor">
-    <header>
-      <img src="./assets/logo.png" alt="Logo La Casona de 17" />
-      <h1>Bienvenido a La Casona</h1>
-      <p>Inicia sesión para acceder al sistema</p>
-    </header>
-
-    <!-- Formulario de login -->
-    <form id="loginForm">
-      <label for="usuario"><strong>Usuario</strong></label>
-      <input type="text" id="usuario" placeholder="Usuario" required autocomplete="off" />
-
-      <label for="clave"><strong>Contraseña</strong></label>
-      <input type="password" id="clave" placeholder="Contraseña" required autocomplete="off" />
-
-      <button type="submit" id="btnLogin">Ingresar</button>
-    </form>
-
-    <!-- Animación de carga -->
-    <div id="loader" style="display:none; margin-top: 1em; color: #555;">Verificando credenciales...</div>
-
-    <!-- Mensaje de error -->
-    <p id="mensaje" class="mensaje-error" style="color: red; margin-top: 1em;"></p>
+    <div class="bloque-seccion" id="login">
+      <img src="assets/logo-casona.png" alt="Logo" class="logo-login" />
+      <h1>Bienvenido a La Casona de 17</h1>
+      <form id="loginForm">
+        <input type="text" id="usuario" placeholder="Usuario" />
+        <input type="password" id="clave" placeholder="Contraseña" />
+        <button type="submit">Entrar</button>
+        <div id="loader" style="display:none;">Verificando...</div>
+        <div id="mensaje" class="mensaje-error"></div>
+      </form>
+    </div>
   </div>
 
-  <!-- Script principal -->
   <script type="module" src="./index.js"></script>
 </body>
 </html>
