@@ -3,26 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menú - Dependientas | La Casona de 17</title>
+  <title>Menú - Dependientes | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
   <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
 </head>
-<body>
+<body class="login">
   <div class="contenedor">
     <header>
-      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
       <h1>Menú - La Casona de 17</h1>
       <p>Consumo en salón (por mesa)</p>
     </header>
+
+    <!-- Mensajes visuales -->
+    <div id="mensajeSistema" style="display:none;"></div>
 
     <!-- Login -->
     <section id="login">
       <h3>Inicio de sesión</h3>
       <label for="usuario"><strong>Usuario</strong></label>
-      <input type="text" id="usuario" placeholder="Usuario" autocomplete="off" />
+      <input type="text" id="usuario" placeholder="Usuario" autocomplete="username" required />
       <label for="clave"><strong>Contraseña</strong></label>
-      <input type="password" id="clave" placeholder="Contraseña" autocomplete="off" />
-      <button id="btnEntrar">Entrar</button>
+      <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password" required />
+      <button id="btnEntrar" class="btn-principal">Entrar</button>
       <p id="loginError" class="mensaje-error"></p>
     </section>
 
@@ -47,7 +50,7 @@
       </select>
 
       <label for="mesa"><strong>Número de mesa:</strong></label>
-      <input type="text" id="mesa" placeholder="Ej. 5" />
+      <input type="text" id="mesa" placeholder="Ej. 5" required />
 
       <!-- Filtro por categoría -->
       <label for="filtro"><strong>Filtrar por categoría:</strong></label>
@@ -62,8 +65,8 @@
       <p><strong>Platos seleccionados:</strong> <span id="cantidad-items">0</span></p>
 
       <div class="botonera">
-        <button id="btnRevisarPedido">Revisar pedido</button>
-        <button id="btnLimpiarSeleccion">Limpiar selección</button>
+        <button id="btnRevisarPedido" class="btn-principal">Revisar pedido</button>
+        <button id="btnLimpiarSeleccion" class="btn-secundario">Limpiar selección</button>
       </div>
 
       <!-- Confirmación persistente -->
