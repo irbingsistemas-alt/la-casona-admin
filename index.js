@@ -3,26 +3,24 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Inicializar Supabase
 const supabase = createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU" // tu anon key real
 );
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
-  const loader = document.getElementById("loader"); // Elemento opcional para animación
-  const mensaje = document.getElementById("mensaje"); // Elemento opcional para mostrar errores
+  const loader = document.getElementById("loader");
+  const mensaje = document.getElementById("mensaje");
 
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Limpiar mensajes previos
       if (mensaje) mensaje.textContent = "";
       if (loader) loader.style.display = "block";
 
       const usuario_input = document.getElementById("usuario").value.trim().toLowerCase();
       const clave_input = document.getElementById("clave").value.trim();
 
-      // Validación básica
       if (!usuario_input || !clave_input) {
         if (loader) loader.style.display = "none";
         if (mensaje) mensaje.textContent = "Por favor completa todos los campos.";
@@ -31,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const { data, error } = await supabase.rpc("login_usuario", {
-          p_usuario: usuario_input,
-          p_clave: clave_input,
+          usuario_input,
+          clave_input,
         });
 
         if (loader) loader.style.display = "none";
@@ -49,12 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const usuario = data[0];
-
-        // Guardar sesión
         localStorage.setItem("usuario", usuario.usuario);
         localStorage.setItem("rol", usuario.rol);
 
-        // Redirigir según rol
         switch (usuario.rol) {
           case "dependiente":
             window.location.href = "modules/dependientes.html";
