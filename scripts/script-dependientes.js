@@ -18,6 +18,14 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+function mostrarMensaje(texto, tipo = "info") {
+  const mensaje = document.getElementById("mensajeSistema");
+  mensaje.textContent = texto;
+  mensaje.className = tipo === "error" ? "mensaje-error" : "confirmacion-ok";
+  mensaje.style.display = "block";
+  setTimeout(() => mensaje.style.display = "none", 4000);
+}
+
 // Login seguro con RPC
 async function iniciarSesion() {
   const usuario = document.getElementById("usuario").value.trim();
@@ -53,7 +61,7 @@ async function cargarMenu() {
     .order("categoria", { ascending: true });
 
   if (error) {
-    console.warn("❌ Error al cargar el menú:", error);
+    mostrarMensaje("❌ Error al cargar el menú", "error");
     return;
   }
 
@@ -93,7 +101,6 @@ function mostrarMenuAgrupado(platos) {
     contenedor.appendChild(grupo);
   }
 
-  // Listeners para inputs
   contenedor.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener("input", (e) => {
       const menuId = e.target.dataset.menuId;
@@ -134,11 +141,10 @@ function filtrarMenu() {
     mostrarMenuAgrupado(filtrado);
   }
 }
-
-// Crear/actualizar pedido
+// Enviar pedido
 async function enviarPedido() {
-  const local = document.getElementById("local").value;
-  const mesa = document.getElementById("mesa").value.trim();
+  const local = document.getElementById("local").value.trim();
+  const mesa = document.getElementById("mesa").value.trim().toLowerCase();
   const hoy = new Date().toISOString().split("T")[0];
 
   const items = [];
@@ -151,7 +157,7 @@ async function enviarPedido() {
   }
 
   if (items.length === 0 || mesa === "") {
-    alert("⚠️ Selecciona al menos un plato y especifica la mesa.");
+    mostrarMensaje("⚠️ Selecciona al menos un plato y especifica la mesa.", "error");
     return;
   }
 
@@ -175,7 +181,7 @@ async function enviarPedido() {
     for (const item of items) {
       const { data: existente } = await supabase
         .from("pedido_items")
-        .select("id, cantidad")
+        .select("id")
         .eq("pedido_id", pedidoId)
         .eq("menu_id", item.menu_id)
         .single();
@@ -250,11 +256,13 @@ async function enviarPedido() {
     <p><strong>Platos:</strong> ${items.map(i => `${escapeHtml(i.nombre)} (${i.cantidad})`).join(", ")}</p>
   `;
 
-  document.getElementById("usuario-conectado").textContent = localStorage.getItem("usuario_nombre") || "";
+  limpiarSeleccion();
+  mostrarMensaje(mensaje, "info");
   await cargarResumen();
   await mostrarPedidosPendientes();
 }
 
+// Limpiar selección
 function limpiarSeleccion() {
   cantidadesSeleccionadas = {};
   document.querySelectorAll("#menu input[type='number']").forEach(input => (input.value = 0));
@@ -262,6 +270,7 @@ function limpiarSeleccion() {
   document.getElementById("cantidad-items").textContent = "0";
 }
 
+// Cerrar sesión
 function cerrarSesion() {
   usuarioAutenticado = null;
   localStorage.removeItem("usuario_nombre");
@@ -274,6 +283,7 @@ function cerrarSesion() {
   document.getElementById("usuario-conectado").textContent = "";
 }
 
+// Cargar resumen
 async function cargarResumen() {
   const hoy = new Date().toISOString().split("T")[0];
   const { data: pedidos, error } = await supabase
@@ -307,6 +317,7 @@ async function cargarResumen() {
   document.getElementById("importe-pendiente").textContent = totalPendiente;
 }
 
+// Mostrar pedidos pendientes
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   const { data: pedidos, error } = await supabase
@@ -350,6 +361,7 @@ async function mostrarPedidosPendientes() {
   }
 }
 
+// Cerrar pedido
 async function cerrarPedido(pedidoId) {
   const { error } = await supabase
     .from("pedidos")
@@ -357,11 +369,11 @@ async function cerrarPedido(pedidoId) {
     .eq("id", pedidoId);
 
   if (!error) {
-    alert("✅ Pedido marcado como cobrado.");
+    mostrarMensaje("✅ Pedido marcado como cobrado", "info");
     await cargarResumen();
     await mostrarPedidosPendientes();
   } else {
-    alert("❌ Error al cerrar el pedido.");
+    mostrarMensaje("❌ Error al cerrar el pedido", "error");
   }
 }
 
@@ -369,7 +381,4 @@ async function cerrarPedido(pedidoId) {
 document.getElementById("btnEntrar").addEventListener("click", iniciarSesion);
 document.getElementById("filtro").addEventListener("change", filtrarMenu);
 document.getElementById("btnRevisarPedido").addEventListener("click", enviarPedido);
-document.getElementById("btnLimpiarSeleccion").addEventListener("click", limpiarSeleccion);
-document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
-
-// Carga inicial de menú para vista (opcional si quieres que se vea sin login)
+document.getElementById("btnLimpiarSeleccion").addEvent
