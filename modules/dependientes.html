@@ -3,86 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menú - Dependientes | La Casona de 17</title>
+  <title>Dependientes | La Casona de 17</title>
   <link rel="stylesheet" href="https://irbingsistemas-alt.github.io/la-casona-admin/style-base.css" />
-  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
 </head>
-<body class="login">
+<body>
   <div class="contenedor">
-    <header>
-      <img src="../assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
-      <h1>Menú - La Casona de 17</h1>
-      <p>Consumo en salón (por mesa)</p>
-    </header>
+    <div class="bloque-seccion" id="login">
+      <img src="../assets/logo.png" alt="Logo" class="logo-login" />
+      <h1>La Casona de 17</h1>
+      <form>
+        <input type="text" id="usuario" placeholder="Usuario" />
+        <input type="password" id="clave" placeholder="Contraseña" />
+        <button type="button" id="btnEntrar">Entrar</button>
+        <div id="loginError" class="mensaje-error"></div>
+      </form>
+    </div>
 
-    <!-- Mensajes visuales -->
-    <div id="mensajeSistema" style="display:none;"></div>
-
-    <!-- Login -->
-    <section id="login">
-      <h3>Inicio de sesión</h3>
-      <label for="usuario"><strong>Usuario</strong></label>
-      <input type="text" id="usuario" placeholder="Usuario" autocomplete="username" required />
-      <label for="clave"><strong>Contraseña</strong></label>
-      <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password" required />
-      <button id="btnEntrar" class="btn-principal">Entrar</button>
-      <p id="loginError" class="mensaje-error"></p>
-    </section>
-
-    <!-- Contenido operativo -->
-    <section id="contenido" class="contenido-oculto">
+    <div class="bloque-seccion contenido-oculto" id="contenido">
+      <h2>Resumen del día</h2>
+      <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
       <p><strong>Usuario conectado:</strong> <span id="usuario-conectado"></span></p>
+      <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
+      <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
+      <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
 
-      <div id="resumen-cobros">
-        <h3>📊 Resumen del día</h3>
-        <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
-        <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
-        <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
-        <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
-        <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
-      </div>
+      <h2>Menú</h2>
+      <button onclick="cargarMenu()">Actualizar menú</button>
+      <select id="filtro"></select>
+      <div id="menu"></div>
 
-      <label for="local"><strong>Tipo de local:</strong></label>
-      <select id="local">
-        <option value="Restaurant">Restaurant</option>
-        <option value="Bar">Bar</option>
-        <option value="Pizzería">Pizzería</option>
-      </select>
-
-      <label for="mesa"><strong>Número de mesa:</strong></label>
-      <input type="text" id="mesa" placeholder="Ej. 5" required />
-
-      <!-- Filtro por categoría -->
-      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-      <select id="filtro">
-        <option value="todos">Todos</option>
-      </select>
-
-      <!-- Menú agrupado por categoría -->
-      <div id="menu" class="menu-scroll"></div>
-
-      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
-      <p><strong>Platos seleccionados:</strong> <span id="cantidad-items">0</span></p>
-
+      <h2>Pedido</h2>
+      <input type="text" id="local" placeholder="Tipo de comida (ej. Almuerzo)" />
+      <input type="text" id="mesa" placeholder="Mesa" />
       <div class="botonera">
-        <button id="btnRevisarPedido" class="btn-principal">Revisar pedido</button>
+        <button id="btnRevisarPedido">Revisar pedido</button>
         <button id="btnLimpiarSeleccion" class="btn-secundario">Limpiar selección</button>
+        <button id="btnCerrarSesion" class="btn-secundario">Cerrar sesión</button>
       </div>
+      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+      <p><strong>Items:</strong> <span id="cantidad-items">0</span></p>
 
-      <!-- Confirmación persistente -->
       <div id="confirmacion" class="confirmacion-oculta">
-        <h3 class="confirmacion-ok">✅ Pedido procesado</h3>
+        <h3>Confirmación</h3>
         <div id="resumen"></div>
       </div>
 
-      <!-- Pedidos pendientes -->
-      <div id="pedidos-pendientes" class="bloque-pendientes"></div>
+      <h2>Pedidos pendientes</h2>
+      <div id="pedidos-pendientes"></div>
+    </div>
 
-      <button id="btnCerrarSesion" class="btn-salir">Cerrar sesión</button>
-    </section>
+    <div id="modal-detalle" class="contenido-oculto">
+      <h3>Detalle del pedido</h3>
+      <div id="detalle-pedido"></div>
+      <button onclick="cerrarModalDetalle()" class="btn-secundario">Cerrar</button>
+    </div>
+
+    <div id="mensajeSistema"></div>
   </div>
 
-  <!-- Script principal -->
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+  <script type="module" src="./script-dependientes.js"></script>
 </body>
 </html>
