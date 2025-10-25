@@ -1,8 +1,8 @@
 // === Inicializar Supabase ===
 const supabase = supabase.createClient(
-  'https://https://ihswokmnhwaitzwjzvmy.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU'
-
+  'https://TU-PROYECTO.supabase.co',
+  'TU-CLAVE-PUBLICA'
+);
 
 // === Login ===
 document.getElementById('btn-login').addEventListener('click', async () => {
@@ -43,8 +43,6 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 async function cargarMenu() {
   const contenedor = document.getElementById('menu-contenedor');
   contenedor.innerHTML = '';
-  let total = 0;
-  let cantidad = 0;
 
   const { data, error } = await supabase
     .from('menus')
@@ -80,9 +78,7 @@ async function cargarMenu() {
       input.type = 'number';
       input.min = 0;
       input.value = 0;
-      input.addEventListener('input', () => {
-        actualizarTotales();
-      });
+      input.addEventListener('input', actualizarTotales);
 
       fila.appendChild(nombre);
       fila.appendChild(precio);
@@ -141,8 +137,8 @@ async function cargarPedidosPendientes() {
       <p><strong>Total:</strong> ${pedido.total} CUP</p>
       <p><strong>Hora:</strong> ${new Date(pedido.fecha).toLocaleTimeString()}</p>
       <div class="botonera">
-        <button onclick="verDetalles(${pedido.id})">Ver detalles</button>
-        <button onclick="cobrarPedido(${pedido.id})">Cobrar</button>
+        <button onclick="verDetalles('${pedido.id}')">Ver detalles</button>
+        <button onclick="cobrarPedido('${pedido.id}')">Cobrar</button>
       </div>
     `;
 
@@ -202,10 +198,10 @@ async function cargarResumen() {
   document.getElementById('resumen-fecha').textContent = fecha;
   document.getElementById('resumen-usuario').textContent = localStorage.getItem('usuario_nombre');
 
-  const { data: cobrados } = await supabase
+  const { data: cobrados, error: errorC } = await supabase
     .rpc('resumen_cobrados', { usuario_id });
 
-  const { data: pendientes } = await supabase
+  const { data: pendientes, error: errorP } = await supabase
     .rpc('resumen_pendientes', { usuario_id });
 
   document.getElementById('resumen-cobrados').textContent = cobrados?.pedidos_cobrados || 0;
