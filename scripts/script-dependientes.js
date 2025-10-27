@@ -98,6 +98,7 @@ async function cargarMenu(force = false) {
 
 function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
+  if (!contenedor) return;
   contenedor.innerHTML = "";
 
   const grupos = platos.reduce((acc, p) => {
@@ -157,7 +158,9 @@ function actualizarFiltroCategorias(platos) {
 
 /* función expuesta (asegura disponibilidad global) */
 window.filtrarMenu = function () {
-  const seleccion = document.getElementById("filtro").value;
+  const seleccionEl = document.getElementById("filtro");
+  if (!seleccionEl) return;
+  const seleccion = seleccionEl.value;
   if (seleccion === "todos") {
     mostrarMenuAgrupado(menu);
   } else {
@@ -169,7 +172,6 @@ window.filtrarMenu = function () {
 function attachFiltroListener() {
   const filtroEl = document.getElementById("filtro");
   if (!filtroEl) return;
-  // reemplazar nodo para eliminar listeners previos y evitar duplicados
   const nuevo = filtroEl.cloneNode(true);
   filtroEl.parentNode.replaceChild(nuevo, filtroEl);
   nuevo.addEventListener("change", window.filtrarMenu);
@@ -198,7 +200,7 @@ function actualizarTotalesUI() {
   if (itemsEl) itemsEl.textContent = items;
 }
 
-/* ---------- mostrarPedidosPendientes y helpers básicos (declaración adelantada) ---------- */
+/* ---------- mostrarPedidosPendientes y helpers básicos ---------- */
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   try {
@@ -239,60 +241,10 @@ async function mostrarPedidosPendientes() {
     console.error("Error mostrarPedidosPendientes:", err);
   }
 }
-
-/* ---------- verDetalles y cerrarPedido placeholders (implementadas en Parte 2) ---------- */
-window.verDetalles = async function (pedidoId) { console.warn("verDetalles placeholder"); };
-window.cerrarPedido = async function (pedidoId) { console.warn("cerrarPedido placeholder"); };
-
-/* ---------- iniciarSesion (usa las funciones ya definidas arriba) ---------- */
-window.iniciarSesion = async function () {
-  const usuario = document.getElementById("usuario").value.trim();
-  const clave = document.getElementById("clave").value.trim();
-  if (!usuario || !clave) {
-    alert("Completa usuario y contraseña.");
-    return;
-  }
-
-  const { data, error } = await supabase.rpc("login_dependiente", {
-    usuario_input: usuario,
-    clave_input: clave
-  });
-
-  if (error || !data) {
-    alert("❌ Usuario o contraseña incorrectos.");
-    return;
-  }
-
-  const perfil = Array.isArray(data) ? data[0] : data;
-  if (!perfil || !perfil.rol) {
-    alert("❌ Respuesta inválida del servidor.");
-    return;
-  }
-
-  if (!["admin", "dependiente", "gerente"].includes(perfil.rol)) {
-    alert("⚠️ Acceso denegado para este rol.");
-    return;
-  }
-
-  usuarioAutenticado = perfil.id;
-  localStorage.setItem("usuario_nombre", perfil.usuario);
-  document.getElementById("usuario-conectado").textContent = perfil.usuario;
-  document.getElementById("login").style.display = "none";
-  document.getElementById("contenido").style.display = "block";
-
-  // listener recarga menú
-  const btnRec = document.getElementById("btn-recargar-menu");
-  if (btnRec) btnRec.onclick = () => cargarMenu(true);
-
-  await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
-};
 /* ---------- revisarPedido (muestra resumen con confirmación) ---------- */
 window.revisarPedido = function () {
   const mesa = (document.getElementById("mesa").value || "").trim();
-  if (!mesa) {
-    alert("Indica número de mesa antes de revisar el pedido.");
-    return;
-  }
+  if (!mesa) { alert("Indica número de mesa antes de revisar el pedido."); return; }
   const local = document.getElementById("local").value;
   const items = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
@@ -301,10 +253,7 @@ window.revisarPedido = function () {
     })
     .filter(Boolean);
 
-  if (items.length === 0) {
-    alert("Selecciona al menos un plato antes de revisar.");
-    return;
-  }
+  if (items.length === 0) { alert("Selecciona al menos un plato antes de revisar."); return; }
 
   const resumenBlock = document.getElementById("resumen");
   resumenBlock.innerHTML = `
@@ -327,14 +276,11 @@ window.revisarPedido = function () {
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
 
-/* ---------- confirmarPedido: crea o actualiza pedido (elimina items con cantidad 0) ---------- */
+/* ---------- confirmarPedido (Mode SUM) ---------- */
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesa = (document.getElementById("mesa").value || "").trim().toLowerCase();
-  if (!mesa) {
-    alert("Indica número de mesa antes de confirmar.");
-    return;
-  }
+  if (!mesa) { alert("Indica número de mesa antes de confirmar."); return; }
 
   const items = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
@@ -344,10 +290,7 @@ async function confirmarPedido() {
     .filter(Boolean)
     .filter(i => i.cantidad > 0);
 
-  if (items.length === 0) {
-    alert("No hay items para enviar.");
-    return;
-  }
+  if (items.length === 0) { alert("No hay items para enviar."); return; }
 
   const hoy = new Date().toISOString().split("T")[0];
 
@@ -368,57 +311,71 @@ async function confirmarPedido() {
     let mensaje = "";
 
     if (existentes && existentes.length > 0) {
+      // actualizar pedido existente: SUM mode
       pedidoId = existentes[0].id;
       mensaje = "✅ Pedido actualizado correctamente.";
 
-      const { data: itemsExistentes } = await supabase
+      const { data: itemsExistentes, error: errItemsExist } = await supabase
         .from("pedido_items")
-        .select("id, menu_id")
+        .select("id, menu_id, cantidad, precio")
         .eq("pedido_id", pedidoId);
 
+      if (errItemsExist) throw errItemsExist;
+
       const existentesMap = {};
-      (itemsExistentes || []).forEach(it => { existentesMap[it.menu_id] = it.id; });
+      (itemsExistentes || []).forEach(it => { existentesMap[it.menu_id] = it; });
 
       for (const it of items) {
         if (existentesMap[it.menu_id]) {
+          const existing = existentesMap[it.menu_id];
+          const nuevaCantidad = Number(existing.cantidad) + Number(it.cantidad);
+          const updatePayload = { cantidad: nuevaCantidad, precio: it.precio, updated_at: new Date().toISOString() };
           await supabase
             .from("pedido_items")
-            .update({ cantidad: it.cantidad, precio: it.precio })
-            .eq("id", existentesMap[it.menu_id]);
+            .update(updatePayload)
+            .eq("id", existing.id);
         } else {
           await supabase.from("pedido_items").insert([{
             pedido_id: pedidoId,
             menu_id: it.menu_id,
             nombre: it.nombre,
             cantidad: it.cantidad,
-            precio: it.precio
+            precio: it.precio,
+            updated_at: new Date().toISOString()
           }]);
         }
       }
 
+      // eliminar items que ya no están en la selección actual (comparar por menu_id)
       const menuIdsActual = items.map(i => i.menu_id);
-      if (menuIdsActual.length > 0) {
+      const idsParaBorrar = (itemsExistentes || [])
+        .filter(it => !menuIdsActual.includes(it.menu_id))
+        .map(it => it.id);
+
+      if (idsParaBorrar.length > 0) {
         const { error: errDelete } = await supabase
           .from("pedido_items")
           .delete()
-          .eq("pedido_id", pedidoId)
-          .not("menu_id", "in", `(${menuIdsActual.map(id => `'${id}'`).join(",")})`);
-        if (errDelete) console.warn("No se pudo eliminar items obsoletos:", errDelete);
+          .in("id", idsParaBorrar);
+        if (errDelete) console.warn("No se pudo eliminar items obsoletos por id:", errDelete);
       }
 
-      const { data: actualizados } = await supabase
+      // recalcular total desde BD
+      const { data: actualizados, error: errCalc } = await supabase
         .from("pedido_items")
         .select("cantidad, precio")
         .eq("pedido_id", pedidoId);
 
+      if (errCalc) throw errCalc;
       const nuevoTotal = (actualizados || []).reduce((s, p) => s + p.cantidad * p.precio, 0);
 
       await supabase
         .from("pedidos")
-        .update({ total: nuevoTotal })
+        .update({ total: nuevoTotal, fecha: new Date().toISOString() })
         .eq("id", pedidoId);
 
     } else {
+      // crear nuevo pedido
       mensaje = "🆕 Nuevo pedido creado.";
       const total = items.reduce((s, i) => s + i.precio * i.cantidad, 0);
 
@@ -444,12 +401,14 @@ async function confirmarPedido() {
         menu_id: i.menu_id,
         nombre: i.nombre,
         cantidad: i.cantidad,
-        precio: i.precio
+        precio: i.precio,
+        updated_at: new Date().toISOString()
       }));
       const { error: errItems } = await supabase.from("pedido_items").insert(inserts);
       if (errItems) throw errItems;
     }
 
+    // mostrar confirmación y limpiar selección local
     document.getElementById("confirmacion").style.display = "block";
     document.getElementById("resumen").innerHTML = `
       <p>${mensaje}</p>
@@ -466,6 +425,9 @@ async function confirmarPedido() {
     await mostrarPedidosPendientes();
     await cargarMenu(true);
 
+    // opcional: abrir modal de detalles automáticamente
+    // if (pedidoId) verDetalles(pedidoId);
+
   } catch (err) {
     console.error("Error en confirmarPedido:", err);
     alert("❌ Error al procesar el pedido. Revisa la consola.");
@@ -477,7 +439,7 @@ window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
       .from("pedido_items")
-      .select("menu_id, nombre, cantidad, precio, updated_at")
+      .select("id, menu_id, nombre, cantidad, precio, updated_at")
       .eq("pedido_id", pedidoId)
       .order("id", { ascending: true });
 
@@ -552,4 +514,47 @@ window.cerrarSesion = function () {
   document.getElementById("confirmacion").style.display = "none";
   document.getElementById("resumen").innerHTML = "";
   document.getElementById("usuario-conectado").textContent = "";
+};
+
+/* ---------- iniciarSesion (usa las funciones ya definidas arriba) ---------- */
+window.iniciarSesion = async function () {
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
+  if (!usuario || !clave) {
+    alert("Completa usuario y contraseña.");
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("login_dependiente", {
+    usuario_input: usuario,
+    clave_input: clave
+  });
+
+  if (error || !data) {
+    alert("❌ Usuario o contraseña incorrectos.");
+    return;
+  }
+
+  const perfil = Array.isArray(data) ? data[0] : data;
+  if (!perfil || !perfil.rol) {
+    alert("❌ Respuesta inválida del servidor.");
+    return;
+  }
+
+  if (!["admin", "dependiente", "gerente"].includes(perfil.rol)) {
+    alert("⚠️ Acceso denegado para este rol.");
+    return;
+  }
+
+  usuarioAutenticado = perfil.id;
+  localStorage.setItem("usuario_nombre", perfil.usuario);
+  document.getElementById("usuario-conectado").textContent = perfil.usuario;
+  document.getElementById("login").style.display = "none";
+  document.getElementById("contenido").style.display = "block";
+
+  // listener recarga menú
+  const btnRec = document.getElementById("btn-recargar-menu");
+  if (btnRec) btnRec.onclick = () => cargarMenu(true);
+
+  await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
 };
