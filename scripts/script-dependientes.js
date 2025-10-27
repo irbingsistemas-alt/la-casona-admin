@@ -1,5 +1,5 @@
 // === Inicializar Supabase ===
-const supabase = supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://ihswokmnhwaitzwjzvmy.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
@@ -9,7 +9,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   const usuario = document.getElementById('usuario').value.trim();
   const clave = document.getElementById('clave').value.trim();
 
-  const { data, error } = await supabase.rpc('login_usuario', {
+  const { data, error } = await supabaseClient.rpc('login_usuario', {
     usuario_input: usuario,
     clave_input: clave
   });
@@ -44,13 +44,16 @@ async function cargarMenu() {
   const contenedor = document.getElementById('menu-contenedor');
   contenedor.innerHTML = '';
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('menus')
     .select('id, nombre, precio, categoria')
     .eq('disponible', true)
     .order('categoria', { ascending: true });
 
-  if (error) return;
+  if (error) {
+    console.error('Error cargando menú', error);
+    return;
+  }
 
   const agrupado = {};
   data.forEach(item => {
@@ -68,6 +71,7 @@ async function cargarMenu() {
 
     agrupado[categoria].forEach(plato => {
       const fila = document.createElement('div');
+
       const nombre = document.createElement('span');
       nombre.textContent = plato.nombre;
 
@@ -103,9 +107,12 @@ function actualizarTotales() {
   let total = 0;
   let cantidad = 0;
   document.querySelectorAll('#menu-contenedor .categoria-grupo').forEach(grupo => {
-    grupo.querySelectorAll('input[type="number"]').forEach((input, index) => {
+    // Cada fila: [0]=nombre, [1]=precio, [2]=input
+    grupo.querySelectorAll('div').forEach(fila => {
+      const input = fila.querySelector('input[type="number"]');
+      const precioSpan = fila.querySelector('span:nth-child(2)');
       const valor = parseInt(input.value) || 0;
-      const precio = parseFloat(grupo.children[index * 3 + 1].textContent);
+      const precio = parseFloat(precioSpan.textContent) || 0;
       total += valor * precio;
       cantidad += valor;
     });
@@ -119,14 +126,18 @@ async function cargarPedidosPendientes() {
   const contenedor = document.getElementById('pedidos-contenedor');
   contenedor.innerHTML = '';
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('pedidos')
     .select('id, mesa, total, fecha')
     .eq('usuario_id', usuario_id)
     .eq('cobrado', false)
     .gte('fecha', new Date().toISOString().split('T')[0]);
 
-  if (error || !data) return;
+  if (error) {
+    console.error('Error cargando pedidos', error);
+    return;
+  }
+  if (!data) return;
 
   data.forEach(pedido => {
     const div = document.createElement('div');
@@ -148,12 +159,16 @@ async function cargarPedidosPendientes() {
 
 // === Ver detalles del pedido ===
 async function verDetalles(pedido_id) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('vista_pedido_detalle')
     .select('nombre_plato, cantidad, precio, updated_at')
     .eq('pedido_id', pedido_id);
 
-  if (error || !data) return;
+  if (error) {
+    console.error('Error en verDetalles', error);
+    return;
+  }
+  if (!data) return;
 
   const contenedor = document.getElementById('detalle-contenedor');
   contenedor.innerHTML = '';
@@ -180,12 +195,15 @@ document.getElementById('modal-close').addEventListener('click', () => {
 
 // === Cobrar pedido ===
 async function cobrarPedido(pedido_id) {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('pedidos')
     .update({ cobrado: true })
     .eq('id', pedido_id);
 
-  if (error) return;
+  if (error) {
+    console.error('Error cobrando pedido', error);
+    return;
+  }
 
   cargarPedidosPendientes();
   cargarResumen();
@@ -198,14 +216,17 @@ async function cargarResumen() {
   document.getElementById('resumen-fecha').textContent = fecha;
   document.getElementById('resumen-usuario').textContent = localStorage.getItem('usuario_nombre');
 
-  const { data: cobrados, error: errorC } = await supabase
+  const { data: cobrados, error: errorC } = await supabaseClient
     .rpc('resumen_cobrados', { usuario_id });
 
-  const { data: pendientes, error: errorP } = await supabase
+  const { data: pendientes, error: errorP } = await supabaseClient
     .rpc('resumen_pendientes', { usuario_id });
 
+  if (errorC) console.error('RPC resumen_cobrados', errorC);
+  if (errorP) console.error('RPC resumen_pendientes', errorP);
+
   document.getElementById('resumen-cobrados').textContent = cobrados?.pedidos_cobrados || 0;
-  document.getElementById('resumen-cobrado').textContent = cobrados?.importe_cobrado?.toFixed(2) || '0.00';
+  document.getElementById('resumen-cobrado').textContent = (cobrados?.importe_cobrado ?? 0).toFixed(2);
   document.getElementById('resumen-pendientes').textContent = pendientes?.pedidos_pendientes || 0;
-  document.getElementById('resumen-pendiente').textContent = pendientes?.importe_pendiente?.toFixed(2) || '0.00';
+  document.getElementById('resumen-pendiente').textContent = (pendientes?.importe_pendiente ?? 0).toFixed(2);
 }
