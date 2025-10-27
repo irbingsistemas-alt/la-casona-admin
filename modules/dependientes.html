@@ -3,71 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel de dependientes</title>
-  <link rel="stylesheet" href="../style-base.css" />
+  <title>Módulo Dependientes</title>
+  <link rel="stylesheet" href="dependientes.css" />
 </head>
 <body>
-  <div id="login-panel" class="contenedor">
-    <img src="../assets/logo.png" alt="Logo" class="logo-login" />
-    <h2>Iniciar sesión</h2>
-    <input type="text" id="usuario" placeholder="Usuario" />
-    <input type="password" id="clave" placeholder="Contraseña" />
-    <div style="margin-top:12px;">
-      <button id="btn-login">Entrar</button>
-    </div>
-    <p id="login-error" class="mensaje-error"></p>
-  </div>
+  <section id="login">
+    <h2>Acceso al módulo</h2>
+    <input type="text" id="usuario_input" placeholder="Usuario" />
+    <input type="password" id="clave_input" placeholder="Clave" />
+    <button id="btn_login">Ingresar</button>
+    <p id="mensaje_login"></p>
+  </section>
 
-  <div id="main-panel" class="contenedor" style="display: none;">
-    <header style="display:flex; align-items:center; gap:12px; justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <img src="../assets/logo.png" alt="Logo" id="logo" style="max-width:64px;" />
-        <span id="bienvenida" style="font-weight:bold;"></span>
-      </div>
-      <div>
-        <button id="btn-logout" class="btn-secundario">Cerrar sesión</button>
-      </div>
-    </header>
+  <section id="panel" style="display:none;">
+    <h2>Bienvenido, <span id="nombre_usuario"></span></h2>
 
-    <section id="menu-panel" style="margin-top:18px;">
+    <div id="menu">
       <h3>Menú disponible</h3>
-      <div id="menu-contenedor" class="scrollable-menu"></div>
-
-      <div id="totales" style="margin-top:12px; display:flex; gap:16px; align-items:center; justify-content:space-between;">
-        <div>
-          <p>Total: <span id="total-cup">0.00</span> CUP</p>
-          <p>Cantidad de ítems: <span id="total-items">0</span></p>
-        </div>
-        <div>
-          <button id="btn-limpiar">Limpiar selección</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="pedidos-panel" style="margin-top:18px;">
-      <h3>Pedidos pendientes</h3>
-      <div id="pedidos-contenedor"></div>
-    </section>
-
-    <section id="resumen-panel" style="margin-top:18px;">
-      <h3>Resumen del día</h3>
-      <p>Fecha: <span id="resumen-fecha"></span></p>
-      <p>Usuario conectado: <span id="resumen-usuario"></span></p>
-      <p>Pedidos cobrados: <span id="resumen-cobrados"></span></p>
-      <p>Importe cobrado: <span id="resumen-cobrado"></span> CUP</p>
-      <p>Pedidos pendientes: <span id="resumen-pendientes"></span></p>
-      <p>Importe pendiente: <span id="resumen-pendiente"></span> CUP</p>
-    </section>
-
-    <div id="modal-detalles" class="modal" style="display: none;">
-      <div class="modal-content">
-        <span id="modal-close">&times;</span>
-        <h3>Detalles del pedido</h3>
-        <div id="detalle-contenedor"></div>
-      </div>
+      <select id="filtro_categoria"></select>
+      <div id="menu_items" class="scrollable-menu"></div>
     </div>
-  </div>
 
-  <script type="module" src="../scripts/script-dependientes.js"></script>
+    <div id="pedido">
+      <h3>Datos del pedido</h3>
+      <input type="text" id="mesa_input" placeholder="Mesa" />
+      <select id="local_input">
+        <option value="restaurant">Restaurant</option>
+        <option value="bar">Bar</option>
+        <option value="pizzeria">Pizzería</option>
+      </select>
+      <button id="btn_revisar">Revisar pedido</button>
+    </div>
+
+    <section id="resumen-pedido" class="resumen-visual" style="display:none;">
+      <h3>Resumen del pedido</h3>
+      <div id="resumen_contenido" class="resumen-contenido"></div>
+      <div class="botonera">
+        <button id="btn-confirmar" class="btn-principal">✅ Confirmar pedido</button>
+        <button id="btn-cancelar" class="btn-secundario">❌ Cancelar</button>
+      </div>
+    </section>
+
+    <div id="pendientes">
+      <h3>Pedidos pendientes</h3>
+      <div id="lista_pendientes"></div>
+    </div>
+
+    <div id="resumen_dia">
+      <h3>Resumen del día</h3>
+      <p id="resumen_texto"></p>
+    </div>
+
+    <button id="btn_logout">Cerrar sesión</button>
+  </section>
+
+  <script src="dependientes.js"></script>
 </body>
 </html>
