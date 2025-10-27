@@ -8,7 +8,7 @@
 </head>
 <body>
   <div id="login-panel">
-    <img src="../assets/logo.png alt="Logo"/>
+    <img src="../assets/logo.png" alt="Logo" />
     <h2>Iniciar sesión</h2>
     <input type="text" id="usuario" placeholder="Usuario" />
     <input type="password" id="clave" placeholder="Contraseña" />
@@ -18,7 +18,7 @@
 
   <div id="main-panel" style="display: none;">
     <header>
-      <img src="assets/logo.png" alt="Logo" id="logo" />
+      <img src="../assets/logo.png" alt="Logo" id="logo" />
       <span id="bienvenida"></span>
       <button id="btn-logout">Cerrar sesión</button>
     </header>
@@ -56,7 +56,11 @@
       </div>
     </div>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="../scripts/script-dependientes.js"></script>
+
+  <!-- Supabase client (must load before your script) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Tu script -->
+  <script src="../scripts/script-dependientes.js"></script>
 </body>
 </html>
