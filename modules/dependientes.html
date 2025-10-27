@@ -3,60 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo Dependientes</title>
-  <link rel="stylesheet" href="dependientes.css" />
+  <title>Menú - Dependientes | La Casona de 17</title>
+  <link rel="stylesheet" href="../style-base.css" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <style>
+    #menu {
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+    .categoria-grupo {
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #ddd;
+      margin-bottom: 15px;
+    }
+    .categoria-grupo h3 {
+      margin: 10px 0 5px;
+      font-size: 1rem;
+      color: #444;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+    .menu-item input {
+      width: 36px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .menu-item div {
+      flex: 1;
+    }
+    .menu-item .precio {
+      width: 70px;
+      text-align: right;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <section id="login">
-    <h2>Acceso al módulo</h2>
-    <input type="text" id="usuario_input" placeholder="Usuario" />
-    <input type="password" id="clave_input" placeholder="Clave" />
-    <button id="btn_login">Ingresar</button>
-    <p id="mensaje_login"></p>
-  </section>
+  <div class="contenedor">
+    <header>
+      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <h1>Menú - La Casona de 17</h1>
+      <p>Consumo en salón (por mesa)</p>
+    </header>
 
-  <section id="panel" style="display:none;">
-    <h2>Bienvenido, <span id="nombre_usuario"></span></h2>
-
-    <div id="menu">
-      <h3>Menú disponible</h3>
-      <select id="filtro_categoria"></select>
-      <div id="menu_items" class="scrollable-menu"></div>
-    </div>
-
-    <div id="pedido">
-      <h3>Datos del pedido</h3>
-      <input type="text" id="mesa_input" placeholder="Mesa" />
-      <select id="local_input">
-        <option value="restaurant">Restaurant</option>
-        <option value="bar">Bar</option>
-        <option value="pizzeria">Pizzería</option>
-      </select>
-      <button id="btn_revisar">Revisar pedido</button>
-    </div>
-
-    <section id="resumen-pedido" class="resumen-visual" style="display:none;">
-      <h3>Resumen del pedido</h3>
-      <div id="resumen_contenido" class="resumen-contenido"></div>
-      <div class="botonera">
-        <button id="btn-confirmar" class="btn-principal">✅ Confirmar pedido</button>
-        <button id="btn-cancelar" class="btn-secundario">❌ Cancelar</button>
-      </div>
+    <!-- Login -->
+    <section id="login">
+      <h3>Inicio de sesión</h3>
+      <input type="text" id="usuario" placeholder="Usuario" autocomplete="off" />
+      <input type="password" id="clave" placeholder="Contraseña" autocomplete="off" />
+      <button onclick="iniciarSesion()">Entrar</button>
     </section>
 
-    <div id="pendientes">
-      <h3>Pedidos pendientes</h3>
-      <div id="lista_pendientes"></div>
-    </div>
+    <!-- Panel operativo -->
+    <section id="contenido" style="display:none;">
+      <p><strong>Usuario conectado:</strong> <span id="usuario-conectado"></span></p>
 
-    <div id="resumen_dia">
-      <h3>Resumen del día</h3>
-      <p id="resumen_texto"></p>
-    </div>
+      <div id="resumen-cobros">
+        <h3>📊 Resumen del día</h3>
+        <p><strong>Fecha:</strong> <span id="fecha-resumen"></span></p>
+        <p><strong>Pedidos pendientes:</strong> <span id="total-pendientes">0</span></p>
+        <p><strong>Importe pendiente:</strong> <span id="importe-pendiente">0</span> CUP</p>
+        <p><strong>Pedidos cobrados:</strong> <span id="total-cobrados">0</span></p>
+        <p><strong>Importe cobrado:</strong> <span id="importe-cobrado">0</span> CUP</p>
+      </div>
 
-    <button id="btn_logout">Cerrar sesión</button>
-  </section>
+      <label for="local"><strong>Tipo de local:</strong></label>
+      <select id="local">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Bar">Bar</option>
+        <option value="Pizzería">Pizzería</option>
+      </select>
 
-  <script src="dependientes.js"></script>
+      <label for="mesa"><strong>Número de mesa:</strong></label>
+      <input type="text" id="mesa" placeholder="Ej. 5" />
+
+      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
+      <select id="filtro" onchange="filtrarMenu()">
+        <option value="todos">Todos</option>
+      </select>
+
+      <div id="menu"></div>
+
+      <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+      <p><strong>Platos seleccionados:</strong> <span id="cantidad-items">0</span></p>
+
+      <button onclick="enviarPedido()">Revisar pedido</button>
+      <button onclick="limpiarSeleccion()">Limpiar selección</button>
+
+      <div id="confirmacion" style="display:none; margin-top:30px;">
+        <h3 style="color:green;">✅ Pedido procesado</h3>
+        <div id="resumen"></div>
+      </div>
+
+      <div id="pedidos-pendientes" style="margin-top:30px;"></div>
+
+      <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
+    </section>
+  </div>
+
+  <script type="module" src="../scripts/script-dependientes.js"></script>
 </body>
 </html>
