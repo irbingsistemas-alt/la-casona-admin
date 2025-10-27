@@ -138,8 +138,10 @@ function mostrarMenuAgrupado(platos) {
   }
 }
 
+/* ---------- actualizarFiltroCategorias (ahora llama attachFiltroListener) ---------- */
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
+  if (!filtro) return;
   const categorias = [...new Set(platos.map(p => p.categoria || "Sin categoría"))].sort();
   filtro.innerHTML = `<option value="todos">Todos</option>`;
   categorias.forEach(cat => {
@@ -148,6 +150,29 @@ function actualizarFiltroCategorias(platos) {
     option.textContent = cat;
     filtro.appendChild(option);
   });
+
+  // asegurar listener en el select (evita inline onchange y duplicados)
+  attachFiltroListener();
+}
+
+/* función expuesta (asegura disponibilidad global) */
+window.filtrarMenu = function () {
+  const seleccion = document.getElementById("filtro").value;
+  if (seleccion === "todos") {
+    mostrarMenuAgrupado(menu);
+  } else {
+    mostrarMenuAgrupado(menu.filter(p => (p.categoria || "Sin categoría") === seleccion));
+  }
+};
+
+/* helper que asegura que el listener se registre (llamar desde actualizarFiltroCategorias) */
+function attachFiltroListener() {
+  const filtroEl = document.getElementById("filtro");
+  if (!filtroEl) return;
+  // reemplazar nodo para eliminar listeners previos y evitar duplicados
+  const nuevo = filtroEl.cloneNode(true);
+  filtroEl.parentNode.replaceChild(nuevo, filtroEl);
+  nuevo.addEventListener("change", window.filtrarMenu);
 }
 
 /* ---------- actualizarCantidad y UI totals ---------- */
@@ -255,7 +280,9 @@ window.iniciarSesion = async function () {
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  document.getElementById("btn-recargar-menu").onclick = () => cargarMenu(true);
+  // listener recarga menú
+  const btnRec = document.getElementById("btn-recargar-menu");
+  if (btnRec) btnRec.onclick = () => cargarMenu(true);
 
   await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
 };
