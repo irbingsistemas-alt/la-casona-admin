@@ -7,38 +7,49 @@
   <link rel="stylesheet" href="../style-base.css" />
 </head>
 <body>
-  <div id="login-panel">
-    <img src="../assets/logo.png" alt="Logo" />
+  <div id="login-panel" class="contenedor">
+    <img src="../assets/logo.png" alt="Logo" class="logo-login" />
     <h2>Iniciar sesión</h2>
     <input type="text" id="usuario" placeholder="Usuario" />
     <input type="password" id="clave" placeholder="Contraseña" />
-    <button id="btn-login">Entrar</button>
-    <p id="login-error" class="error"></p>
+    <div style="margin-top:12px;">
+      <button id="btn-login">Entrar</button>
+    </div>
+    <p id="login-error" class="mensaje-error"></p>
   </div>
 
-  <div id="main-panel" style="display: none;">
-    <header>
-      <img src="../assets/logo.png" alt="Logo" id="logo" />
-      <span id="bienvenida"></span>
-      <button id="btn-logout">Cerrar sesión</button>
+  <div id="main-panel" class="contenedor" style="display: none;">
+    <header style="display:flex; align-items:center; gap:12px; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <img src="../assets/logo.png" alt="Logo" id="logo" style="max-width:64px;" />
+        <span id="bienvenida" style="font-weight:bold;"></span>
+      </div>
+      <div>
+        <button id="btn-logout" class="btn-secundario">Cerrar sesión</button>
+      </div>
     </header>
 
-    <section id="menu-panel">
+    <section id="menu-panel" style="margin-top:18px;">
       <h3>Menú disponible</h3>
       <div id="menu-contenedor" class="scrollable-menu"></div>
-      <div id="totales">
-        <p>Total: <span id="total-cup">0</span> CUP</p>
-        <p>Cantidad de ítems: <span id="total-items">0</span></p>
-        <button id="btn-limpiar">Limpiar selección</button>
+
+      <div id="totales" style="margin-top:12px; display:flex; gap:16px; align-items:center; justify-content:space-between;">
+        <div>
+          <p>Total: <span id="total-cup">0.00</span> CUP</p>
+          <p>Cantidad de ítems: <span id="total-items">0</span></p>
+        </div>
+        <div>
+          <button id="btn-limpiar">Limpiar selección</button>
+        </div>
       </div>
     </section>
 
-    <section id="pedidos-panel">
+    <section id="pedidos-panel" style="margin-top:18px;">
       <h3>Pedidos pendientes</h3>
       <div id="pedidos-contenedor"></div>
     </section>
 
-    <section id="resumen-panel">
+    <section id="resumen-panel" style="margin-top:18px;">
       <h3>Resumen del día</h3>
       <p>Fecha: <span id="resumen-fecha"></span></p>
       <p>Usuario conectado: <span id="resumen-usuario"></span></p>
@@ -57,10 +68,6 @@
     </div>
   </div>
 
-  <!-- Supabase client (must load before your script) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-  <!-- Tu script -->
-  <script src="../scripts/script-dependientes.js"></script>
+  <script type="module" src="../scripts/script-dependientes.js"></script>
 </body>
 </html>
