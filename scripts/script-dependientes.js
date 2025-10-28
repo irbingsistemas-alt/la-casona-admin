@@ -7,7 +7,7 @@ const supabase = createClient(
 
 let menu = [];
 let usuarioAutenticado = null;
-let cantidadesSeleccionadas = {}; // { menuId: cantidad }
+let cantidadesSeleccionadas = {};
 let latestMenuFetchTs = 0;
 
 function escapeHtml(text = "") {
@@ -29,7 +29,6 @@ async function cargarResumen() {
     document.getElementById("importe-pendiente").textContent = "0.00";
     return;
   }
-
   const hoy = new Date().toISOString().split("T")[0];
   try {
     const { data: pedidos, error } = await supabase
@@ -38,7 +37,6 @@ async function cargarResumen() {
       .eq("usuario_id", usuarioAutenticado)
       .gte("fecha", `${hoy}T00:00:00`)
       .lte("fecha", `${hoy}T23:59:59`);
-
     if (error) { console.warn("Error al cargar resumen:", error); return; }
 
     let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
@@ -69,7 +67,6 @@ async function cargarMenu(force = false) {
     .eq("disponible", true)
     .eq("activo", true)
     .order("categoria", { ascending: true });
-
   if (error) { console.warn("Error al cargar menú:", error); alert("❌ Error al cargar el menú."); return; }
 
   menu = data || [];
@@ -85,18 +82,15 @@ function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   if (!contenedor) return;
   contenedor.innerHTML = "";
-
   const grupos = platos.reduce((acc, p) => {
     const cat = p.categoria || "Sin categoría";
     (acc[cat] = acc[cat] || []).push(p);
     return acc;
   }, {});
-
   for (const categoria of Object.keys(grupos)) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
     grupo.innerHTML = `<h3>${escapeHtml(categoria)}</h3>`;
-
     grupos[categoria].forEach(plato => {
       const cantidadActual = Number(cantidadesSeleccionadas[plato.id] || 0);
       const item = document.createElement("div");
@@ -113,12 +107,11 @@ function mostrarMenuAgrupado(platos) {
       });
       grupo.appendChild(item);
     });
-
     contenedor.appendChild(grupo);
   }
 }
 
-/* ---------- filtro de categorías ---------- */
+/* ---------- filtro ---------- */
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
   if (!filtro) return;
@@ -132,7 +125,6 @@ function actualizarFiltroCategorias(platos) {
   });
   attachFiltroListener();
 }
-
 window.filtrarMenu = function () {
   const seleccionEl = document.getElementById("filtro");
   if (!seleccionEl) return;
@@ -140,7 +132,6 @@ window.filtrarMenu = function () {
   if (seleccion === "todos") mostrarMenuAgrupado(menu);
   else mostrarMenuAgrupado(menu.filter(p => (p.categoria || "Sin categoría") === seleccion));
 };
-
 function attachFiltroListener() {
   const filtroEl = document.getElementById("filtro");
   if (!filtroEl) return;
@@ -156,7 +147,6 @@ window.actualizarCantidad = function (menuId, cantidad) {
   else { cantidadesSeleccionadas[menuId] = qty; }
   actualizarTotalesUI();
 };
-
 function actualizarTotalesUI() {
   const total = Object.entries(cantidadesSeleccionadas).reduce((sum, [id, qty]) => {
     const plato = menu.find(p => p.id === id);
@@ -169,7 +159,7 @@ function actualizarTotalesUI() {
   if (itemsEl) itemsEl.textContent = items;
 }
 
-/* ---------- mostrar pedidos pendientes ---------- */
+/* ---------- mostrarPedidosPendientes ---------- */
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   try {
@@ -181,7 +171,6 @@ async function mostrarPedidosPendientes() {
       .gte("fecha", `${hoy}T00:00:00`)
       .lte("fecha", `${hoy}T23:59:59`)
       .order("fecha", { ascending: true });
-
     if (error) throw error;
 
     let html = "<h3>🕒 Pedidos pendientes</h3>";
@@ -240,14 +229,13 @@ window.revisarPedido = function () {
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
 
-/* ---------- confirmarPedido (Mode SUM — mejora: prioriza pedido por usuario, fallback por mesa, no toLowerCase, verifica en BD antes de limpiar) ---------- */
+/* ---------- confirmarPedido (usa RPC confirmar_pedido_sum) ---------- */
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesaRaw = (document.getElementById("mesa").value || "").trim();
-  const mesa = mesaRaw; // mantener exacto como se guarda en BD
+  const mesa = mesaRaw;
   if (!mesa) { alert("Indica número de mesa antes de confirmar."); return; }
 
-  // construir items actuales (solo cantidad > 0) y normalizar menu_id como string
   const itemsRaw = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
       const p = menu.find(m => m.id === id);
@@ -258,7 +246,7 @@ async function confirmarPedido() {
 
   if (itemsRaw.length === 0) { alert("No hay items para enviar."); return; }
 
-  // compactar items por menu_id por si hubiera duplicados (suma cantidades localmente)
+  // compactar localmente por menu_id
   const itemsMap = {};
   itemsRaw.forEach(it => {
     const key = String(it.menu_id);
@@ -267,212 +255,27 @@ async function confirmarPedido() {
   });
   const items = Object.values(itemsMap);
 
-  // DEBUG contexto y payload
   console.log("[DEBUG CONTEXTO] usuarioAutenticado, local, mesa, items:", { usuarioAutenticado, local, mesa: mesaRaw, items });
   console.log("[DEBUG] items a enviar (compactados):", JSON.stringify(items, null, 2));
 
-  const hoy = new Date().toISOString().split("T")[0];
-
   try {
-    // buscar pedido activo: preferir pedido del mismo usuario, si no existe tomar cualquier pedido activo en la mesa/local
-    let pedidoId = null;
+    const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum', {
+      p_pedido_id: null,
+      p_mesa: mesa,
+      p_local: local,
+      p_usuario_id: usuarioAutenticado,
+      p_items: JSON.stringify(payload)
+    });
 
-    const { data: existentesUsuario, error: errExistUser } = await supabase
-      .from("pedidos")
-      .select("id")
-      .eq("usuario_id", usuarioAutenticado)
-      .eq("local", local)
-      .eq("mesa", mesa)
-      .eq("cobrado", false)
-      .gte("fecha", `${hoy}T00:00:00`)
-      .lte("fecha", `${hoy}T23:59:59`)
-      .order("fecha", { ascending: false })
-      .limit(1);
+    if (error) throw error;
 
-    if (errExistUser) throw errExistUser;
-    if (existentesUsuario && existentesUsuario.length > 0) pedidoId = existentesUsuario[0].id;
-    else {
-      const { data: existentesMesa, error: errExistMesa } = await supabase
-        .from("pedidos")
-        .select("id, usuario_id")
-        .eq("local", local)
-        .eq("mesa", mesa)
-        .eq("cobrado", false)
-        .gte("fecha", `${hoy}T00:00:00`)
-        .lte("fecha", `${hoy}T23:59:59`)
-        .order("fecha", { ascending: false })
-        .limit(1);
+    // data es el JSON retornado por la función
+    console.log("[DEBUG] RPC confirmar_pedido_sum resultado:", data);
 
-      if (errExistMesa) throw errExistMesa;
-      if (existentesMesa && existentesMesa.length > 0) pedidoId = existentesMesa[0].id;
-    }
-
-    let mensaje = "";
-
-    if (pedidoId) {
-      mensaje = "✅ Pedido actualizado correctamente.";
-
-      const { data: itemsExistentes, error: errItemsExist } = await supabase
-        .from("pedido_items")
-        .select("id, menu_id, cantidad, precio, subtotal")
-        .eq("pedido_id", pedidoId);
-
-      console.log("[DEBUG] itemsExistentes desde BD:", JSON.stringify(itemsExistentes || [], null, 2));
-      if (errItemsExist) throw errItemsExist;
-
-      const existentesMap = {};
-      (itemsExistentes || []).forEach(it => {
-        existentesMap[String(it.menu_id)] = { id: it.id, cantidad: Number(it.cantidad), precio: Number(it.precio) };
-      });
-
-      // procesar actualizaciones/insertos con logging
-      for (const it of items) {
-        const key = String(it.menu_id);
-        if (existentesMap[key]) {
-          const existing = existentesMap[key];
-          const nuevaCantidad = Number(existing.cantidad) + Number(it.cantidad);
-          const nuevaSubtotal = Number(nuevaCantidad) * Number(it.precio || existing.precio);
-          const updatePayload = { cantidad: nuevaCantidad, precio: it.precio, subtotal: nuevaSubtotal, updated_at: new Date().toISOString() };
-
-          const { data: updData, error: errUpd } = await supabase
-            .from("pedido_items")
-            .update(updatePayload)
-            .eq("id", existing.id)
-            .select();
-
-          console.log("[DEBUG] resultado UPDATE item:", { id: existing.id, updatePayload, errUpd, updData });
-          if (errUpd) throw errUpd;
-        } else {
-          const { data: insData, error: errIns } = await supabase
-            .from("pedido_items")
-            .insert([{
-              pedido_id: pedidoId,
-              menu_id: it.menu_id,
-              nombre: it.nombre,
-              cantidad: it.cantidad,
-              precio: it.precio,
-              subtotal: Number(it.cantidad) * Number(it.precio),
-              updated_at: new Date().toISOString()
-            }])
-            .select();
-
-          console.log("[DEBUG] resultado INSERT item:", { menu_id: it.menu_id, errIns, insData });
-          if (errIns) throw errIns;
-        }
-      }
-
-      // eliminar items obsoletos si aplica
-      const menuIdsActual = items.map(i => String(i.menu_id));
-      const idsParaBorrar = (itemsExistentes || [])
-        .filter(it => !menuIdsActual.includes(String(it.menu_id)))
-        .map(it => it.id);
-
-      if (idsParaBorrar.length > 0) {
-        const { data: delData, error: errDelete } = await supabase
-          .from("pedido_items")
-          .delete()
-          .in("id", idsParaBorrar)
-          .select();
-        console.log("[DEBUG] resultado DELETE items obsoletos:", { idsParaBorrar, errDelete, delData });
-        if (errDelete) throw errDelete;
-      }
-
-      // recalcular total desde subtotales en BD
-      const { data: actualizados, error: errCalc } = await supabase
-        .from("pedido_items")
-        .select("subtotal")
-        .eq("pedido_id", pedidoId);
-
-      if (errCalc) throw errCalc;
-      const nuevoTotal = (actualizados || []).reduce((s, p) => s + Number(p.subtotal || 0), 0);
-
-      const { data: updPedidoData, error: errUpdPedido } = await supabase
-        .from("pedidos")
-        .update({ total: nuevoTotal, fecha: new Date().toISOString() })
-        .eq("id", pedidoId)
-        .select();
-
-      console.log("[DEBUG] resultado UPDATE pedido total:", { pedidoId, errUpdPedido, updPedidoData });
-      if (errUpdPedido) throw errUpdPedido;
-
-      // lectura final y comprobación antes de limpiar UI
-      const checks = [];
-      for (const it of items) {
-        const { data: finalItemsCheck, error: errFinalCheck } = await supabase
-          .from("pedido_items")
-          .select("menu_id, cantidad, subtotal, updated_at")
-          .eq("pedido_id", pedidoId)
-          .eq("menu_id", it.menu_id);
-
-        console.log("[DEBUG] finalItemsCheck for", it.menu_id, finalItemsCheck, errFinalCheck);
-        if (errFinalCheck) throw errFinalCheck;
-        checks.push({ menu_id: it.menu_id, rows: finalItemsCheck || [] });
-      }
-
-      // validar checks: si alguno no refleja la cantidad esperada, no limpiar y avisar
-      let allGood = true;
-      checks.forEach(c => {
-        const desired = items.find(x => String(x.menu_id) === String(c.menu_id));
-        const row = (c.rows || [])[0];
-        if (!row) allGood = false;
-        else {
-          const expectedQty = items.find(x => String(x.menu_id) === String(c.menu_id)).cantidad;
-          const actualQty = Number(row.cantidad || 0);
-          if (actualQty < expectedQty) allGood = false;
-        }
-      });
-
-      if (!allGood) {
-        alert("❗ La actualización no se reflejó completamente en la base. Revisa la consola y vuelve a intentar.");
-        return;
-      }
-
-    } else {
-      // crear nuevo pedido y sus items
-      mensaje = "🆕 Nuevo pedido creado.";
-      const total = items.reduce((s, i) => s + i.precio * i.cantidad, 0);
-
-      const { data: newPedido, error: errInsert } = await supabase
-        .from("pedidos")
-        .insert([{
-          local,
-          mesa,
-          total,
-          entregado: false,
-          cobrado: false,
-          fecha: new Date().toISOString(),
-          usuario_id: usuarioAutenticado
-        }])
-        .select()
-        .single();
-
-      if (errInsert) throw errInsert;
-      pedidoId = newPedido.id;
-
-      const inserts = items.map(i => ({
-        pedido_id: pedidoId,
-        menu_id: i.menu_id,
-        nombre: i.nombre,
-        cantidad: i.cantidad,
-        precio: i.precio,
-        subtotal: Number(i.cantidad) * Number(i.precio),
-        updated_at: new Date().toISOString()
-      }));
-      const { data: insMany, error: errItems } = await supabase.from("pedido_items").insert(inserts).select();
-      console.log("[DEBUG] resultado INSERT batch items:", { insMany, errItems });
-      if (errItems) throw errItems;
-
-      // lectura final de items creados
-      const { data: finalItems, error: errFinalItems } = await supabase
-        .from("pedido_items")
-        .select("menu_id, cantidad, subtotal, updated_at")
-        .eq("pedido_id", pedidoId);
-
-      console.log("[DEBUG] estado final de pedido_items tras crear pedido:", { pedidoId, finalItems, errFinalItems });
-      if (errFinalItems) throw errFinalItems;
-    }
-
-    // UI: mostrar confirmación y limpiar selección local
+    // actualizar UI según respuesta
+    const result = data;
+    const mensaje = result && result.total ? "✅ Pedido registrado/actualizado." : "✅ Pedido procesado.";
     document.getElementById("confirmacion").style.display = "block";
     document.getElementById("resumen").innerHTML = `
       <p>${mensaje}</p>
@@ -481,7 +284,19 @@ async function confirmarPedido() {
       <p><strong>Platos:</strong> ${items.map(i => `${escapeHtml(i.nombre)} (${i.cantidad})`).join(", ")}</p>
     `;
 
-    // limpiar solo después de verificar
+    // limpiar solo si la RPC devolvió items que contienen las cantidades esperadas
+    const itemsReturned = (result && result.items) ? result.items : [];
+    let allGood = true;
+    items.forEach(it => {
+      const found = (itemsReturned || []).find(r => String(r.menu_id) === String(it.menu_id));
+      if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
+    });
+
+    if (!allGood) {
+      alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
+      return;
+    }
+
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
@@ -490,11 +305,11 @@ async function confirmarPedido() {
     await mostrarPedidosPendientes();
     await cargarMenu(true);
 
-    if (pedidoId) verDetalles(pedidoId);
+    if (result && result.pedido_id) verDetalles(result.pedido_id);
 
   } catch (err) {
-    console.error("Error en confirmarPedido:", err);
-    alert("❌ Error al procesar el pedido. Revisa la consola.");
+    console.error("Error en confirmarPedido (RPC):", err);
+    alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
 }
 
@@ -506,7 +321,6 @@ window.verDetalles = async function (pedidoId) {
       .select("id, menu_id, nombre, cantidad, precio, subtotal, updated_at")
       .eq("pedido_id", pedidoId)
       .order("id", { ascending: true });
-
     if (error) throw error;
     const items = data || [];
     const total = (items || []).reduce((s, it) => s + Number(it.cantidad) * Number(it.precio), 0);
