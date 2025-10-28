@@ -1,3 +1,16 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const rol = localStorage.getItem("rol");
+  const usuario = localStorage.getItem("usuario");
+
+  const rolesPermitidos = ["admin", "gerente"]; // Ajusta según el módulo
+
+  if (!usuario || !rolesPermitidos.includes(rol)) {
+    window.location.href = "../index.html"; // Redirige al login
+    return;
+  }
+
+  // Aquí continúa tu lógica normal del módulo...
+});
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // Inicializar Supabase
