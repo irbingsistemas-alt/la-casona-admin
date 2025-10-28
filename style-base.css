@@ -22,8 +22,14 @@ body {
 }
 
 /* Unificar logo en todo el sitio */
-/* === Logo === */ .logo-login, .logo img { max-width: 160px; height: auto; display: block; margin: 0 auto 12px auto; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-
+.site-logo, .site-logo img {
+  display: block;
+  max-width: 160px;
+  height: auto;
+  margin: 0 auto 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
 
 /* === Encabezados === */
 h1 {
