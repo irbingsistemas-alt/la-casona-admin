@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
             break;
           case "admin":
           case "gerente":
-            window.location.href = "modules/admin.html";
+            window.location.href = "modules/selector.html";
             break;
           default:
             if (mensaje) mensaje.textContent = "Rol no reconocido: " + usuario.rol;
