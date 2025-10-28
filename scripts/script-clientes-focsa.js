@@ -1,193 +1,303 @@
+// clientes-focsa.js
+// Versión que usa la RPC listar_menus(p_destino, p_only_available, p_limit)
+// Reemplaza la función cargarMenu en tu módulo FOCSA.
+// Depende de que la RPC listar_menus exista y que el anon/authenticated tenga EXECUTE.
+
+// Import Supabase (ESM)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabase = createClient(
-  "https://ihswokmnhwaitzwjzvmy.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
-);
+const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
 
-const menuDiv = document.getElementById("menu");
-const filtroSelect = document.getElementById("filtro");
-const cantidadesSeleccionadas = {};
-let menu = [];
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {});
 
-async function cargarMenu() {
-  const { data, error } = await supabase
-    .from("menus")
-    .select("*")
-    .eq("disponible", true)
-    .order("orden", { ascending: true });
+// DOM references (espera que el HTML tenga estos ids)
+const menuContainer = document.getElementById("menu-container");
+const filtro = document.getElementById("filtro");
+const buscar = document.getElementById("buscar");
+const loadingMenu = document.getElementById("loadingMenu");
+const carritoLista = document.getElementById("carritoLista");
+const totalEl = document.getElementById("total");
+const resumenEl = document.getElementById("resumen");
+const confirmPanel = document.getElementById("confirmacion");
+const btnRevisar = document.getElementById("btnRevisar");
+const btnLimpiar = document.getElementById("btnLimpiar");
+const btnEnviarWhats = document.getElementById("btnEnviarWhats");
+const btnCancelar = document.getElementById("btnCancelar");
 
-  if (error) {
-    alert("❌ Error al cargar el menú");
+let menu = []; // array de items retornados por la RPC
+const seleccion = {}; // productId -> cantidad
+
+const escapeHtml = s => String(s ?? "").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// Cargar menú usando RPC listar_menus filtrado por focsa
+export async function cargarMenu() {
+  if (loadingMenu) loadingMenu.style.display = "inline";
+  try {
+    const { data, error } = await supabase.rpc('listar_menus', {
+      p_destino: 'focsa',
+      p_only_available: true,
+      p_limit: 1000
+    });
+    if (error) throw error;
+    menu = Array.isArray(data) ? data : [];
+
+    // construir select de categorías desde items FOCSA
+    const cats = [...new Set(menu.map(i => i.categoria).filter(Boolean))].sort();
+    if (filtro) {
+      filtro.innerHTML = "<option value='todos'>Todas las categorías</option>";
+      cats.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        filtro.appendChild(opt);
+      });
+    }
+
+    renderMenu(menu);
+  } catch (err) {
+    console.error("Error cargarMenu RPC listar_menus:", err);
+    if (menuContainer) menuContainer.innerHTML = "<div class='small'>Error cargando menú FOCSA. Revisa consola.</div>";
+  } finally {
+    if (loadingMenu) loadingMenu.style.display = "none";
+  }
+}
+
+// Render agrupado por categoría y controles de cantidad
+export function renderMenu(list) {
+  if (!menuContainer) return;
+  menuContainer.innerHTML = "";
+  const listToRender = Array.isArray(list) ? list : (Array.isArray(menu) ? menu : []);
+  if (!listToRender.length) {
+    menuContainer.innerHTML = "<div class='small'>No hay platos disponibles.</div>";
     return;
   }
 
-  menu = data;
-  const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
+  const grouped = listToRender.reduce((acc, it) => {
+    const cat = it.categoria || "Sin categoría";
+    acc[cat] = acc[cat] || [];
+    acc[cat].push(it);
+    return acc;
+  }, {});
 
-  filtroSelect.innerHTML = '<option value="todos">Todas</option>';
-  categorias.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    filtroSelect.appendChild(option);
-  });
+  for (const cat of Object.keys(grouped)) {
+    const groupDiv = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = cat;
+    groupDiv.appendChild(title);
 
-  mostrarMenuAgrupado(menu);
-}
+    const grid = document.createElement("div");
+    grid.className = "menu-grid";
 
-function mostrarMenuAgrupado(platos) {
-  menuDiv.innerHTML = "";
+    grouped[cat].forEach(item => {
+      const card = document.createElement("div");
+      card.className = "menu-item";
 
-  const agrupado = {};
-  platos.forEach(item => {
-    if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
-    agrupado[item.categoria].push(item);
-  });
+      const name = document.createElement("div");
+      name.innerHTML = `<strong>${escapeHtml(item.nombre)}</strong>`;
 
-  for (const categoria in agrupado) {
-    const grupo = agrupado[categoria];
-    const grupoDiv = document.createElement("div");
-    grupoDiv.className = "categoria-grupo";
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = `${item.precio} CUP`;
 
-    const titulo = document.createElement("h3");
-    titulo.textContent = categoria;
-    grupoDiv.appendChild(titulo);
-
-    grupo.forEach(item => {
-      const key = item.nombre;
-      const cantidadGuardada = cantidadesSeleccionadas[key] || 0;
-      const div = document.createElement("div");
-      div.className = "menu-item";
-      div.innerHTML = `
-        <label>
-          <strong>${item.nombre}</strong> - ${item.precio} CUP
-          <input type="number" min="0" value="${cantidadGuardada}" data-name="${item.nombre}" data-price="${item.precio}" />
-        </label>
+      const qtyRow = document.createElement("div");
+      qtyRow.className = "qty-row";
+      qtyRow.innerHTML = `
+        <button type="button" data-action="dec" data-id="${item.id}">−</button>
+        <input type="number" min="0" value="${seleccion[item.id] || 0}" data-id="${item.id}" />
+        <button type="button" data-action="inc" data-id="${item.id}">+</button>
       `;
-      grupoDiv.appendChild(div);
+
+      qtyRow.querySelectorAll("button").forEach(b => {
+        b.addEventListener("click", () => {
+          const id = b.dataset.id;
+          const action = b.dataset.action;
+          const current = Number(seleccion[id] || 0);
+          if (action === "inc") seleccion[id] = current + 1;
+          if (action === "dec") seleccion[id] = Math.max(0, current - 1);
+          const input = qtyRow.querySelector(`input[data-id="${id}"]`);
+          if (input) input.value = seleccion[id];
+          renderCarrito();
+        });
+      });
+
+      const inputEl = qtyRow.querySelector("input");
+      inputEl.addEventListener("input", (ev) => {
+        const id = ev.target.dataset.id;
+        const v = Math.max(0, parseInt(ev.target.value || 0));
+        seleccion[id] = v;
+        renderCarrito();
+      });
+
+      card.appendChild(name);
+      card.appendChild(price);
+      card.appendChild(qtyRow);
+      grid.appendChild(card);
     });
 
-    menuDiv.appendChild(grupoDiv);
+    groupDiv.appendChild(grid);
+    menuContainer.appendChild(groupDiv);
   }
+}
 
-  document.querySelectorAll("input[type='number']").forEach(input => {
-    input.addEventListener("input", () => {
-      const nombre = input.dataset.name;
-      const cantidad = parseInt(input.value) || 0;
-      cantidadesSeleccionadas[nombre] = cantidad;
-      calcularTotal();
-    });
+// Filtrar y buscar
+if (filtro) {
+  filtro.addEventListener("change", () => {
+    const val = filtro.value;
+    const filtered = val === "todos" ? menu : menu.filter(m => m.categoria === val);
+    renderMenu(filtered);
+  });
+}
+
+let searchDebounce;
+if (buscar) {
+  buscar.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      const q = buscar.value.trim().toLowerCase();
+      const filtered = !q ? menu : menu.filter(m => (m.nombre || "").toLowerCase().includes(q) || (m.categoria||"").toLowerCase().includes(q));
+      renderMenu(filtered);
+    }, 180);
+  });
+}
+
+// Carrito y UI
+export function renderCarrito() {
+  if (!carritoLista || !totalEl) return;
+  const entries = Object.entries(seleccion).filter(([, qty]) => qty > 0);
+  if (entries.length === 0) {
+    carritoLista.innerHTML = "<div class='small'>No hay items seleccionados.</div>";
+    totalEl.textContent = "0 CUP";
+    return;
+  }
+  const lines = entries.map(([id, qty]) => {
+    const item = menu.find(m => String(m.id) === String(id));
+    const subtotal = item ? (qty * (Number(item.precio)||0)) : 0;
+    return { id, nombre: item ? item.nombre : id, qty, precio: Number(item.precio)||0, subtotal };
   });
 
-  calcularTotal();
+  carritoLista.innerHTML = lines.map(l => `
+    <div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px dashed #f0f0f0">
+      <div><strong>${escapeHtml(l.nombre)}</strong><div class="small">x${l.qty} · ${l.precio} CUP</div></div>
+      <div style="text-align:right">${l.subtotal} CUP</div>
+    </div>
+  `).join("");
+
+  const total = lines.reduce((s, i) => s + i.subtotal, 0);
+  totalEl.textContent = `${total} CUP`;
 }
 
-function filtrarMenu() {
-  const seleccion = filtroSelect.value;
-  if (seleccion === "todos") {
-    mostrarMenuAgrupado(menu);
-  } else {
-    const filtrado = menu.filter(item => item.categoria === seleccion);
-    mostrarMenuAgrupado(filtrado);
-  }
+// Limpiar selección
+if (btnLimpiar) {
+  btnLimpiar.addEventListener("click", () => {
+    for (const k in seleccion) seleccion[k] = 0;
+    renderCarrito();
+    renderMenu(menu);
+  });
 }
 
-function calcularTotal() {
-  let total = 0;
-  for (const nombre in cantidadesSeleccionadas) {
-    const cantidad = cantidadesSeleccionadas[nombre];
-    const plato = menu.find(p => p.nombre === nombre);
-    if (plato && cantidad > 0) {
-      total += cantidad * plato.precio;
+// Revisar pedido
+if (btnRevisar) {
+  btnRevisar.addEventListener("click", () => {
+    const cliente = document.getElementById("cliente").value.trim();
+    const piso = document.getElementById("piso").value.trim();
+    const apartamento = document.getElementById("apartamento").value.trim();
+    if (!cliente || !piso || !apartamento) {
+      alert("Por favor completa nombre, piso y apartamento");
+      return;
     }
-  }
-  document.getElementById("total").textContent = total;
+    const items = Object.entries(seleccion).filter(([,q]) => q>0).map(([id,q]) => {
+      const item = menu.find(m => String(m.id) === String(id));
+      return { id, nombre: item ? item.nombre : id, cantidad: q, precio: Number(item?.precio||0), subtotal: q * Number(item?.precio||0) };
+    });
+    if (items.length === 0) { alert("Selecciona al menos un plato"); return; }
+
+    resumenEl.innerHTML = `
+      <div style="margin-bottom:8px"><strong>Cliente:</strong> ${escapeHtml(cliente)}<br>
+      <strong>Piso:</strong> ${escapeHtml(piso)} · <strong>Apto:</strong> ${escapeHtml(apartamento)}</div>
+      ${items.map(it=>`<div style="display:flex;justify-content:space-between;padding:6px 0">${escapeHtml(it.nombre)} <span>${it.cantidad} × ${it.precio} CUP</span></div>`).join("")}
+      <div style="border-top:1px solid #eee;padding-top:8px;font-weight:800">Total: ${items.reduce((s,i)=>s+i.subtotal,0)} CUP</div>
+    `;
+    confirmPanel.style.display = "block";
+    confirmPanel.setAttribute("aria-hidden","false");
+
+    const msgLines = [
+      `Pedido para: ${cliente}`,
+      `Local: Edificio FOCSA`,
+      `Piso: ${piso} - Apto: ${apartamento}`,
+      `` ,
+      ...items.map(it => `- ${it.nombre} x${it.cantidad} = ${it.subtotal} CUP`),
+      ``,
+      `Total: ${items.reduce((s,i)=>s+i.subtotal,0)} CUP`
+    ];
+    window.mensajeWhatsApp = msgLines.join("\n");
+    window.pedidoParaGuardar = { cliente, piso, apartamento, local: "FOCSA", tipo: "FOCSA", total: items.reduce((s,i)=>s+i.subtotal,0), items };
+  });
 }
 
-async function enviarPedido() {
-  const cliente = document.getElementById("cliente").value.trim();
-  const piso = document.getElementById("piso").value.trim();
-  const apartamento = document.getElementById("apartamento").value.trim();
+if (btnCancelar) {
+  btnCancelar.addEventListener("click", () => {
+    confirmPanel.style.display = "none";
+    confirmPanel.setAttribute("aria-hidden","true");
+  });
+}
 
-  if (!cliente || !piso || !apartamento) {
-    alert("Por favor, completa nombre, piso y apartamento");
-    return;
-  }
+// Guardar pedido usando inserciones actuales o, si prefieres, reemplazar por supabase.rpc('crear_pedido_cliente', payload)
+if (btnEnviarWhats) {
+  btnEnviarWhats.addEventListener("click", async () => {
+    const payload = window.pedidoParaGuardar;
+    if (!payload) return alert("No hay pedido para enviar.");
+    btnEnviarWhats.disabled = true;
+    btnEnviarWhats.textContent = "Enviando...";
+    try {
+      // Insert pedido (frontend directo). Recomiendo cambiar por RPC transaccional crear_pedido_cliente más adelante.
+      const { data: pedido, error: errPedido } = await supabase
+        .from("pedidos")
+        .insert([{
+          cliente: payload.cliente,
+          piso: payload.piso,
+          apartamento: payload.apartamento,
+          local: payload.local,
+          tipo: payload.tipo,
+          fecha: new Date().toISOString(),
+          total: payload.total,
+          entregado: false
+        }])
+        .select()
+        .single();
+      if (errPedido) throw errPedido;
 
-  let resumenHTML = `<p><strong>Local:</strong> Edificio FOCSA<br><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
-  let mensaje = `Pedido para: ${cliente}\nLocal: Edificio FOCSA\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
-  let total = 0;
-  let items = [];
+      const itemsToInsert = (payload.items || []).map(it => ({
+        pedido_id: pedido.id,
+        producto_id: it.id,
+        nombre: it.nombre,
+        cantidad: it.cantidad,
+        subtotal: it.subtotal
+      }));
+      const { error: errItems } = await supabase.from("pedido_items").insert(itemsToInsert);
+      if (errItems) throw errItems;
 
-  for (const nombre in cantidadesSeleccionadas) {
-    const cantidad = cantidadesSeleccionadas[nombre];
-    const plato = menu.find(p => p.nombre === nombre);
-    if (cantidad > 0 && plato) {
-      const subtotal = cantidad * plato.precio;
-      mensaje += `- ${nombre} x${cantidad} = ${subtotal} CUP\n`;
-      resumenHTML += `<li>${nombre} x${cantidad} = ${subtotal} CUP</li>`;
-      total += subtotal;
-      items.push({ nombre, cantidad, subtotal });
+      const numero = "5350971023";
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
+      window.open(url, "_blank");
+
+      confirmPanel.style.display = "none";
+      confirmPanel.setAttribute("aria-hidden","true");
+      for (const k in seleccion) seleccion[k]=0;
+      renderCarrito();
+      alert("Pedido guardado y se abrió WhatsApp.");
+    } catch (err) {
+      console.error("Error guardando pedido:", err);
+      alert("❌ Error guardando pedido. Revisa consola y logs.");
+    } finally {
+      btnEnviarWhats.disabled = false;
+      btnEnviarWhats.textContent = "Confirmar y enviar";
     }
-  }
-
-  if (items.length === 0) {
-    alert("Selecciona al menos un plato");
-    return;
-  }
-
-  mensaje += `\nTotal: ${total} CUP`;
-  resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
-
-  const { data: pedido, error } = await supabase
-    .from("pedidos")
-    .insert([{
-      cliente,
-      piso,
-      apartamento,
-      local: "FOCSA",
-      tipo: "FOCSA",
-      fecha: new Date().toISOString(),
-      total,
-      entregado: false
-    }])
-    .select()
-    .single();
-
-  if (error) {
-    alert("❌ Error al guardar el pedido");
-    return;
-  }
-
-  for (const item of items) {
-    await supabase.from("pedido_items").insert([{
-      pedido_id: pedido.id,
-      nombre: item.nombre,
-      cantidad: item.cantidad,
-      subtotal: item.subtotal
-    }]);
-  }
-
-  document.getElementById("resumen").innerHTML = resumenHTML;
-  document.getElementById("confirmacion").style.display = "block";
-  window.mensajeWhatsApp = mensaje;
+  });
 }
 
-function enviarWhatsApp() {
-  const numero = "5350971023";
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
-  window.open(url, "_blank");
-  document.getElementById("confirmacion").style.display = "none";
-}
-
-function cancelar() {
-  document.getElementById("confirmacion").style.display = "none";
-}
-
-window.filtrarMenu = filtrarMenu;
-window.enviarPedido = enviarPedido;
-window.enviarWhatsApp = enviarWhatsApp;
-window.cancelar = cancelar;
-
-cargarMenu();
+// Inicialización automática
+(async function init(){
+  await cargarMenu();
+  renderCarrito();
+})();
