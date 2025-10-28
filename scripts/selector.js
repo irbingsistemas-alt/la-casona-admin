@@ -13,18 +13,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const accesos = {
     admin: [
-      { nombre: "Administración", href: "modules/admin.html" },
-      { nombre: "Bar", href: "modules/bar.html" },
-      { nombre: "Dependientes", href: "modules/dependientes.html" },
-      { nombre: "Cocina", href: "modules/cocina.html" },
+      { nombre: "Administración", href: "modules/admin.html", icon: "🛠️" },
+      { nombre: "Bar", href: "modules/bar.html", icon: "🍸" },
+      { nombre: "Dependientes", href: "modules/dependientes.html", icon: "🧾" },
+      { nombre: "Cocina", href: "modules/cocina.html", icon: "🍽️" },
     ],
     gerente: [
-      { nombre: "Administración", href: "modules/admin.html" },
-      { nombre: "Dependientes", href: "modules/dependientes.html" },
+      { nombre: "Administración", href: "modules/admin.html", icon: "🛠️" },
+      { nombre: "Dependientes", href: "modules/dependientes.html", icon: "🧾" },
     ],
-    bar: [{ nombre: "Bar", href: "modules/bar.html" }],
-    cocina: [{ nombre: "Cocina", href: "modules/cocina.html" }],
-    dependiente: [{ nombre: "Dependientes", href: "modules/dependientes.html" }],
+    bar: [{ nombre: "Bar", href: "modules/bar.html", icon: "🍸" }],
+    cocina: [{ nombre: "Cocina", href: "modules/cocina.html", icon: "🍽️" }],
+    dependiente: [{ nombre: "Dependientes", href: "modules/dependientes.html", icon: "🧾" }],
   };
 
   const opciones = accesos[rol] || [];
@@ -35,12 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   opciones.forEach((mod) => {
-    const btn = document.createElement("a");
-    btn.href = mod.href;
-    btn.className = "btn";
-    btn.style.margin = "8px";
-    btn.textContent = mod.nombre;
-    modulos.appendChild(btn);
+    const card = document.createElement("a");
+    card.href = mod.href;
+    card.className = "modulo-card";
+    card.innerHTML = `
+      <div class="modulo-icon">${mod.icon}</div>
+      <div><strong>${mod.nombre}</strong></div>
+    `;
+    modulos.appendChild(card);
   });
 
   document.getElementById("btnLogout").addEventListener("click", () => {
