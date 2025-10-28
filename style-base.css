@@ -21,12 +21,12 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* === Logo === */
-.logo-login, .logo img {
+/* Unificar logo en todo el sitio */
+.site-logo, .site-logo img {
+  display: block;
   max-width: 160px;
   height: auto;
-  display: block;
-  margin: 0 auto 12px auto;
+  margin: 0 auto 12px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
