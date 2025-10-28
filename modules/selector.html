@@ -5,6 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Seleccionar Módulo | La Casona</title>
   <link rel="stylesheet" href="style-base.css" />
+  <style>
+    .modulo-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin: 12px;
+      text-align: center;
+      transition: transform 0.2s ease;
+      cursor: pointer;
+      width: 180px;
+    }
+    .modulo-card:hover {
+      transform: scale(1.03);
+    }
+    .modulo-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+      color: #444;
+    }
+    .modulo-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -19,7 +46,7 @@
 
     <section class="card">
       <h2>Selecciona un módulo</h2>
-      <div id="modulos" class="grid"></div>
+      <div id="modulos" class="modulo-grid"></div>
     </section>
   </div>
 
