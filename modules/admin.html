@@ -149,34 +149,115 @@
     });
 
     // Cargar usuarios
-    async function cargarUsuarios() {
+// === reemplazar cargarUsuarios por este bloque completo ===
+const USER_FK_KEYS = ["role_id", "roles_id", "roleid", "role_id_int"]; // ajustar si tu FK tiene otro nombre
+
+async function cargarUsuarios() {
+  const tbody = document.getElementById("tablaUsuarios");
+  try {
+    tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
+
+    // 1) Obtener usuarios (sin tratar de join complex)
+    const { data: usuarios, error: errUsers } = await supabase
+      .from("usuarios")
+      .select("*")
+      .order("usuario", { ascending: true })
+      .limit(1000);
+
+    if (errUsers) {
+      console.error("Error fetching usuarios:", errUsers);
+      tbody.innerHTML = `<tr><td colspan="3">Error cargando usuarios: ${escapeHtml(errUsers.message || JSON.stringify(errUsers))}</td></tr>`;
+      return;
+    }
+
+    if (!usuarios || usuarios.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3">No hay usuarios registrados.</td></tr>`;
+      return;
+    }
+
+    // 2) Detectar campo FK de rol en la primera fila
+    const sample = usuarios[0] || {};
+    const detectedFk = USER_FK_KEYS.find(k => k in sample) || null;
+
+    // 3) Si no hay FK detectada, intentar si existe la relación roles (objeto roles)
+    let hasRolesRelation = false;
+    if ("roles" in sample && typeof sample.roles === "object" && sample.roles !== null) {
+      hasRolesRelation = true;
+    }
+
+    // 4) Si tenemos FK numérica, consultar tabla roles y mapear
+    let rolesById = {};
+    if (detectedFk && usuarios.some(u => u[detectedFk] !== undefined && u[detectedFk] !== null)) {
       try {
-        // Selección segura: soporta relación roles si existe, si no devuelve rol null
-        const { data, error } = await supabase
-          .from("usuarios")
-          .select("usuario, rol, id")
-          .order("usuario", { ascending: true })
+        const { data: roles, error: errRoles } = await supabase
+          .from("roles")
+          .select("id, nombre")
           .limit(1000);
-        if (error) throw error;
-        const tbody = document.getElementById("tablaUsuarios");
-        tbody.innerHTML = "";
-        (data || []).forEach(u => {
-          const tr = document.createElement("tr");
-          const rolText = u.rol ?? (u.roles && u.roles.nombre) ?? "—";
-          tr.innerHTML = `
-            <td>${escapeHtml(u.usuario)}</td>
-            <td>${escapeHtml(rolText)}</td>
-            <td>
-              <button data-usuario="${escapeHtml(u.usuario)}" class="btn-borrar">Borrar</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Error cargando usuarios:", err);
+        if (errRoles) throw errRoles;
+        rolesById = (roles || []).reduce((acc, r) => { acc[String(r.id)] = r.nombre; return acc; }, {});
+      } catch (e) {
+        console.warn("No fue posible cargar roles para mapear role_id:", e);
+        rolesById = {};
       }
     }
 
+    // 5) Renderizar usando la mejor fuente disponible:
+    // - si existe relation u.roles.nombre -> usarla
+    // - si existe rolesById mapear por FK detectado
+    // - si existe campo textual (role, rol, role_name) usarlo
+    renderUsuariosWithMapping(usuarios, { detectedFk, rolesById, hasRolesRelation });
+
+  } catch (ex) {
+    console.error("Excepción en cargarUsuarios:", ex);
+    tbody.innerHTML = `<tr><td colspan="3">Excepción al cargar usuarios: ${escapeHtml(ex.message || JSON.stringify(ex))}</td></tr>`;
+  }
+}
+
+function renderUsuariosWithMapping(usuarios, { detectedFk, rolesById, hasRolesRelation }) {
+  const tbody = document.getElementById("tablaUsuarios");
+  tbody.innerHTML = "";
+
+  // heurística para campos que pueden contener texto de rol
+  const possibleRoleTextKeys = ["rol", "role", "role_name", "nombre_rol", "rol_nombre"];
+
+  usuarios.forEach(u => {
+    // determinar usuario display
+    const usuarioText = u.usuario ?? u.username ?? u.email ?? u.id ?? "—";
+
+    // determinar rol display
+    let rolText = "—";
+
+    // 1. relación embed (u.roles.nombre)
+    if (hasRolesRelation && u.roles && typeof u.roles === "object" && u.roles.nombre) {
+      rolText = String(u.roles.nombre);
+    }
+
+    // 2. mapping por FK si existe rolesById y detectedFk
+    else if (detectedFk && (u[detectedFk] !== undefined && u[detectedFk] !== null) && Object.keys(rolesById).length > 0) {
+      const fkValue = String(u[detectedFk]);
+      rolText = rolesById[fkValue] ?? fkValue;
+    }
+
+    // 3. campo textual directo
+    else {
+      const foundKey = possibleRoleTextKeys.find(k => k in u && u[k]);
+      if (foundKey) rolText = String(u[foundKey]);
+      else {
+        // heurístico: buscar cualquier field que parezca rol
+        const heuristic = Object.keys(u).find(k => /rol|role|roles|tipo|nombre/i.test(k) && typeof u[k] === "string");
+        if (heuristic) rolText = String(u[heuristic]);
+      }
+    }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(usuarioText)}</td>
+      <td>${escapeHtml(rolText)}</td>
+      <td><button data-usuario="${escapeHtml(usuarioText)}" class="btn-borrar">Borrar</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
     // Borrar usuario (delegado)
     document.getElementById("tablaUsuarios").addEventListener("click", async (ev) => {
       const btn = ev.target.closest("button");
