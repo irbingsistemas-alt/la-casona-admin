@@ -19,39 +19,28 @@ function escapeHtml(text = "") {
     .replace(/'/g, "&#039;");
 }
 
-/* cargarResumen */
 async function cargarResumen() {
-  if (!usuarioAutenticado) {
-    document.getElementById("fecha-resumen").textContent = "";
-    document.getElementById("total-cobrados").textContent = "0";
-    document.getElementById("importe-cobrado").textContent = "0.00";
-    document.getElementById("total-pendientes").textContent = "0";
-    document.getElementById("importe-pendiente").textContent = "0.00";
-    return;
-  }
+  if (!usuarioAutenticado) return;
   const hoy = new Date().toISOString().split("T")[0];
-  try {
-    const { data: pedidos, error } = await supabase
-      .from("pedidos")
-      .select("cobrado, total")
-      .eq("usuario_id", usuarioAutenticado)
-      .gte("fecha", `${hoy}T00:00:00`)
-      .lte("fecha", `${hoy}T23:59:59`);
-    if (error) return;
-    let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
-    (pedidos || []).forEach(p => {
-      if (p.cobrado) { cobrados++; totalCobrado += Number(p.total || 0); }
-      else { pendientes++; totalPendiente += Number(p.total || 0); }
-    });
-    document.getElementById("fecha-resumen").textContent = hoy;
-    document.getElementById("total-cobrados").textContent = String(cobrados);
-    document.getElementById("importe-cobrado").textContent = totalCobrado.toFixed(2);
-    document.getElementById("total-pendientes").textContent = String(pendientes);
-    document.getElementById("importe-pendiente").textContent = totalPendiente.toFixed(2);
-  } catch (err) {}
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("cobrado, total")
+    .eq("usuario_id", usuarioAutenticado)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`);
+  if (error) return;
+  let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
+  (pedidos || []).forEach(p => {
+    if (p.cobrado) { cobrados++; totalCobrado += Number(p.total || 0); }
+    else { pendientes++; totalPendiente += Number(p.total || 0); }
+  });
+  document.getElementById("fecha-resumen").textContent = hoy;
+  document.getElementById("total-cobrados").textContent = String(cobrados);
+  document.getElementById("importe-cobrado").textContent = totalCobrado.toFixed(2);
+  document.getElementById("total-pendientes").textContent = String(pendientes);
+  document.getElementById("importe-pendiente").textContent = totalPendiente.toFixed(2);
 }
 
-/* cargarMenu */
 async function cargarMenu(force = false) {
   const now = Date.now();
   if (!force && now - latestMenuFetchTs < 2500) return;
@@ -104,7 +93,6 @@ function mostrarMenuAgrupado(platos) {
   }
 }
 
-/* filtro */
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
   if (!filtro) return;
@@ -133,7 +121,6 @@ function attachFiltroListener() {
   nuevo.addEventListener("change", window.filtrarMenu);
 }
 
-/* cantidades y totales */
 window.actualizarCantidad = function (menuId, cantidad) {
   const qty = parseInt(cantidad, 10) || 0;
   if (qty <= 0) { if (cantidadesSeleccionadas[menuId]) delete cantidadesSeleccionadas[menuId]; }
@@ -152,7 +139,6 @@ function actualizarTotalesUI() {
   if (itemsEl) itemsEl.textContent = items;
 }
 
-/* mostrarPedidosPendientes */
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   try {
@@ -188,7 +174,6 @@ async function mostrarPedidosPendientes() {
   } catch (err) {}
 }
 
-/* revisarPedido */
 window.revisarPedido = function () {
   const mesa = (document.getElementById("mesa").value || "").trim();
   if (!mesa) { alert("Indica número de mesa antes de revisar el pedido."); return; }
@@ -218,7 +203,6 @@ window.revisarPedido = function () {
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
 
-/* confirmarPedido (RPC) */
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesaRaw = (document.getElementById("mesa").value || "").trim();
@@ -245,7 +229,7 @@ async function confirmarPedido() {
 
   try {
     const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
-    const { data, error } = await supabase.rpc('confirmar_pedido_sum', {
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
       p_mesa: mesa,
       p_local: local,
       p_usuario_id: usuarioAutenticado,
@@ -274,7 +258,6 @@ async function confirmarPedido() {
   }
 }
 
-/* verDetalles */
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
@@ -331,7 +314,6 @@ window.verDetalles = async function (pedidoId) {
   }
 };
 
-/* cerrarPedido */
 window.cerrarPedido = async function (pedidoId) {
   if (!confirm("Confirmar cobro del pedido?")) return;
   try {
@@ -360,7 +342,6 @@ window.cerrarPedido = async function (pedidoId) {
   }
 };
 
-/* utilitarios UI */
 window.limpiarSeleccion = function () {
   cantidadesSeleccionadas = {};
   document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
@@ -379,7 +360,6 @@ window.cerrarSesion = function () {
   document.getElementById("usuario-conectado").textContent = "";
 };
 
-/* iniciarSesion */
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
