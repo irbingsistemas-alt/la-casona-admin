@@ -22,11 +22,11 @@ body {
 }
 
 /* Unificar logo en todo el sitio */
-.site-logo, .site-logo img {
-  display: block;
+.site-logo,.logo-login,.site-logo img {
   max-width: 160px;
   height: auto;
-  margin: 0 auto 12px;
+  display: block;
+  margin: 0 auto 12px auto;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
