@@ -219,6 +219,7 @@ async function confirmarPedido() {
 
   if (itemsRaw.length === 0) { alert("No hay items para enviar."); return; }
 
+  // normalizar y sumar cantidades por menu_id
   const itemsMap = {};
   itemsRaw.forEach(it => {
     const key = String(it.menu_id);
@@ -228,14 +229,16 @@ async function confirmarPedido() {
   const items = Object.values(itemsMap);
 
   try {
+    // Envío CORRECTO: pasar el array/obj directamente (NO usar JSON.stringify)
     const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
     const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
       p_mesa: mesa,
       p_local: local,
       p_usuario_id: usuarioAutenticado,
-      p_items: JSON.stringify(payload),
+      p_items: payload,    // <-- aquí va el array/obj directamente
       p_pedido_id: null
     });
+
     if (error) throw error;
     const result = data;
     const itemsReturned = (result && result.items) ? result.items : [];
@@ -245,6 +248,7 @@ async function confirmarPedido() {
       if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
     });
     if (!allGood) { alert("❗ La actualización no se reflejó completamente. Revisa la consola."); return; }
+
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
@@ -257,7 +261,6 @@ async function confirmarPedido() {
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
 }
-
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
