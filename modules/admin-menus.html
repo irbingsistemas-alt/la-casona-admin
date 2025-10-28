@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Menús | La Casona</title>
+  <style>
+    /* Mantén los estilos base del admin; aquí están los estilos usados antes */
+    body{font-family:Segoe UI,Arial;margin:18px;background:#f4f6f9;color:#222}
+    .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px}
+    label{display:block;font-weight:600;margin-top:8px}
+    input, select, textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e6e6;box-sizing:border-box}
+    .row{display:flex;gap:8px}
+    .col{flex:1}
+    .actions{display:flex;gap:8px;margin-top:10px}
+    button{background:#a52a2a;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:#f1f1f1;color:#333}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+    .hist-list{max-height:320px;overflow:auto;border:1px solid #eee;padding:8px;border-radius:8px;background:#fafafa}
+    .hist-item{padding:8px;border-bottom:1px dashed #eee}
+    .filters{display:flex;gap:8px;align-items:end;margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Crear / Editar Plato</h2>
+    <form id="menuForm">
+      <input type="hidden" id="menuId" />
+      <label>Nombre</label>
+      <input id="nombre" required maxlength="150" />
+      <label>Descripción</label>
+      <textarea id="descripcion" rows="2"></textarea>
+      <div class="row">
+        <div class="col">
+          <label>Precio</label>
+          <input id="precio" type="number" step="0.01" min="0" required />
+        </div>
+        <div class="col">
+          <label>Categoría</label>
+          <select id="categoriaSelect"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>Destino</label>
+          <select id="destino">
+            <option value="restaurant">restaurant</option>
+            <option value="focsa">focsa</option>
+            <option value="entregas">entregas</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Disponible</label>
+          <select id="disponible">
+            <option value="true">Sí</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+      <label>Imagen URL</label>
+      <input id="imagen_url" placeholder="https://..." />
+      <label>Stock (dejar vacío = sin control)</label>
+      <input id="stock" type="number" min="0" />
+      <div class="actions">
+        <button type="submit">Guardar</button>
+        <button type="button" id="btnReset" class="ghost">Limpiar</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Listado de Platos</h2>
+    <div class="filters">
+      <div>
+        <label>Filtro por destino</label>
+        <select id="filtroDestino"><option value="">Todos</option><option value="focsa">focsa</option><option value="restaurant">restaurant</option><option value="entregas">entregas</option></select>
+      </div>
+      <div>
+        <label>Filtrar por categoría</label>
+        <select id="filtroCategoria"><option value="">Todas</option></select>
+      </div>
+      <div style="margin-left:auto">
+        <label>&nbsp;</label>
+        <button id="btnRefrescar" class="ghost" type="button">Refrescar</button>
+      </div>
+    </div>
+
+    <table id="tablaMenus">
+      <thead><tr><th>Nombre</th><th>Precio</th><th>Destino</th><th>Categoría</th><th>Disponible</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Historial de Acciones</h2>
+    <div id="historial" class="hist-list"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById('menuForm');
+    const tablaBody = document.querySelector('#tablaMenus tbody');
+    const filtroDestino = document.getElementById('filtroDestino');
+    const filtroCategoria = document.getElementById('filtroCategoria');
+    const categoriaSelect = document.getElementById('categoriaSelect');
+    const btnRefrescar = document.getElementById('btnRefrescar');
+    const historialEl = document.getElementById('historial');
+
+    async function cargarCategorias(){
+      try {
+        const { data, error } = await supabase
+          .from('menus')
+          .select('categoria')
+          .not('categoria', 'is', null)
+          .limit(1000);
+        if (error) throw error;
+        const cats = [...new Set((data||[]).map(r=>r.categoria).filter(Boolean))].sort();
+        categoriaSelect.innerHTML = '<option value="">-- seleccionar --</option>';
+        filtroCategoria.innerHTML = '<option value="">Todas</option>';
+        cats.forEach(c=>{
+          const o = document.createElement('option');
+          o.value = c; o.textContent = c;
+          categoriaSelect.appendChild(o);
+          const f = document.createElement('option');
+          f.value = c; f.textContent = c;
+          filtroCategoria.appendChild(f);
+        });
+      } catch (err) {
+        console.error('cargarCategorias', err);
+      }
+    }
+
+    async function listar(destino = null, categoria = null) {
+      try {
+        // usar RPC listar_menus si quieres
+        const { data, error } = await supabase.rpc('listar_menus', { p_destino: destino, p_only_available: false, p_limit: 1000 });
+        if (error) throw error;
+        let items = data || [];
+        if (categoria) items = items.filter(i => (i.categoria || '') === categoria);
+        renderTabla(items);
+      } catch (err) {
+        console.error('listar error', err);
+        tablaBody.innerHTML = '<tr><td colspan="6">Error cargando menús</td></tr>';
+      }
+    }
+
+    function renderTabla(items){
+      tablaBody.innerHTML = '';
+      if (!items || items.length===0) {
+        tablaBody.innerHTML = '<tr><td colspan="6">No hay platos</td></tr>';
+        return;
+      }
+      items.forEach(it=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(it.nombre)}</td><td>${it.precio}</td><td>${it.destino}</td><td>${escapeHtml(it.categoria||'')}</td><td>${it.disponible ? 'Sí' : 'No'}</td>
+          <td>
+            <button data-id="${it.id}" class="edit">Editar</button>
+            <button data-id="${it.id}" class="del">Eliminar</button>
+          </td>`;
+        tablaBody.appendChild(tr);
+      });
+      tablaBody.querySelectorAll('.edit').forEach(b=>b.addEventListener('click', cargarParaEditar));
+      tablaBody.querySelectorAll('.del').forEach(b=>b.addEventListener('click', eliminarMenu));
+    }
+
+    function escapeHtml(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function cargarParaEditar(ev){
+      const id = ev.target.dataset.id;
+      try {
+        const { data, error } = await supabase.from('menus').select('*').eq('id', id).single();
+        if (error) throw error;
+        document.getElementById('menuId').value = data.id;
+        document.getElementById('nombre').value = data.nombre || '';
+        document.getElementById('descripcion').value = data.descripcion || '';
+        document.getElementById('precio').value = data.precio || 0;
+        categoriaSelect.value = data.categoria || '';
+        document.getElementById('destino').value = data.destino || 'restaurant';
+        document.getElementById('disponible').value = data.disponible ? 'true' : 'false';
+        document.getElementById('imagen_url').value = data.imagen_url || '';
+        document.getElementById('stock').value = data.stock ?? '';
+      } catch (err) {
+        console.error('cargarParaEditar', err);
+        alert('Error cargando plato para editar');
+      }
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const id = document.getElementById('menuId').value || null;
+      const payload = {
+        nombre: document.getElementById('nombre').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value) || 0,
+        categoria: categoriaSelect.value || '',
+        destino: document.getElementById('destino').value,
+        disponible: document.getElementById('disponible').value === 'true',
+        imagen_url: document.getElementById('imagen_url').value.trim(),
+        stock: (document.getElementById('stock').value === '') ? null : parseInt(document.getElementById('stock').value)
+      };
+      try {
+        if (!id) {
+          const { data, error } = await supabase.rpc('crear_menu', { p_payload: payload, p_actor: 'admin_ui' });
+          if (error) throw error;
+          alert('Plato creado correctamente');
+        } else {
+          const { data, error } = await supabase.rpc('actualizar_menu', { p_id: id, p_changes: payload, p_actor: 'admin_ui' });
+          if (error) throw error;
+          alert('Plato actualizado correctamente');
+        }
+        form.reset();
+        document.getElementById('menuId').value = '';
+        await cargarCategorias();
+        await listar(filtroDestino.value || null, filtroCategoria.value || null);
+        await cargarHistorial();
+      } catch (err) {
+        console.error('guardar menu error', err);
+        alert('Error guardando plato: ' + (err.message || JSON.stringify(err)));
+      }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', ()=>{ form.reset(); document.getElementById('menuId').value = ''; });
+
+    filtroDestino.addEventListener('change', ()=>listar(filtroDestino.value || null, filtroCategoria.value || null));
+    filtroCategoria.addEventListener('change', ()=>listar(filtroDestino.value || null, filtroCategoria.value || null));
+    btnRefrescar.addEventListener('click', ()=>listar(filtroDestino.value || null, filtroCategoria.value || null));
+
+    async function eliminarMenu(ev){
+      const id = ev.target.dataset.id;
+      if (!confirm('¿Seguro que desea eliminar (soft-delete) este plato?')) return;
+      try {
+        const { error } = await supabase.rpc('eliminar_menu', { p_id: id, p_actor: 'admin_ui' });
+        if (error) throw error;
+        alert('Plato eliminado (marcado no disponible)');
+        await listar(filtroDestino.value || null, filtroCategoria.value || null);
+        await cargarHistorial();
+      } catch (err) {
+        console.error('eliminarMenu', err);
+        alert('Error al eliminar plato');
+      }
+    }
+
+    // Historial de Acciones: lee audit_logs (últimas 100)
+    async function cargarHistorial(){
+      try {
+        const { data, error } = await supabase.from('audit_logs').select('id, actor, action, object_type, object_id, details, created_at').order('created_at',{ascending:false}).limit(100);
+        if (error) throw error;
+        historialEl.innerHTML = '';
+        (data||[]).forEach(h=>{
+          const d = document.createElement('div');
+          d.className = 'hist-item';
+          d.innerHTML = `<div style="font-weight:700">${escapeHtml(h.action)}</div>
+            <div class="small">actor: ${escapeHtml(h.actor||'')} · objeto: ${escapeHtml(h.object_type||'')} · id: ${escapeHtml(h.object_id||'')}</div>
+            <div class="small">${escapeHtml(JSON.stringify(h.details || {}))}</div>
+            <div class="small" style="color:#666">${new Date(h.created_at).toLocaleString()}</div>`;
+          historialEl.appendChild(d);
+        });
+      } catch (err) {
+        console.error('cargarHistorial', err);
+        historialEl.innerHTML = '<div class="small">Error cargando historial</div>';
+      }
+    }
+
+    // Inicializar
+    (async function init(){
+      await cargarCategorias();
+      await listar();
+      await cargarHistorial();
+    })();
+  </script>
+</body>
+</html>
