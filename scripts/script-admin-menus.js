@@ -97,10 +97,15 @@ function renderListado() {
       card.style.boxShadow = "0 2px 6px rgba(0,0,0,0.04)";
       card.innerHTML = `
         <div><strong>${escapeHtml(it.nombre)}</strong> — ${it.precio} CUP</div>
-        <div class="small">Destino: ${it.destino} · Disponible: ${it.disponible ? "Sí" : "No"}</div>
+        <div class="small">
+          Destino: ${it.destino} · 
+          <label style="font-weight:600">
+            <input type="checkbox" class="chkDisponible" data-id="${it.id}" ${it.disponible ? "checked" : ""} />
+            ${it.disponible ? "✔ Disponible" : "✖ No disponible"}
+          </label>
+        </div>
         <div style="margin-top:6px">
           <button class="edit" data-id="${it.id}">Editar</button>
-          <button class="toggle" data-id="${it.id}">${it.disponible ? "Desactivar" : "Activar"}</button>
         </div>`;
       grupo.appendChild(card);
     });
@@ -108,8 +113,29 @@ function renderListado() {
     menuListado.appendChild(grupo);
   });
 
+  // Eventos
   menuListado.querySelectorAll(".edit").forEach((b) => b.addEventListener("click", cargarParaEditar));
-  menuListado.querySelectorAll(".toggle").forEach((b) => b.addEventListener("click", toggleDisponible));
+
+  menuListado.querySelectorAll(".chkDisponible").forEach((chk) => {
+    chk.addEventListener("change", async (ev) => {
+      const id = ev.target.dataset.id;
+      const nuevo = ev.target.checked;
+      try {
+        const { error } = await supabase.rpc("actualizar_menu", {
+          p_id: id,
+          p_changes: { disponible: nuevo },
+          p_actor: "admin_ui",
+        });
+        if (error) throw error;
+        showToast(nuevo ? "Plato activado" : "Plato desactivado");
+        await listarMenus();
+        await cargarHistorial();
+      } catch (err) {
+        console.error("toggle disponible", err);
+        showToast("Error al cambiar disponibilidad");
+      }
+    });
+  });
 }
 
 async function cargarParaEditar(ev) {
