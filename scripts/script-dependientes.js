@@ -558,3 +558,4 @@ window.iniciarSesion = async function () {
 
   await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
 };
+//este si
