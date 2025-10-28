@@ -19,7 +19,7 @@ function escapeHtml(text = "") {
     .replace(/'/g, "&#039;");
 }
 
-/* ---------- cargarResumen ---------- */
+/* cargarResumen */
 async function cargarResumen() {
   if (!usuarioAutenticado) {
     document.getElementById("fecha-resumen").textContent = "";
@@ -37,42 +37,35 @@ async function cargarResumen() {
       .eq("usuario_id", usuarioAutenticado)
       .gte("fecha", `${hoy}T00:00:00`)
       .lte("fecha", `${hoy}T23:59:59`);
-    if (error) { console.warn("Error al cargar resumen:", error); return; }
-
+    if (error) return;
     let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
     (pedidos || []).forEach(p => {
       if (p.cobrado) { cobrados++; totalCobrado += Number(p.total || 0); }
       else { pendientes++; totalPendiente += Number(p.total || 0); }
     });
-
     document.getElementById("fecha-resumen").textContent = hoy;
     document.getElementById("total-cobrados").textContent = String(cobrados);
     document.getElementById("importe-cobrado").textContent = totalCobrado.toFixed(2);
     document.getElementById("total-pendientes").textContent = String(pendientes);
     document.getElementById("importe-pendiente").textContent = totalPendiente.toFixed(2);
-  } catch (err) {
-    console.error("cargarResumen error:", err);
-  }
+  } catch (err) {}
 }
 
-/* ---------- cargarMenu ---------- */
+/* cargarMenu */
 async function cargarMenu(force = false) {
   const now = Date.now();
   if (!force && now - latestMenuFetchTs < 2500) return;
   latestMenuFetchTs = now;
-
   const { data, error } = await supabase
     .from("menus")
     .select("id,nombre,precio,categoria,disponible,activo")
     .eq("disponible", true)
     .eq("activo", true)
     .order("categoria", { ascending: true });
-  if (error) { console.warn("Error al cargar menú:", error); alert("❌ Error al cargar el menú."); return; }
-
+  if (error) return;
   menu = data || [];
   const menuIds = new Set(menu.map(m => m.id));
   Object.keys(cantidadesSeleccionadas).forEach(id => { if (!menuIds.has(id)) delete cantidadesSeleccionadas[id]; });
-
   mostrarMenuAgrupado(menu);
   actualizarFiltroCategorias(menu);
   actualizarTotalesUI();
@@ -111,7 +104,7 @@ function mostrarMenuAgrupado(platos) {
   }
 }
 
-/* ---------- filtro ---------- */
+/* filtro */
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
   if (!filtro) return;
@@ -140,7 +133,7 @@ function attachFiltroListener() {
   nuevo.addEventListener("change", window.filtrarMenu);
 }
 
-/* ---------- cantidades y totales ---------- */
+/* cantidades y totales */
 window.actualizarCantidad = function (menuId, cantidad) {
   const qty = parseInt(cantidad, 10) || 0;
   if (qty <= 0) { if (cantidadesSeleccionadas[menuId]) delete cantidadesSeleccionadas[menuId]; }
@@ -159,7 +152,7 @@ function actualizarTotalesUI() {
   if (itemsEl) itemsEl.textContent = items;
 }
 
-/* ---------- mostrarPedidosPendientes ---------- */
+/* mostrarPedidosPendientes */
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   try {
@@ -172,7 +165,6 @@ async function mostrarPedidosPendientes() {
       .lte("fecha", `${hoy}T23:59:59`)
       .order("fecha", { ascending: true });
     if (error) throw error;
-
     let html = "<h3>🕒 Pedidos pendientes</h3>";
     if (!pedidos || pedidos.length === 0) html += "<p>No hay pedidos pendientes.</p>";
     else {
@@ -193,12 +185,10 @@ async function mostrarPedidosPendientes() {
     }
     const cont = document.getElementById("pedidos-pendientes");
     if (cont) cont.innerHTML = html;
-  } catch (err) {
-    console.error("Error mostrarPedidosPendientes:", err);
-  }
+  } catch (err) {}
 }
 
-/* ---------- revisarPedido ---------- */
+/* revisarPedido */
 window.revisarPedido = function () {
   const mesa = (document.getElementById("mesa").value || "").trim();
   if (!mesa) { alert("Indica número de mesa antes de revisar el pedido."); return; }
@@ -206,19 +196,18 @@ window.revisarPedido = function () {
   const items = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
       const p = menu.find(m => m.id === id);
-      return p ? { id, nombre: p.nombre, precio: Number(p.precio), cantidad: qty } : null;
+      return p ? { id, nombre: p.nombre, price: Number(p.precio), cantidad: qty } : null;
     })
     .filter(Boolean);
   if (items.length === 0) { alert("Selecciona al menos un plato antes de revisar."); return; }
-
   const resumenBlock = document.getElementById("resumen");
   resumenBlock.innerHTML = `
     <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
     <p><strong>Local:</strong> ${escapeHtml(local)}</p>
     <ul>
-      ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.precio * i.cantidad).toFixed(2)} CUP</li>`).join("")}
+      ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.price * i.cantidad).toFixed(2)} CUP</li>`).join("")}
     </ul>
-    <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.precio*i.cantidad),0).toFixed(2)} CUP</p>
+    <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.price*i.cantidad),0).toFixed(2)} CUP</p>
     <div style="margin-top:12px; display:flex; gap:10px;">
       <button id="confirmar-pedido-btn" class="btn-principal">✅ Confirmar pedido</button>
       <button id="editar-pedido-btn" class="btn-secundario">✏️ Volver a editar</button>
@@ -229,7 +218,7 @@ window.revisarPedido = function () {
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
 
-/* ---------- confirmarPedido (usa RPC confirmar_pedido_sum) ---------- */
+/* confirmarPedido (RPC) */
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesaRaw = (document.getElementById("mesa").value || "").trim();
@@ -246,7 +235,6 @@ async function confirmarPedido() {
 
   if (itemsRaw.length === 0) { alert("No hay items para enviar."); return; }
 
-  // compactar localmente por menu_id
   const itemsMap = {};
   itemsRaw.forEach(it => {
     const key = String(it.menu_id);
@@ -255,65 +243,38 @@ async function confirmarPedido() {
   });
   const items = Object.values(itemsMap);
 
-  console.log("[DEBUG CONTEXTO] usuarioAutenticado, local, mesa, items:", { usuarioAutenticado, local, mesa: mesaRaw, items });
-  console.log("[DEBUG] items a enviar (compactados):", JSON.stringify(items, null, 2));
-
   try {
     const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
     const { data, error } = await supabase.rpc('confirmar_pedido_sum', {
-      p_pedido_id: null,
       p_mesa: mesa,
       p_local: local,
       p_usuario_id: usuarioAutenticado,
-      p_items: JSON.stringify(payload)
+      p_items: JSON.stringify(payload),
+      p_pedido_id: null
     });
-
     if (error) throw error;
-
-    // data es el JSON retornado por la función
-    console.log("[DEBUG] RPC confirmar_pedido_sum resultado:", data);
-
-    // actualizar UI según respuesta
     const result = data;
-    const mensaje = result && result.total ? "✅ Pedido registrado/actualizado." : "✅ Pedido procesado.";
-    document.getElementById("confirmacion").style.display = "block";
-    document.getElementById("resumen").innerHTML = `
-      <p>${mensaje}</p>
-      <p><strong>Mesa:</strong> ${escapeHtml(mesaRaw)}</p>
-      <p><strong>Local:</strong> ${escapeHtml(local)}</p>
-      <p><strong>Platos:</strong> ${items.map(i => `${escapeHtml(i.nombre)} (${i.cantidad})`).join(", ")}</p>
-    `;
-
-    // limpiar solo si la RPC devolvió items que contienen las cantidades esperadas
     const itemsReturned = (result && result.items) ? result.items : [];
     let allGood = true;
     items.forEach(it => {
       const found = (itemsReturned || []).find(r => String(r.menu_id) === String(it.menu_id));
       if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
     });
-
-    if (!allGood) {
-      alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
-      return;
-    }
-
+    if (!allGood) { alert("❗ La actualización no se reflejó completamente. Revisa la consola."); return; }
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
-
     await cargarResumen();
     await mostrarPedidosPendientes();
     await cargarMenu(true);
-
     if (result && result.pedido_id) verDetalles(result.pedido_id);
-
   } catch (err) {
     console.error("Error en confirmarPedido (RPC):", err);
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
 }
 
-/* ---------- verDetalles ---------- */
+/* verDetalles */
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
@@ -370,7 +331,7 @@ window.verDetalles = async function (pedidoId) {
   }
 };
 
-/* ---------- cerrarPedido ---------- */
+/* cerrarPedido */
 window.cerrarPedido = async function (pedidoId) {
   if (!confirm("Confirmar cobro del pedido?")) return;
   try {
@@ -399,7 +360,7 @@ window.cerrarPedido = async function (pedidoId) {
   }
 };
 
-/* ---------- utilitarios UI ---------- */
+/* utilitarios UI */
 window.limpiarSeleccion = function () {
   cantidadesSeleccionadas = {};
   document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
@@ -418,7 +379,7 @@ window.cerrarSesion = function () {
   document.getElementById("usuario-conectado").textContent = "";
 };
 
-/* ---------- iniciarSesion ---------- */
+/* iniciarSesion */
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
