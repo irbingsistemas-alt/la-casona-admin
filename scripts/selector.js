@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modulos = document.getElementById("modulos");
 
   if (!usuario || !rol) {
-    window.location.href = "index.html";
+    window.location.href = "../index.html";
     return;
   }
 
