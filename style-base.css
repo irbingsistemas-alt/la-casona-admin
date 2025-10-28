@@ -22,7 +22,8 @@ body {
 }
 
 /* Unificar logo en todo el sitio */
-.site-logo, .site-logo img {
+.site-logo,
+.site-logo img {
   display: block;
   max-width: 160px;
   height: auto;
