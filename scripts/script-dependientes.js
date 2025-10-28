@@ -7,7 +7,7 @@ const supabase = createClient(
 
 let menu = [];
 let usuarioAutenticado = null;
-let cantidadesSeleccionadas = {}; // { menuId: cantidad }
+let cantidadesSeleccionadas = {};
 let latestMenuFetchTs = 0;
 
 function escapeHtml(text = "") {
@@ -19,17 +19,14 @@ function escapeHtml(text = "") {
     .replace(/'/g, "&#039;");
 }
 
-/* ---------- cargarResumen: recuenta pedidos del día para el usuario ---------- */
+/* cargarResumen */
 async function cargarResumen() {
   if (!usuarioAutenticado) {
+    const els = ["fecha-resumen","total-cobrados","importe-cobrado","total-pendientes","importe-pendiente"];
+    els.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = id.includes("importe") ? "0.00" : "0"; });
     document.getElementById("fecha-resumen").textContent = "";
-    document.getElementById("total-cobrados").textContent = "0";
-    document.getElementById("importe-cobrado").textContent = "0.00";
-    document.getElementById("total-pendientes").textContent = "0";
-    document.getElementById("importe-pendiente").textContent = "0.00";
     return;
   }
-
   const hoy = new Date().toISOString().split("T")[0];
   try {
     const { data: pedidos, error } = await supabase
@@ -39,20 +36,12 @@ async function cargarResumen() {
       .gte("fecha", `${hoy}T00:00:00`)
       .lte("fecha", `${hoy}T23:59:59`);
 
-    if (error) {
-      console.warn("Error al cargar resumen:", error);
-      return;
-    }
+    if (error) { console.warn("Error al cargar resumen:", error); return; }
 
     let cobrados = 0, pendientes = 0, totalCobrado = 0, totalPendiente = 0;
     (pedidos || []).forEach(p => {
-      if (p.cobrado) {
-        cobrados++;
-        totalCobrado += Number(p.total || 0);
-      } else {
-        pendientes++;
-        totalPendiente += Number(p.total || 0);
-      }
+      if (p.cobrado) { cobrados++; totalCobrado += Number(p.total || 0); }
+      else { pendientes++; totalPendiente += Number(p.total || 0); }
     });
 
     document.getElementById("fecha-resumen").textContent = hoy;
@@ -60,13 +49,12 @@ async function cargarResumen() {
     document.getElementById("importe-cobrado").textContent = totalCobrado.toFixed(2);
     document.getElementById("total-pendientes").textContent = String(pendientes);
     document.getElementById("importe-pendiente").textContent = totalPendiente.toFixed(2);
-
   } catch (err) {
     console.error("cargarResumen error:", err);
   }
 }
 
-/* ---------- cargarMenu y render (preserva cantidades) ---------- */
+/* cargarMenu */
 async function cargarMenu(force = false) {
   const now = Date.now();
   if (!force && now - latestMenuFetchTs < 2500) return;
@@ -79,17 +67,11 @@ async function cargarMenu(force = false) {
     .eq("activo", true)
     .order("categoria", { ascending: true });
 
-  if (error) {
-    console.warn("Error al cargar menú:", error);
-    alert("❌ Error al cargar el menú.");
-    return;
-  }
+  if (error) { console.warn("Error al cargar menú:", error); alert("❌ Error al cargar el menú."); return; }
 
   menu = data || [];
   const menuIds = new Set(menu.map(m => m.id));
-  Object.keys(cantidadesSeleccionadas).forEach(id => {
-    if (!menuIds.has(id)) delete cantidadesSeleccionadas[id];
-  });
+  Object.keys(cantidadesSeleccionadas).forEach(id => { if (!menuIds.has(id)) delete cantidadesSeleccionadas[id]; });
 
   mostrarMenuAgrupado(menu);
   actualizarFiltroCategorias(menu);
@@ -119,13 +101,7 @@ function mostrarMenuAgrupado(platos) {
       item.innerHTML = `
         <div class="nombre">${escapeHtml(plato.nombre)}</div>
         <div class="precio">${Number(plato.precio).toFixed(2)} CUP</div>
-        <input
-          type="number"
-          min="0"
-          value="${cantidadActual}"
-          data-menu-id="${plato.id}"
-          aria-label="Cantidad ${escapeHtml(plato.nombre)}"
-        />
+        <input type="number" min="0" value="${cantidadActual}" data-menu-id="${plato.id}" aria-label="Cantidad ${escapeHtml(plato.nombre)}" />
       `;
       const input = item.querySelector("input");
       input.addEventListener("input", (ev) => {
@@ -139,7 +115,7 @@ function mostrarMenuAgrupado(platos) {
   }
 }
 
-/* ---------- actualizarFiltroCategorias (ahora llama attachFiltroListener) ---------- */
+/* actualizarFiltroCategorias + listener */
 function actualizarFiltroCategorias(platos) {
   const filtro = document.getElementById("filtro");
   if (!filtro) return;
@@ -151,24 +127,17 @@ function actualizarFiltroCategorias(platos) {
     option.textContent = cat;
     filtro.appendChild(option);
   });
-
-  // asegurar listener en el select (evita inline onchange y duplicados)
   attachFiltroListener();
 }
 
-/* función expuesta (asegura disponibilidad global) */
 window.filtrarMenu = function () {
   const seleccionEl = document.getElementById("filtro");
   if (!seleccionEl) return;
   const seleccion = seleccionEl.value;
-  if (seleccion === "todos") {
-    mostrarMenuAgrupado(menu);
-  } else {
-    mostrarMenuAgrupado(menu.filter(p => (p.categoria || "Sin categoría") === seleccion));
-  }
+  if (seleccion === "todos") mostrarMenuAgrupado(menu);
+  else mostrarMenuAgrupado(menu.filter(p => (p.categoria || "Sin categoría") === seleccion));
 };
 
-/* helper que asegura que el listener se registre (llamar desde actualizarFiltroCategorias) */
 function attachFiltroListener() {
   const filtroEl = document.getElementById("filtro");
   if (!filtroEl) return;
@@ -177,14 +146,11 @@ function attachFiltroListener() {
   nuevo.addEventListener("change", window.filtrarMenu);
 }
 
-/* ---------- actualizarCantidad y UI totals ---------- */
+/* actualizarCantidad y UI totals */
 window.actualizarCantidad = function (menuId, cantidad) {
   const qty = parseInt(cantidad, 10) || 0;
-  if (qty <= 0) {
-    if (cantidadesSeleccionadas[menuId]) delete cantidadesSeleccionadas[menuId];
-  } else {
-    cantidadesSeleccionadas[menuId] = qty;
-  }
+  if (qty <= 0) { if (cantidadesSeleccionadas[menuId]) delete cantidadesSeleccionadas[menuId]; }
+  else { cantidadesSeleccionadas[menuId] = qty; }
   actualizarTotalesUI();
 };
 
@@ -200,7 +166,7 @@ function actualizarTotalesUI() {
   if (itemsEl) itemsEl.textContent = items;
 }
 
-/* ---------- mostrarPedidosPendientes y helpers básicos ---------- */
+/* mostrarPedidosPendientes */
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
   try {
@@ -216,9 +182,8 @@ async function mostrarPedidosPendientes() {
     if (error) throw error;
 
     let html = "<h3>🕒 Pedidos pendientes</h3>";
-    if (!pedidos || pedidos.length === 0) {
-      html += "<p>No hay pedidos pendientes.</p>";
-    } else {
+    if (!pedidos || pedidos.length === 0) html += "<p>No hay pedidos pendientes.</p>";
+    else {
       html += "<ul>";
       pedidos.forEach(p => {
         html += `
@@ -234,14 +199,13 @@ async function mostrarPedidosPendientes() {
       });
       html += "</ul>";
     }
-
     const cont = document.getElementById("pedidos-pendientes");
     if (cont) cont.innerHTML = html;
   } catch (err) {
     console.error("Error mostrarPedidosPendientes:", err);
   }
 }
-/* ---------- revisarPedido (muestra resumen con confirmación) ---------- */
+/* revisarPedido */
 window.revisarPedido = function () {
   const mesa = (document.getElementById("mesa").value || "").trim();
   if (!mesa) { alert("Indica número de mesa antes de revisar el pedido."); return; }
@@ -252,7 +216,6 @@ window.revisarPedido = function () {
       return p ? { id, nombre: p.nombre, precio: Number(p.precio), cantidad: qty } : null;
     })
     .filter(Boolean);
-
   if (items.length === 0) { alert("Selecciona al menos un plato antes de revisar."); return; }
 
   const resumenBlock = document.getElementById("resumen");
@@ -270,13 +233,11 @@ window.revisarPedido = function () {
   `;
   document.getElementById("confirmacion").style.display = "block";
 
-  document.getElementById("editar-pedido-btn").onclick = () => {
-    document.getElementById("confirmacion").style.display = "none";
-  };
+  document.getElementById("editar-pedido-btn").onclick = () => { document.getElementById("confirmacion").style.display = "none"; };
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
 
-/* ---------- confirmarPedido (Mode SUM) ---------- */
+/* confirmarPedido Mode SUM */
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesa = (document.getElementById("mesa").value || "").trim().toLowerCase();
@@ -311,7 +272,6 @@ async function confirmarPedido() {
     let mensaje = "";
 
     if (existentes && existentes.length > 0) {
-      // actualizar pedido existente: SUM mode
       pedidoId = existentes[0].id;
       mensaje = "✅ Pedido actualizado correctamente.";
 
@@ -330,12 +290,13 @@ async function confirmarPedido() {
           const existing = existentesMap[it.menu_id];
           const nuevaCantidad = Number(existing.cantidad) + Number(it.cantidad);
           const updatePayload = { cantidad: nuevaCantidad, precio: it.precio, updated_at: new Date().toISOString() };
-          await supabase
+          const { error: errUpd } = await supabase
             .from("pedido_items")
             .update(updatePayload)
             .eq("id", existing.id);
+          if (errUpd) console.warn("Error actualizando item existente:", errUpd);
         } else {
-          await supabase.from("pedido_items").insert([{
+          const { error: errIns } = await supabase.from("pedido_items").insert([{
             pedido_id: pedidoId,
             menu_id: it.menu_id,
             nombre: it.nombre,
@@ -343,10 +304,10 @@ async function confirmarPedido() {
             precio: it.precio,
             updated_at: new Date().toISOString()
           }]);
+          if (errIns) console.warn("Error insertando nuevo item:", errIns);
         }
       }
 
-      // eliminar items que ya no están en la selección actual (comparar por menu_id)
       const menuIdsActual = items.map(i => i.menu_id);
       const idsParaBorrar = (itemsExistentes || [])
         .filter(it => !menuIdsActual.includes(it.menu_id))
@@ -360,7 +321,6 @@ async function confirmarPedido() {
         if (errDelete) console.warn("No se pudo eliminar items obsoletos por id:", errDelete);
       }
 
-      // recalcular total desde BD
       const { data: actualizados, error: errCalc } = await supabase
         .from("pedido_items")
         .select("cantidad, precio")
@@ -369,13 +329,13 @@ async function confirmarPedido() {
       if (errCalc) throw errCalc;
       const nuevoTotal = (actualizados || []).reduce((s, p) => s + p.cantidad * p.precio, 0);
 
-      await supabase
+      const { error: errUpdPedido } = await supabase
         .from("pedidos")
         .update({ total: nuevoTotal, fecha: new Date().toISOString() })
         .eq("id", pedidoId);
+      if (errUpdPedido) console.warn("Error actualizando total del pedido:", errUpdPedido);
 
     } else {
-      // crear nuevo pedido
       mensaje = "🆕 Nuevo pedido creado.";
       const total = items.reduce((s, i) => s + i.precio * i.cantidad, 0);
 
@@ -408,7 +368,6 @@ async function confirmarPedido() {
       if (errItems) throw errItems;
     }
 
-    // mostrar confirmación y limpiar selección local
     document.getElementById("confirmacion").style.display = "block";
     document.getElementById("resumen").innerHTML = `
       <p>${mensaje}</p>
@@ -425,8 +384,8 @@ async function confirmarPedido() {
     await mostrarPedidosPendientes();
     await cargarMenu(true);
 
-    // opcional: abrir modal de detalles automáticamente
-    // if (pedidoId) verDetalles(pedidoId);
+    // abrir modal de detalles automáticamente para confirmación visual
+    if (pedidoId) verDetalles(pedidoId);
 
   } catch (err) {
     console.error("Error en confirmarPedido:", err);
@@ -434,7 +393,7 @@ async function confirmarPedido() {
   }
 }
 
-/* ---------- verDetalles: modal con listado de items del pedido ---------- */
+/* verDetalles */
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
@@ -445,6 +404,7 @@ window.verDetalles = async function (pedidoId) {
 
     if (error) throw error;
     const items = data || [];
+    const total = (items || []).reduce((s, it) => s + Number(it.cantidad) * Number(it.precio), 0);
 
     const root = document.getElementById("modal-detalle-root");
     root.innerHTML = `
@@ -462,6 +422,7 @@ window.verDetalles = async function (pedidoId) {
               </li>
             `).join("")}
           </ul>
+          <div style="margin-top:10px; font-weight:700;">Total: ${total.toFixed(2)} CUP</div>
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
             <button id="modal-cerrar-btn" class="btn-secundario">Cerrar</button>
           </div>
@@ -469,14 +430,13 @@ window.verDetalles = async function (pedidoId) {
       </div>
     `;
     document.getElementById("modal-cerrar-btn").onclick = () => { root.innerHTML = ""; };
-
   } catch (err) {
     console.error("Error verDetalles:", err);
     alert("❌ Error al cargar detalles del pedido.");
   }
 };
 
-/* ---------- cerrarPedido: marca cobrado + registra cobrado_por y cobrado_at ---------- */
+/* cerrarPedido */
 window.cerrarPedido = async function (pedidoId) {
   if (!confirm("Confirmar cobro del pedido?")) return;
   try {
@@ -484,9 +444,7 @@ window.cerrarPedido = async function (pedidoId) {
       .from("pedidos")
       .update({ cobrado: true, cobrado_por: usuarioAutenticado, cobrado_at: new Date().toISOString() })
       .eq("id", pedidoId);
-
     if (error) throw error;
-
     alert("✅ Pedido marcado como cobrado.");
     await cargarResumen();
     await mostrarPedidosPendientes();
@@ -497,7 +455,7 @@ window.cerrarPedido = async function (pedidoId) {
   }
 }
 
-/* ---------- utilitarios UI ---------- */
+/* utilitarios UI */
 window.limpiarSeleccion = function () {
   cantidadesSeleccionadas = {};
   document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
@@ -516,35 +474,22 @@ window.cerrarSesion = function () {
   document.getElementById("usuario-conectado").textContent = "";
 };
 
-/* ---------- iniciarSesion (usa las funciones ya definidas arriba) ---------- */
+/* iniciarSesion */
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
-  if (!usuario || !clave) {
-    alert("Completa usuario y contraseña.");
-    return;
-  }
+  if (!usuario || !clave) { alert("Completa usuario y contraseña."); return; }
 
   const { data, error } = await supabase.rpc("login_dependiente", {
     usuario_input: usuario,
     clave_input: clave
   });
 
-  if (error || !data) {
-    alert("❌ Usuario o contraseña incorrectos.");
-    return;
-  }
+  if (error || !data) { alert("❌ Usuario o contraseña incorrectos."); return; }
 
   const perfil = Array.isArray(data) ? data[0] : data;
-  if (!perfil || !perfil.rol) {
-    alert("❌ Respuesta inválida del servidor.");
-    return;
-  }
-
-  if (!["admin", "dependiente", "gerente"].includes(perfil.rol)) {
-    alert("⚠️ Acceso denegado para este rol.");
-    return;
-  }
+  if (!perfil || !perfil.rol) { alert("❌ Respuesta inválida del servidor."); return; }
+  if (!["admin", "dependiente", "gerente"].includes(perfil.rol)) { alert("⚠️ Acceso denegado para este rol."); return; }
 
   usuarioAutenticado = perfil.id;
   localStorage.setItem("usuario_nombre", perfil.usuario);
@@ -552,10 +497,8 @@ window.iniciarSesion = async function () {
   document.getElementById("login").style.display = "none";
   document.getElementById("contenido").style.display = "block";
 
-  // listener recarga menú
   const btnRec = document.getElementById("btn-recargar-menu");
   if (btnRec) btnRec.onclick = () => cargarMenu(true);
 
   await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
 };
-//este si
