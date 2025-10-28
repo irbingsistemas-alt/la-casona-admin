@@ -82,26 +82,58 @@ document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
 
 // Cargar usuarios
 async function cargarUsuarios() {
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select("usuario, roles(nombre)")
-    .order("usuario");
+  try {
+    const tbody = document.getElementById("tablaUsuarios");
+    tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
 
-  if (error) {
-    console.error("Error cargando usuarios:", error);
+    // Intenta obtener rol desde relación roles(nombre) o, si no existe, solo usuario/id
+    // Ajusta "roles(nombre)" si tu relación tiene otro nombre.
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("usuario, id, roles(nombre)")
+      .order("usuario", { ascending: true })
+      .limit(1000);
+
+    if (error) {
+      // Si la columna/relación no existe, reintenta con una select más simple
+      console.warn('Primera consulta usuarios fallo, reintentando sin roles:', error);
+      const fallback = await supabase
+        .from("usuarios")
+        .select("usuario, id")
+        .order("usuario", { ascending: true })
+        .limit(1000);
+      if (fallback.error) {
+        tbody.innerHTML = `<tr><td colspan="3">Error cargando usuarios: ${escapeHtml(fallback.error.message || JSON.stringify(fallback.error))}</td></tr>`;
+        console.error("Error cargando usuarios fallback:", fallback.error);
+        return;
+      }
+      renderUsuariosFromData(fallback.data || []);
+      return;
+    }
+
+    renderUsuariosFromData(data || []);
+  } catch (err) {
+    console.error("Error cargando usuarios (excepción):", err);
+    const tbody = document.getElementById("tablaUsuarios");
+    tbody.innerHTML = `<tr><td colspan="3">Excepción al cargar usuarios: ${escapeHtml(err.message || JSON.stringify(err))}</td></tr>`;
+  }
+}
+
+function renderUsuariosFromData(data) {
+  const tbody = document.getElementById("tablaUsuarios");
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3">No hay usuarios registrados.</td></tr>`;
     return;
   }
-
-  const tbody = document.getElementById("tablaUsuarios");
   tbody.innerHTML = "";
-  data.forEach(u => {
+  (data || []).forEach(u => {
+    // si traes roles(nombre) la propiedad será u.roles?.nombre
+    const rolText = (u.roles && u.roles.nombre) ? u.roles.nombre : (u.rol ?? "—");
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${u.usuario}</td>
-      <td>${u.roles.nombre}</td>
-      <td>
-        <button onclick="borrarUsuario('${u.usuario}')">Borrar</button>
-      </td>
+      <td>${escapeHtml(u.usuario)}</td>
+      <td>${escapeHtml(rolText)}</td>
+      <td><button data-usuario="${escapeHtml(u.usuario)}" class="btn-borrar">Borrar</button></td>
     `;
     tbody.appendChild(tr);
   });
