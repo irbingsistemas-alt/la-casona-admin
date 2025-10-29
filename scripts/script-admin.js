@@ -1,7 +1,5 @@
-// ✅ Importar Supabase al inicio del archivo
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ✅ Luego continúa con toda tu lógica dentro del bloque DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   const usuario = localStorage.getItem("usuario");
   const rol = localStorage.getItem("rol");
@@ -19,24 +17,45 @@ document.addEventListener("DOMContentLoaded", () => {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
   );
 
-  // Aquí continúa toda tu lógica: logout, crear usuario, cambiar clave, cargar usuarios, historial, filtros, exportar, etc.
-
-  // 🔓 Logout
   document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.clear();
     window.location.href = "../index.html";
   });
 
-  // 👤 Crear usuario
+  async function cargarRoles() {
+    const select = document.getElementById("nuevoRol");
+    try {
+      const { data, error } = await supabase
+        .from("roles")
+        .select("insert")
+        .order("insert", { ascending: true });
+
+      if (error) throw error;
+
+      select.innerHTML = "";
+      (data || []).forEach(r => {
+        const option = document.createElement("option");
+        option.value = r.insert;
+        option.textContent = r.insert;
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Error cargando roles:", err);
+      select.innerHTML = `<option>Error al cargar roles</option>`;
+    }
+  }
+
   document.getElementById("crearForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
     const nuevaClave = document.getElementById("nuevaClave").value.trim();
     const nuevoRol = document.getElementById("nuevoRol").value;
+
     if (!nuevoUsuario || !nuevaClave || !nuevoRol) {
       alert("Completa todos los campos para crear el usuario.");
       return;
     }
+
     try {
       const { error } = await supabase.rpc("crear_usuario", {
         p_usuario: nuevoUsuario,
@@ -54,15 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 🔐 Cambiar clave
   document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const usuarioClave = document.getElementById("usuarioClave").value.trim().toLowerCase();
     const nuevaClaveUsuario = document.getElementById("nuevaClaveUsuario").value.trim();
+
     if (!usuarioClave || !nuevaClaveUsuario) {
       alert("Completa ambos campos para cambiar la clave.");
       return;
     }
+
     try {
       const { data, error } = await supabase.rpc("cambiar_clave", {
         p_usuario: usuarioClave,
@@ -79,40 +99,44 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("❌ Error cambiando clave: " + (err.message || JSON.stringify(err)));
     }
   });
-/ 👥 Cargar usuarios con relación a roles(nombre)
-async function cargarUsuarios() {
-  const tbody = document.getElementById("tablaUsuarios");
-  tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
+    // 👥 Cargar usuarios con relación a roles(nombre)
+  async function cargarUsuarios() {
+    const tbody = document.getElementById("tablaUsuarios");
+    tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
 
-  try {
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("usuario, roles(nombre)")
-      .order("usuario", { ascending: true })
-      .limit(1000);
-    if (error) throw error;
-    tbody.innerHTML = "";
-    (data || []).forEach(u => {
-      const rolText = (u.roles && u.roles.nombre) ? u.roles.nombre : "—";
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${escapeHtml(u.usuario)}</td>
-        <td>${escapeHtml(rolText)}</td>
-        <td><button class="btn-borrar" data-usuario="${escapeHtml(u.usuario)}">Borrar</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error("Error cargando usuarios:", err);
-    tbody.innerHTML = `<tr><td colspan="3">Error al cargar usuarios</td></tr>`;
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("usuario, roles(nombre)")
+        .order("usuario", { ascending: true })
+        .limit(1000);
+
+      if (error) throw error;
+
+      tbody.innerHTML = "";
+      (data || []).forEach(u => {
+        const rolText = (u.roles && u.roles.nombre) ? u.roles.nombre : "—";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(u.usuario)}</td>
+          <td>${escapeHtml(rolText)}</td>
+          <td><button class="btn-borrar" data-usuario="${escapeHtml(u.usuario)}">Borrar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("Error cargando usuarios:", err);
+      tbody.innerHTML = `<tr><td colspan="3">Error al cargar usuarios</td></tr>`;
+    }
   }
-}
+
   // 🗑️ Borrar usuario
   document.getElementById("tablaUsuarios").addEventListener("click", async (ev) => {
     const btn = ev.target.closest(".btn-borrar");
     if (!btn) return;
     const usuarioAfectado = btn.dataset.usuario;
     if (!confirm("¿Seguro que quieres borrar " + usuarioAfectado + "?")) return;
+
     try {
       const { error } = await supabase.rpc("borrar_usuario", {
         p_usuario: usuarioAfectado,
@@ -136,10 +160,12 @@ async function cargarUsuarios() {
       .select("*")
       .order("fecha", { ascending: false })
       .limit(100);
+
     if (error) {
       console.error("Error cargando logs:", error);
       return;
     }
+
     historialCompleto = data || [];
     renderizarHistorial();
   }
@@ -147,15 +173,19 @@ async function cargarUsuarios() {
   function renderizarHistorial() {
     const actorFiltro = document.getElementById("filtroActor").value.trim().toLowerCase();
     const accionFiltro = document.getElementById("filtroAccion").value.trim().toLowerCase();
+    const fechaFiltro = document.getElementById("filtroFecha")?.value || "";
     const tbody = document.getElementById("tablaLogs");
     tbody.innerHTML = "";
 
     const filtrado = historialCompleto.filter((l) => {
       const actor = (l.realizado_por || "").toLowerCase();
       const accion = (l.accion || "").toLowerCase();
+      const fecha = l.fecha ? new Date(l.fecha).toISOString().split("T")[0] : "";
+
       return (
         (!actorFiltro || actor.includes(actorFiltro)) &&
-        (!accionFiltro || accion.includes(accionFiltro))
+        (!accionFiltro || accion.includes(accionFiltro)) &&
+        (!fechaFiltro || fecha === fechaFiltro)
       );
     });
 
@@ -173,26 +203,32 @@ async function cargarUsuarios() {
 
   // 🧠 Filtros en tiempo real
   document.getElementById("filtroActor").addEventListener("input", () => {
-    clearTimeout(filtroActor._t);
-    filtroActor._t = setTimeout(renderizarHistorial, 300);
+    renderizarHistorial();
   });
 
   document.getElementById("filtroAccion").addEventListener("input", () => {
-    clearTimeout(filtroAccion._t);
-    filtroAccion._t = setTimeout(renderizarHistorial, 300);
+    renderizarHistorial();
+  });
+
+  document.getElementById("filtroFecha")?.addEventListener("input", () => {
+    renderizarHistorial();
   });
 
   // 📤 Exportar historial filtrado
   document.getElementById("btnExportarHistorial").addEventListener("click", () => {
     const actorFiltro = document.getElementById("filtroActor").value.trim().toLowerCase();
     const accionFiltro = document.getElementById("filtroAccion").value.trim().toLowerCase();
+    const fechaFiltro = document.getElementById("filtroFecha")?.value || "";
 
     const filtrado = historialCompleto.filter((l) => {
       const actor = (l.realizado_por || "").toLowerCase();
       const accion = (l.accion || "").toLowerCase();
+      const fecha = l.fecha ? new Date(l.fecha).toISOString().split("T")[0] : "";
+
       return (
         (!actorFiltro || actor.includes(actorFiltro)) &&
-        (!accionFiltro || accion.includes(accionFiltro))
+        (!accionFiltro || accion.includes(accionFiltro)) &&
+        (!fechaFiltro || fecha === fechaFiltro)
       );
     });
 
@@ -225,6 +261,6 @@ Fecha: ${new Date(l.fecha).toLocaleString()}
 
   // 🚀 Inicializar
   (async function init() {
-    await Promise.all([cargarUsuarios(), cargarLogs()]);
+    await Promise.all([cargarRoles(), cargarUsuarios(), cargarLogs()]);
   })();
 });
