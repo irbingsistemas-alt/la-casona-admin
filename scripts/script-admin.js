@@ -57,12 +57,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const { error } = await supabase.rpc("crear_usuario", {
-        p_usuario: nuevoUsuario,
-        p_clave: nuevaClave,
-        p_rol_id: nuevoRolId,
-        p_admin: usuario
-      });
+const { error } = await supabase.rpc("crear_usuario", {
+  p_usuario: nuevoUsuario,
+  p_clave: nuevaClave,
+  p_rol: nuevoRolId,
+  p_admin: usuario
+});
       if (error) throw error;
       alert("✅ Usuario creado con éxito");
       e.target.reset();
