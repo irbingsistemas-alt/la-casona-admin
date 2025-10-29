@@ -132,13 +132,7 @@
       <label for="nuevaClave">Clave</label>
       <input type="password" id="nuevaClave" placeholder="Clave" required />
       <label for="nuevoRol">Rol</label>
-      <select id="nuevoRol">
-        <option value="dependiente">Dependiente</option>
-        <option value="cocina">Cocina</option>
-        <option value="bar">Bar</option>
-        <option value="gerente">Gerente</option>
-        <option value="admin">Admin</option>
-      </select>
+      <select id="nuevoRol"></select>
       <button type="submit">Crear</button>
     </form>
 
@@ -168,6 +162,10 @@
       <div>
         <label>Acción</label>
         <input id="filtroAccion" placeholder="crear_usuario, cambiar_clave..." />
+      </div>
+      <div>
+        <label>Fecha</label>
+        <input type="date" id="filtroFecha" />
       </div>
       <div>
         <label>&nbsp;</label>
