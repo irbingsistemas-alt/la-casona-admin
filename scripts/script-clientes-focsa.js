@@ -1,13 +1,12 @@
 /**
  * script-clientes-focsa.js
- * - Asegúrate de poner tu URL y anon key en las variables debajo.
- * - Llamará a crear_pedido_cliente(p_payload json, p_actor text)
- * - Validaciones defensivas y manejo claro de errores
+ * Versión final con llamada única a crear_pedido_cliente(json, text)
+ * Validaciones defensivas, sin fallback, sin stringify
  */
 
-/* CONFIGURA TU SUPABASE: cambia URL y ANON_KEY por tus valores */
-const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co"; // tu URL
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"; // reemplaza con tu anon key en producción
+/* CONFIGURA TU SUPABASE */
+const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -21,10 +20,10 @@ const mensajeEl = document.getElementById("mensaje");
 
 let menu = [];
 let embalajes = [];
-const seleccion = {}; // menu_id -> cantidad
-const packagingSeleccionado = {}; // menu_id -> cantidad
+const seleccion = {};
+const packagingSeleccionado = {};
 
-/* Cargar menú desde supabase */
+/* Cargar menú */
 async function cargarMenu() {
   try {
     const { data, error } = await supabase
@@ -38,7 +37,6 @@ async function cargarMenu() {
     if (error) throw error;
     menu = Array.isArray(data) ? data : [];
 
-    // categorías
     const categorias = [...new Set(menu.map(i => i.categoria).filter(Boolean))].sort();
     filtroCategoria.innerHTML = "<option value='todos'>Todas</option>";
     categorias.forEach(cat => {
@@ -55,7 +53,7 @@ async function cargarMenu() {
   }
 }
 
-/* Renderizar la lista vertical (scroll) de productos agrupados por categoría */
+/* Renderizar menú */
 function renderMenu(lista) {
   menuContenedor.innerHTML = "";
   const agrupado = lista.reduce((acc, item) => {
@@ -169,7 +167,7 @@ async function cargarEmbalajes() {
   }
 }
 
-/* Calcular total defensivamente */
+/* Calcular total */
 function calcularTotal() {
   let total = 0;
 
@@ -200,8 +198,7 @@ filtroCategoria.addEventListener("change", () => {
 /* Carga inicial */
 cargarMenu();
 cargarEmbalajes();
-
-/* Envío del pedido: armado del payload y llamada RPC */
+/* Envío del pedido */
 btnEnviarWhats.addEventListener("click", async () => {
   try {
     const cliente = document.getElementById("cliente").value.trim();
@@ -214,7 +211,6 @@ btnEnviarWhats.addEventListener("click", async () => {
       return;
     }
 
-    // Armar items defensivos (ignorar ids que no existan)
     const items = Object.entries(seleccion)
       .filter(([_, cantidad]) => Number(cantidad) > 0)
       .map(([id, cantidad]) => {
@@ -265,38 +261,30 @@ btnEnviarWhats.addEventListener("click", async () => {
       nota: `Grupo WhatsApp: ${perteneceGrupo ? "SI" : "NO"}`
     };
 
-    // UX: deshabilitar mientras envía
+    console.log("Payload enviado:", JSON.stringify(payload, null, 2));
+
     btnEnviarWhats.disabled = true;
     btnEnviarWhats.textContent = "Enviando...";
 
-    // Intento primario: llamar a la función estándar
-    let rpcName = "crear_pedido_cliente";
-    let rpcResult = await supabase.rpc(rpcName, { p_payload: payload, p_actor: cliente });
+    const rpcResult = await supabase.rpc("crear_pedido_cliente", {
+      p_payload: payload,
+      p_actor: cliente
+    });
 
-    // Si supabase-js devuelve error por sobrecarga PGRST203, intentar función renombrada alterna
-    if (rpcResult.error && rpcResult.error.code === "PGRST203") {
-      console.warn("Ambigüedad en RPC, intentando función renombrada crear_pedido_cliente_v2");
-      rpcName = "crear_pedido_cliente_v2";
-      rpcResult = await supabase.rpc(rpcName, { p_payload: payload, p_actor: cliente });
-    }
-
-    // Manejo de respuesta robusto
-    const { data, error } = rpcResult;
+    const { data, error } = rpcResult || {};
     if (error || !data || data.ok === false) {
-      console.error("RPC error", { rpcName, error, data });
-      const msg = error?.message || data?.message || "No se pudo crear el pedido";
+      console.error("RPC error", { error, data });
+      const msg = data?.message || error?.message || "No se pudo crear el pedido";
       alert("Error: " + msg);
       return;
     }
 
-    // Éxito: abrir WhatsApp con mensaje resumido (ajusta número)
     const texto = data.mensaje || `Pedido creado: ${data.pedido_id}`;
     window.open(`https://wa.me/5350971023?text=${encodeURIComponent(texto)}`, "_blank");
 
     mensajeEl.textContent = "Pedido enviado correctamente.";
     mensajeEl.style.display = "block";
 
-    // Reset visual y estado
     document.getElementById("formPedido").reset();
     totalEl.textContent = "0.00";
     Object.keys(seleccion).forEach(k => delete seleccion[k]);
