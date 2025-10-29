@@ -290,3 +290,19 @@ tbody tr:hover { background: #f5f5f5; }
 .fila-datos > div {
   flex: 1;
 }
+.menu-item .estado {
+  font-size: 0.85rem;
+  margin-left: 6px;
+  color: #2e8b57;
+}
+.menu-item .estado.no {
+  color: #b00020;
+}
+.menu-item .meta {
+  font-size: 0.85rem;
+  color: #555;
+}
+.menu-item .meta.stock-bajo {
+  color: #b00020;
+  font-weight: bold;
+}
