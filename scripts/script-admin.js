@@ -45,33 +45,59 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  document.getElementById("crearForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
-    const nuevaClave = document.getElementById("nuevaClave").value.trim();
-    const nuevoRolId = document.getElementById("nuevoRol").value;
+document.getElementById("crearForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    if (!nuevoUsuario || !nuevaClave || !nuevoRolId) {
-      alert("Completa todos los campos para crear el usuario.");
+  const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
+  const nuevaClave = document.getElementById("nuevaClave").value.trim();
+  const nuevoRolId = document.getElementById("nuevoRol").value;
+
+  if (!nuevoUsuario || !nuevaClave || !nuevoRolId) {
+    alert("Completa todos los campos para crear el usuario.");
+    return;
+  }
+
+  try {
+    // 🔍 Verificar si el usuario ya existe
+    const { data: existentes, error: errorCheck } = await supabase
+      .from("usuarios")
+      .select("usuario")
+      .eq("usuario", nuevoUsuario);
+
+    if (errorCheck) {
+      console.error("Error verificando existencia:", errorCheck);
+      alert("❌ Error verificando si el usuario ya existe.");
       return;
     }
 
-    try {
-const { error } = await supabase.rpc("crear_usuario", {
-  p_usuario: nuevoUsuario,
-  p_clave: nuevaClave,
-  p_rol: nuevoRolId,
-  p_admin: usuario
-});
-      if (error) throw error;
-      alert("✅ Usuario creado con éxito");
-      e.target.reset();
-      await Promise.all([cargarUsuarios(), cargarLogs()]);
-    } catch (err) {
-      console.error("crear_usuario error:", err);
+    if (existentes.length > 0) {
+      alert("⚠️ El usuario ya existe. Elige otro nombre.");
+      return;
+    }
+
+    // ✅ Crear usuario
+    const { error } = await supabase.rpc("crear_usuario", {
+      p_usuario: nuevoUsuario,
+      p_clave: nuevaClave,
+      p_rol: nuevoRolId,
+      p_admin: usuario
+    });
+
+    if (error) throw error;
+
+    alert("✅ Usuario creado con éxito");
+    e.target.reset();
+    await Promise.all([cargarUsuarios(), cargarLogs()]);
+
+  } catch (err) {
+    console.error("crear_usuario error:", err);
+    if (err.code === "23505") {
+      alert("⚠️ El usuario ya existe. Elige otro nombre.");
+    } else {
       alert("❌ Error creando usuario: " + (err.message || JSON.stringify(err)));
     }
-  });
+  }
+});
 
   document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
     e.preventDefault();
