@@ -307,4 +307,98 @@ async function mostrarPedidosPendientes() {
   if (error) return;
 
   let html = "<h3>🕒 Pedidos pendientes</h3>";
- 
+  if (!pedidos || pedidos.length === 0) {
+    html += "<p>No hay pedidos pendientes.</p>";
+  } else {
+    html += "<ul>";
+    pedidos.forEach(p => {
+      html += `
+        <li style="margin-bottom:10px;">
+          <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${Number(p.total).toFixed(2)} CUP
+          <div style="display:inline-block; margin-left:10px;">
+            <button class="btn-principal" onclick="verDetalles('${p.id}')">Ver detalles</button>
+            <button class="btn-secundario" onclick="cerrarPedido('${p.id}')">Cobrar</button>
+          </div>
+          <div style="color:#666; font-size:0.9rem; margin-top:4px;">${new Date(p.fecha).toLocaleString()}</div>
+        </li>
+      `;
+    });
+    html += "</ul>";
+  }
+
+  const cont = document.getElementById("pedidos-pendientes");
+  if (cont) cont.innerHTML = html;
+}
+
+window.verDetalles = async function (pedidoId) {
+  try {
+    const { data, error } = await supabase
+      .from("pedido_items")
+      .select("id, menu_id, nombre, cantidad, precio, subtotal, updated_at")
+      .eq("pedido_id", pedidoId)
+      .order("id", { ascending: true });
+
+    if (error) throw error;
+
+    const items = data || [];
+    const total = items.reduce((s, it) => s + Number(it.subtotal || 0), 0);
+
+    const root = document.getElementById("modal-detalle-root");
+    root.innerHTML = `
+      <div class="modal-backdrop" role="dialog" aria-modal="true">
+        <div class="modal">
+          <h4>Detalles del pedido</h4>
+          <ul>
+            ${items.map(it => `
+              <li>
+                <div>
+                  <strong>${escapeHtml(it.nombre)}</strong><br/>
+                  <span class="meta">Cantidad: ${it.cantidad} — Precio: ${Number(it.precio).toFixed(2)} CUP — Subtotal: ${Number(it.subtotal).toFixed(2)} CUP</span>
+                </div>
+                <div class="meta">${new Date(it.updated_at).toLocaleString()}</div>
+              </li>
+            `).join("")}
+          </ul>
+          <div style="margin-top:10px; font-weight:700;">Total: ${total.toFixed(2)} CUP</div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+            <button id="modal-cerrar-btn" class="btn-secundario">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById("modal-cerrar-btn").onclick = () => { root.innerHTML = ""; };
+  } catch (err) {
+    console.error("Error verDetalles:", err);
+    alert("❌ Error al cargar detalles del pedido.");
+  }
+};
+
+window.cerrarPedido = async function (pedidoId) {
+  if (!confirm("Confirmar cobro del pedido?")) return;
+  try {
+    const { data: pedidoCheck, error: errCheck } = await supabase
+      .from("pedidos")
+      .select("usuario_id, cobrado")
+      .eq("id", pedidoId)
+      .single();
+
+    if (errCheck) throw errCheck;
+    if (!pedidoCheck || pedidoCheck.cobrado) return alert("Pedido ya cobrado o no encontrado.");
+    if (pedidoCheck.usuario_id !== usuarioAutenticado) return alert("Este pedido no fue creado por tu sesión.");
+
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ cobrado: true, cobrado_por: usuarioAutenticado, cobrado_at: new Date().toISOString() })
+      .eq("id", pedidoId);
+
+    if (error) throw error;
+
+    alert("✅ Pedido marcado como cobrado.");
+    await cargarResumen();
+    await mostrarPedidosPendientes();
+    await cargarMenu(true);
+  } catch (err) {
+    console.error("Error cerrarPedido:", err);
+    alert("❌ Error al marcar como cobrado.");
+  }
+};
