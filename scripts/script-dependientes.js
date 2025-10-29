@@ -298,6 +298,16 @@ async function confirmarPedido() {
     console.error("Error en confirmarPedido (RPC):", err);
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
+  if (result && result.items) {
+  result.items.forEach(ret => {
+    const localPlato = menu.find(p => String(p.id) === String(ret.menu_id));
+    if (localPlato) {
+      localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
+    }
+  });
+  mostrarMenuAgrupado(menu);
+  actualizarTotalesUI();
+}
 }
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
