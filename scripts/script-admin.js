@@ -79,33 +79,34 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("❌ Error cambiando clave: " + (err.message || JSON.stringify(err)));
     }
   });
-    // 👥 Cargar usuarios
-  async function cargarUsuarios() {
-    const tbody = document.getElementById("tablaUsuarios");
-    tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
-    try {
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("usuario, rol")
-        .order("usuario", { ascending: true })
-        .limit(1000);
-      if (error) throw error;
-      tbody.innerHTML = "";
-      (data || []).forEach(u => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${escapeHtml(u.usuario)}</td>
-          <td>${escapeHtml(u.rol)}</td>
-          <td><button class="btn-borrar" data-usuario="${escapeHtml(u.usuario)}">Borrar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error("Error cargando usuarios:", err);
-      tbody.innerHTML = `<tr><td colspan="3">Error al cargar usuarios</td></tr>`;
-    }
-  }
+/ 👥 Cargar usuarios con relación a roles(nombre)
+async function cargarUsuarios() {
+  const tbody = document.getElementById("tablaUsuarios");
+  tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
 
+  try {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("usuario, roles(nombre)")
+      .order("usuario", { ascending: true })
+      .limit(1000);
+    if (error) throw error;
+    tbody.innerHTML = "";
+    (data || []).forEach(u => {
+      const rolText = (u.roles && u.roles.nombre) ? u.roles.nombre : "—";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(u.usuario)}</td>
+        <td>${escapeHtml(rolText)}</td>
+        <td><button class="btn-borrar" data-usuario="${escapeHtml(u.usuario)}">Borrar</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error cargando usuarios:", err);
+    tbody.innerHTML = `<tr><td colspan="3">Error al cargar usuarios</td></tr>`;
+  }
+}
   // 🗑️ Borrar usuario
   document.getElementById("tablaUsuarios").addEventListener("click", async (ev) => {
     const btn = ev.target.closest(".btn-borrar");
