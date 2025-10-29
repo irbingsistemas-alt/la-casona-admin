@@ -1,54 +1,102 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pedidos FOCSA</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pedidos FOCSA — La Casona de 17</title>
+
+  <!-- Ajusta la ruta si tu style-base.css está en otro sitio -->
   <link rel="stylesheet" href="../style-base.css" />
+
+  <!-- favicon: pon tu archivo en ../assets/favicon.ico -->
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <style>
+    /* Pequeños estilos locales necesarios para que el ejemplo funcione si falta style-base.css */
+    .contenedor { max-width:1100px; margin:24px auto; padding:18px; background:#fafafa; border-radius:8px; font-family:Inter, system-ui, sans-serif; }
+    .site-logo img { height:56px; display:block; margin-bottom:12px; }
+    h1,h2 { margin:8px 0 14px; font-weight:600; }
+    .fila-datos { display:flex; gap:16px; margin-bottom:16px; }
+    .fila-datos > div { flex:1; min-width:120px; }
+    label { display:block; font-size:13px; color:#333; margin-bottom:6px; }
+    input[type="text"], input[type="number"], select { width:100%; padding:8px 10px; border:1px solid #d0d0d0; border-radius:6px; box-sizing:border-box; }
+    .botonera { margin-top:14px; }
+    button { padding:10px 14px; border-radius:8px; border:none; background:#0b63d6; color:#fff; cursor:pointer; }
+    button[disabled] { opacity:0.6; cursor:not-allowed; }
+    .confirmacion-ok { margin-top:12px; padding:10px; background:#e6fff2; border:1px solid #bdeccd; border-radius:6px; color:#0b7a43; }
+    .estado-disponible { display:block; margin:12px 0; font-size:14px; }
+
+    /* Scroll vertical para lista de productos y embalajes */
+    .scrollable-menu {
+      max-height:360px;
+      overflow-y:auto;
+      border:1px solid #e0e0e0;
+      padding:10px;
+      background:#fff;
+      border-radius:8px;
+      margin-bottom:18px;
+    }
+    .menu-item {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:8px 6px;
+      border-bottom:1px dashed #eee;
+    }
+    .menu-item:last-child { border-bottom:0; }
+    .menu-item span { font-weight:500; }
+    .menu-item input[type="number"] { width:76px; padding:6px; border:1px solid #d6d6d6; border-radius:6px; }
+    .meta-line { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+    .cliente-line { display:flex; gap:12px; align-items:center; width:100%; }
+    .cliente-line input { flex:1; min-width:90px; }
+  </style>
 </head>
 <body>
   <div class="contenedor">
     <div class="site-logo">
       <img src="../assets/logo.png" alt="Logo La Casona de 17" />
     </div>
+
     <h1>Pedidos FOCSA</h1>
 
-    <form id="formPedido">
-      <div class="fila-datos">
+    <form id="formPedido" onsubmit="return false;">
+      <div class="fila-datos cliente-line" aria-label="Datos del cliente">
         <div>
-          <label>Nombre del cliente</label>
-          <input type="text" id="cliente" required />
+          <label for="cliente">Nombre del cliente</label>
+          <input type="text" id="cliente" autocomplete="name" required />
         </div>
+
         <div>
-          <label>Piso</label>
-          <input type="text" id="piso" required />
+          <label for="piso">Piso</label>
+          <input type="text" id="piso" autocomplete="address-level2" required />
         </div>
+
         <div>
-          <label>Apartamento</label>
-          <input type="text" id="apartamento" required />
+          <label for="apartamento">Apartamento</label>
+          <input type="text" id="apartamento" autocomplete="address-level3" required />
         </div>
       </div>
     </form>
 
     <h2>Selecciona productos</h2>
     <label for="filtroCategoria"><strong>Filtrar por categoría:</strong></label>
-    <select id="filtroCategoria">
+    <select id="filtroCategoria" style="margin:8px 0 12px;">
       <option value="todos">Todas</option>
     </select>
-    <div id="menuContenedor" class="scroll-horizontal"></div>
+    <div id="menuContenedor" class="scrollable-menu" aria-live="polite"></div>
 
     <h2>Embalajes / Envases</h2>
-    <div id="listaEmbalajes" class="scroll-horizontal"></div>
+    <div id="listaEmbalajes" class="scrollable-menu"></div>
 
     <label class="estado-disponible">
       <input type="checkbox" id="optGrupo" checked />
       Deseo pertenecer al Grupo de Información de La Casona de 17
     </label>
 
-    <p><strong>Total:</strong> <span id="total">0</span> CUP</p>
+    <p><strong>Total:</strong> <span id="total">0.00</span> CUP</p>
 
     <div class="botonera">
-      <button id="btnEnviarWhats">Confirmar y enviar</button>
+      <button id="btnEnviarWhats" type="button">Confirmar y enviar</button>
     </div>
 
     <div id="mensaje" class="confirmacion-ok" style="display:none;"></div>
