@@ -27,16 +27,16 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const { data, error } = await supabase
         .from("roles")
-        .select("insert")
-        .order("insert", { ascending: true });
+        .select("id, nombre")
+        .order("nombre", { ascending: true });
 
       if (error) throw error;
 
       select.innerHTML = "";
       (data || []).forEach(r => {
         const option = document.createElement("option");
-        option.value = r.insert;
-        option.textContent = r.insert;
+        option.value = r.id;
+        option.textContent = r.nombre;
         select.appendChild(option);
       });
     } catch (err) {
@@ -49,9 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
     const nuevaClave = document.getElementById("nuevaClave").value.trim();
-    const nuevoRol = document.getElementById("nuevoRol").value;
+    const nuevoRolId = document.getElementById("nuevoRol").value;
 
-    if (!nuevoUsuario || !nuevaClave || !nuevoRol) {
+    if (!nuevoUsuario || !nuevaClave || !nuevoRolId) {
       alert("Completa todos los campos para crear el usuario.");
       return;
     }
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const { error } = await supabase.rpc("crear_usuario", {
         p_usuario: nuevoUsuario,
         p_clave: nuevaClave,
-        p_rol: nuevoRol,
+        p_rol_id: nuevoRolId,
         p_admin: usuario
       });
       if (error) throw error;
@@ -202,17 +202,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 🧠 Filtros en tiempo real
-  document.getElementById("filtroActor").addEventListener("input", () => {
-    renderizarHistorial();
-  });
-
-  document.getElementById("filtroAccion").addEventListener("input", () => {
-    renderizarHistorial();
-  });
-
-  document.getElementById("filtroFecha")?.addEventListener("input", () => {
-    renderizarHistorial();
-  });
+  document.getElementById("filtroActor").addEventListener("input", renderizarHistorial);
+  document.getElementById("filtroAccion").addEventListener("input", renderizarHistorial);
+  document.getElementById("filtroFecha")?.addEventListener("input", renderizarHistorial);
 
   // 📤 Exportar historial filtrado
   document.getElementById("btnExportarHistorial").addEventListener("click", () => {
