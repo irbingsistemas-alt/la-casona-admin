@@ -1,22 +1,26 @@
+// ✅ Importar Supabase al inicio del archivo
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// ✅ Luego continúa con toda tu lógica dentro del bloque DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
-  // 🔐 Validación de sesión y rol
   const usuario = localStorage.getItem("usuario");
   const rol = localStorage.getItem("rol");
   const rolesPermitidos = ["admin", "gerente"];
+
   if (!usuario || !rolesPermitidos.includes(rol)) {
     window.location.href = "../index.html";
     return;
   }
+
   document.getElementById("usuarioConectado").textContent = usuario;
 
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-
-  // 🔗 Supabase
   const supabase = createClient(
     "https://ihswokmnhwaitzwjzvmy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
   );
+
+  // Aquí continúa toda tu lógica: logout, crear usuario, cambiar clave, cargar usuarios, historial, filtros, exportar, etc.
+});
 
   // 🔓 Logout
   document.getElementById("logoutBtn").addEventListener("click", () => {
