@@ -1,5 +1,5 @@
 const supabase = window.supabase.createClient(
-  "https://ihswokmnhwaitzwjzvmy.supabase.co",
+  "https://ihswokmnhwaitzwjzvmy.supabase.co", // ✅ corrige tu URL aquí
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU"
 );
 
@@ -12,8 +12,8 @@ const mensajeEl = document.getElementById("mensaje");
 
 let menu = [];
 let embalajes = [];
-const seleccion = {}; // id → cantidad
-const packagingSeleccionado = {}; // id → cantidad
+const seleccion = {}; // menu_id → cantidad
+const packagingSeleccionado = {}; // menu_id → cantidad
 
 async function cargarMenu() {
   const { data, error } = await supabase
@@ -41,6 +41,7 @@ async function cargarMenu() {
 
 function renderMenu(lista) {
   menuContenedor.innerHTML = "";
+
   const agrupado = lista.reduce((acc, item) => {
     const cat = item.categoria || "Sin categoría";
     acc[cat] = acc[cat] || [];
@@ -50,15 +51,14 @@ function renderMenu(lista) {
 
   for (const cat in agrupado) {
     const grupoDiv = document.createElement("div");
-    grupoDiv.className = "categoria-grupo";
-    grupoDiv.innerHTML = `<h4>${cat}</h4>`;
+    grupoDiv.className = "scroll-horizontal";
 
     agrupado[cat].forEach(item => {
       const div = document.createElement("div");
       div.className = "menu-item";
 
       const nombre = document.createElement("span");
-      nombre.textContent = `${item.nombre} – ${item.precio} CUP · Stock: ${item.stock}`;
+      nombre.textContent = `${item.nombre} – ${item.precio} CUP`;
 
       const input = document.createElement("input");
       input.type = "number";
@@ -102,21 +102,37 @@ async function cargarEmbalajes() {
   if (error) return console.error("Error embalajes", error);
   embalajes = data || [];
 
-  listaEmbalajes.innerHTML = embalajes.map(e => `
-    <div class="menu-item">
-      <span>${e.nombre} – ${e.precio} CUP</span>
-      <input type="number" min="0" value="0" data-id="${e.id}" data-precio="${e.precio}" />
-    </div>
-  `).join("");
+  const grupoDiv = document.createElement("div");
+  grupoDiv.className = "scroll-horizontal";
 
-  listaEmbalajes.querySelectorAll("input").forEach(input => {
+  embalajes.forEach(e => {
+    const div = document.createElement("div");
+    div.className = "menu-item";
+
+    const nombre = document.createElement("span");
+    nombre.textContent = `${e.nombre} – ${e.precio} CUP`;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = 0;
+    input.value = 0;
+    input.dataset.id = e.id;
+    input.dataset.precio = e.precio;
+
     input.addEventListener("input", () => {
       const id = input.dataset.id;
       const cantidad = parseInt(input.value) || 0;
       packagingSeleccionado[id] = cantidad;
       calcularTotal();
     });
+
+    div.appendChild(nombre);
+    div.appendChild(input);
+    grupoDiv.appendChild(div);
   });
+
+  listaEmbalajes.innerHTML = "";
+  listaEmbalajes.appendChild(grupoDiv);
 }
 
 function calcularTotal() {
@@ -159,10 +175,12 @@ btnEnviarWhats.addEventListener("click", async () => {
     .map(([id, cantidad]) => {
       const item = menu.find(m => m.id === id);
       return {
-        id,
+        menu_id: id,
         nombre: item.nombre,
         cantidad,
-        precio: item.precio
+        precio: item.precio,
+        subtotal: cantidad * item.precio,
+        es_packaging: false
       };
     });
 
@@ -171,10 +189,12 @@ btnEnviarWhats.addEventListener("click", async () => {
     .map(([id, cantidad]) => {
       const item = embalajes.find(e => e.id === id);
       return {
-        id,
+        menu_id: id,
         nombre: item.nombre,
-        qty: cantidad,
-        precio: item.precio
+        cantidad,
+        precio: item.precio,
+        subtotal: cantidad * item.precio,
+        es_packaging: true
       };
     });
 
@@ -185,8 +205,7 @@ btnEnviarWhats.addEventListener("click", async () => {
     apartamento,
     local: "FOCSA",
     tipo: "FOCSA",
-    items,
-    packaging,
+    items: [...items, ...packaging],
     total,
     grupo_whatsapp: perteneceGrupo,
     nota: `Grupo WhatsApp: ${perteneceGrupo ? "SI" : "NO"}`
