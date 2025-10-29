@@ -1,322 +1,154 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Panel de Administración - La Casona</title>
+  <title>Admin Menús | La Casona</title>
   <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <link rel="stylesheet" href="../style-base.css" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin:0; padding:40px 20px; display:flex; justify-content:center; }
-    .contenedor { max-width:900px; width:100%; background:#fff; padding:30px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
-    .logo { text-align:center; margin-bottom:20px; }
-    .logo img { max-width:160px; height:auto; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
-    h1{ text-align:center; color:#a52a2a; margin-bottom:10px; }
-    h2{ margin-top:30px; color:#444; border-bottom:2px solid #a52a2a; padding-bottom:6px; }
-    button{ background:#a52a2a; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:10px; transition:background .2s ease; }
-    button:hover{ background:#8b1a1a; }
-    form{ background:#fafafa; padding:16px; border-radius:8px; margin-bottom:20px; }
-    input, select { width:100%; margin-bottom:10px; padding:8px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-    table{ width:100%; border-collapse:collapse; margin-top:10px; background:#fff; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
-    thead{ background:#a52a2a; color:#fff; }
-    th, td{ padding:10px; border-bottom:1px solid #eee; text-align:left; }
-    tbody tr:nth-child(even){ background:#fafafa; } tbody tr:hover{ background:#f5f5f5; }
-    .small { font-size:0.9rem; color:#666; }
+    .historial-filtros {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .hist-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 8px;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .hist-item {
+      padding: 6px;
+      border-bottom: 1px solid #eee;
+    }
+    .hist-item:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
-  <div class="contenedor">
-    <div class="logo">
-      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+  <div class="wrap">
+    <header>
+      <img src="../assets/logo.png" alt="La Casona logo" />
+      <div>
+        <h1>Admin Menús</h1>
+        <div class="small">Crear y editar platos — destinos: focsa / restaurant / entregas</div>
+      </div>
+      <button id="btnLogout" class="btn ghost" style="margin-left:auto">Cerrar sesión</button>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Crear / Editar Plato</h2>
+        <form id="menuForm" autocomplete="off">
+          <input type="hidden" id="menuId" />
+          <label>Nombre</label>
+          <input id="nombre" required maxlength="150" />
+          <label>Descripción</label>
+          <textarea id="descripcion" rows="2" placeholder="Opcional"></textarea>
+
+          <div class="row">
+            <div class="col">
+              <label>Precio</label>
+              <input id="precio" type="number" step="0.01" min="0" required />
+            </div>
+            <div class="col">
+              <label>Categoría</label>
+              <select id="categoriaSelect"></select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>Destino</label>
+              <select id="destino">
+                <option value="restaurant">restaurant</option>
+                <option value="focsa">focsa</option>
+                <option value="entregas">entregas</option>
+              </select>
+            </div>
+            <div class="col">
+              <label>Disponible</label>
+              <select id="disponible">
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Imagen URL</label>
+          <input id="imagen_url" placeholder="https://..." />
+          <label>Stock (opcional)</label>
+          <input id="stock" type="number" min="0" placeholder="Dejar vacío = sin control" />
+
+          <div class="actions">
+            <button type="submit" id="btnGuardar" class="btn">Guardar</button>
+            <button type="button" id="btnLimpiar" class="btn ghost">Limpiar</button>
+            <button type="button" id="btnCancelarEdicion" class="btn ghost" style="display:none">Cancelar Edición</button>
+          </div>
+        </form>
+      </section>
+
+      <aside>
+        <div class="card">
+          <h2>Listado de Platos</h2>
+          <div class="filters">
+            <div>
+              <label>Destino</label>
+              <select id="filtroDestino">
+                <option value="">Todos</option>
+                <option value="focsa">focsa</option>
+                <option value="restaurant">restaurant</option>
+                <option value="entregas">entregas</option>
+              </select>
+            </div>
+            <div>
+              <label>Categoría</label>
+              <select id="filtroCategoria">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div>
+              <label>Buscar</label>
+              <input id="buscar" placeholder="Nombre..." />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button id="btnRefrescar" class="btn ghost" type="button">Refrescar</button>
+            </div>
+          </div>
+          <div id="menuListado" style="max-height:360px;overflow-y:auto;padding-right:6px"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2>Historial de Acciones</h2>
+
+          <div class="historial-filtros">
+            <div>
+              <label>Actor</label>
+              <input id="filtroActor" placeholder="admin_ui, dependiente..." />
+            </div>
+            <div>
+              <label>Acción</label>
+              <input id="filtroAccion" placeholder="crear_menu, actualizar_menu..." />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button id="btnExportarHistorial" class="btn ghost" type="button">Exportar historial</button>
+            </div>
+          </div>
+
+          <div id="historial" class="hist-list" aria-live="polite"></div>
+        </div>
+      </aside>
     </div>
-
-    <h1>Administración de Usuarios</h1>
-    <p>Conectado como: <span id="usuarioConectado" class="small"></span></p>
-    <button id="logoutBtn">Cerrar sesión</button>
-
-    <h2>Crear Usuario</h2>
-    <form id="crearForm">
-      <label for="nuevoUsuario">Usuario</label>
-      <input type="text" id="nuevoUsuario" placeholder="Usuario" required />
-      <label for="nuevaClave">Clave</label>
-      <input type="password" id="nuevaClave" placeholder="Clave" required />
-      <label for="nuevoRol">Rol</label>
-      <select id="nuevoRol">
-        <option value="dependiente">Dependiente</option>
-        <option value="cocina">Cocina</option>
-        <option value="bar">Bar</option>
-        <option value="gerente">Gerente</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button type="submit">Crear</button>
-    </form>
-
-    <h2>Cambiar Clave</h2>
-    <form id="cambiarForm">
-      <label for="usuarioClave">Usuario</label>
-      <input type="text" id="usuarioClave" placeholder="Usuario" required />
-      <label for="nuevaClaveUsuario">Nueva clave</label>
-      <input type="password" id="nuevaClaveUsuario" placeholder="Nueva clave" required />
-      <button type="submit">Cambiar Clave</button>
-    </form>
-
-    <h2>Usuarios Existentes</h2>
-    <table>
-      <thead>
-        <tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
-      </thead>
-      <tbody id="tablaUsuarios"></tbody>
-    </table>
-
-    <h2>Historial de Acciones</h2>
-    <table>
-      <thead>
-        <tr><th>Acción</th><th>Usuario afectado</th><th>Realizado por</th><th>Fecha</th></tr>
-      </thead>
-      <tbody id="tablaLogs"></tbody>
-    </table>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    // Valores provistos por ti
-    const SUPABASE_URL = "https://ihswokmnhwaitzwjzvmy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imloc3dva21uaHdhaXR6d2p6dm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NjU2OTcsImV4cCI6MjA3NjM0MTY5N30.TY4BdOYdzrmUGoprbFmbl4HVntaIGJyRMOxkcZPdlWU";
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Sesión / control de acceso
-    const usuario = localStorage.getItem("usuario");
-    const rol = localStorage.getItem("rol");
-    if (!usuario || !rol || (rol !== "admin" && rol !== "gerente")) {
-      window.location.href = "../index.html";
-    }
-    document.getElementById("usuarioConectado").textContent = usuario;
-
-    // Logout
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.clear();
-      window.location.href = "../index.html";
-    });
-
-    // Crear usuario
-    document.getElementById("crearForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
-      const nuevaClave = document.getElementById("nuevaClave").value.trim();
-      const nuevoRol = document.getElementById("nuevoRol").value;
-      if (!nuevoUsuario || !nuevaClave || !nuevoRol) { alert("Completa todos los campos para crear el usuario."); return; }
-
-      try {
-        const { data, error } = await supabase.rpc("crear_usuario", {
-          p_usuario: nuevoUsuario,
-          p_clave: nuevaClave,
-          p_rol: nuevoRol,
-          p_admin: usuario
-        });
-        if (error) throw error;
-        alert("✅ Usuario creado con éxito");
-        e.target.reset();
-        await Promise.all([cargarUsuarios(), cargarLogs()]);
-      } catch (err) {
-        console.error("crear_usuario error:", err);
-        alert("❌ Error creando usuario: " + (err.message || JSON.stringify(err)));
-      }
-    });
-
-    // Cambiar clave
-    document.getElementById("cambiarForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const usuarioClave = document.getElementById("usuarioClave").value.trim().toLowerCase();
-      const nuevaClaveUsuario = document.getElementById("nuevaClaveUsuario").value.trim();
-      if (!usuarioClave || !nuevaClaveUsuario) { alert("Completa ambos campos para cambiar la clave."); return; }
-
-      try {
-        const { data, error } = await supabase.rpc("cambiar_clave", {
-          p_usuario: usuarioClave,
-          p_clave: nuevaClaveUsuario,
-          p_admin: usuario
-        });
-        if (error) throw error;
-        const mensaje = data?.mensaje || ("Clave actualizada con éxito para " + usuarioClave);
-        alert("🔐 " + mensaje);
-        e.target.reset();
-        await cargarLogs();
-      } catch (err) {
-        console.error("cambiar_clave error:", err);
-        alert("❌ Error cambiando clave: " + (err.message || JSON.stringify(err)));
-      }
-    });
-
-    // Cargar usuarios
-// === reemplazar cargarUsuarios por este bloque completo ===
-const USER_FK_KEYS = ["role_id", "roles_id", "roleid", "role_id_int"]; // ajustar si tu FK tiene otro nombre
-
-async function cargarUsuarios() {
-  const tbody = document.getElementById("tablaUsuarios");
-  try {
-    tbody.innerHTML = `<tr><td colspan="3">Cargando usuarios…</td></tr>`;
-
-    // 1) Obtener usuarios (sin tratar de join complex)
-    const { data: usuarios, error: errUsers } = await supabase
-      .from("usuarios")
-      .select("*")
-      .order("usuario", { ascending: true })
-      .limit(1000);
-
-    if (errUsers) {
-      console.error("Error fetching usuarios:", errUsers);
-      tbody.innerHTML = `<tr><td colspan="3">Error cargando usuarios: ${escapeHtml(errUsers.message || JSON.stringify(errUsers))}</td></tr>`;
-      return;
-    }
-
-    if (!usuarios || usuarios.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3">No hay usuarios registrados.</td></tr>`;
-      return;
-    }
-
-    // 2) Detectar campo FK de rol en la primera fila
-    const sample = usuarios[0] || {};
-    const detectedFk = USER_FK_KEYS.find(k => k in sample) || null;
-
-    // 3) Si no hay FK detectada, intentar si existe la relación roles (objeto roles)
-    let hasRolesRelation = false;
-    if ("roles" in sample && typeof sample.roles === "object" && sample.roles !== null) {
-      hasRolesRelation = true;
-    }
-
-    // 4) Si tenemos FK numérica, consultar tabla roles y mapear
-    let rolesById = {};
-    if (detectedFk && usuarios.some(u => u[detectedFk] !== undefined && u[detectedFk] !== null)) {
-      try {
-        const { data: roles, error: errRoles } = await supabase
-          .from("roles")
-          .select("id, nombre")
-          .limit(1000);
-        if (errRoles) throw errRoles;
-        rolesById = (roles || []).reduce((acc, r) => { acc[String(r.id)] = r.nombre; return acc; }, {});
-      } catch (e) {
-        console.warn("No fue posible cargar roles para mapear role_id:", e);
-        rolesById = {};
-      }
-    }
-
-    // 5) Renderizar usando la mejor fuente disponible:
-    // - si existe relation u.roles.nombre -> usarla
-    // - si existe rolesById mapear por FK detectado
-    // - si existe campo textual (role, rol, role_name) usarlo
-    renderUsuariosWithMapping(usuarios, { detectedFk, rolesById, hasRolesRelation });
-
-  } catch (ex) {
-    console.error("Excepción en cargarUsuarios:", ex);
-    tbody.innerHTML = `<tr><td colspan="3">Excepción al cargar usuarios: ${escapeHtml(ex.message || JSON.stringify(ex))}</td></tr>`;
-  }
-}
-
-function renderUsuariosWithMapping(usuarios, { detectedFk, rolesById, hasRolesRelation }) {
-  const tbody = document.getElementById("tablaUsuarios");
-  tbody.innerHTML = "";
-
-  // heurística para campos que pueden contener texto de rol
-  const possibleRoleTextKeys = ["rol", "role", "role_name", "nombre_rol", "rol_nombre"];
-
-  usuarios.forEach(u => {
-    // determinar usuario display
-    const usuarioText = u.usuario ?? u.username ?? u.email ?? u.id ?? "—";
-
-    // determinar rol display
-    let rolText = "—";
-
-    // 1. relación embed (u.roles.nombre)
-    if (hasRolesRelation && u.roles && typeof u.roles === "object" && u.roles.nombre) {
-      rolText = String(u.roles.nombre);
-    }
-
-    // 2. mapping por FK si existe rolesById y detectedFk
-    else if (detectedFk && (u[detectedFk] !== undefined && u[detectedFk] !== null) && Object.keys(rolesById).length > 0) {
-      const fkValue = String(u[detectedFk]);
-      rolText = rolesById[fkValue] ?? fkValue;
-    }
-
-    // 3. campo textual directo
-    else {
-      const foundKey = possibleRoleTextKeys.find(k => k in u && u[k]);
-      if (foundKey) rolText = String(u[foundKey]);
-      else {
-        // heurístico: buscar cualquier field que parezca rol
-        const heuristic = Object.keys(u).find(k => /rol|role|roles|tipo|nombre/i.test(k) && typeof u[k] === "string");
-        if (heuristic) rolText = String(u[heuristic]);
-      }
-    }
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(usuarioText)}</td>
-      <td>${escapeHtml(rolText)}</td>
-      <td><button data-usuario="${escapeHtml(usuarioText)}" class="btn-borrar">Borrar</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-    // Borrar usuario (delegado)
-    document.getElementById("tablaUsuarios").addEventListener("click", async (ev) => {
-      const btn = ev.target.closest("button");
-      if (!btn) return;
-      if (btn.classList.contains("btn-borrar")) {
-        const usuarioAfectado = btn.dataset.usuario;
-        if (!confirm("¿Seguro que quieres borrar " + usuarioAfectado + "?")) return;
-        try {
-          const { error } = await supabase.rpc("borrar_usuario", { p_usuario: usuarioAfectado, p_admin: usuario });
-          if (error) throw error;
-          alert("🗑️ Usuario borrado");
-          await Promise.all([cargarUsuarios(), cargarLogs()]);
-        } catch (err) {
-          console.error("borrar_usuario error:", err);
-          alert("❌ Error borrando usuario: " + (err.message || JSON.stringify(err)));
-        }
-      }
-    });
-
-    // Cargar logs
-    async function cargarLogs() {
-      try {
-        const { data, error } = await supabase
-          .from("logs_admin")
-          .select("*")
-          .order("fecha", { ascending: false })
-          .limit(50);
-        if (error) throw error;
-        const tbody = document.getElementById("tablaLogs");
-        tbody.innerHTML = "";
-        (data || []).forEach(l => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${escapeHtml(l.accion || l.message || "")}</td>
-            <td>${escapeHtml(l.usuario_afectado || l.target || "")}</td>
-            <td>${escapeHtml(l.realizado_por || l.actor || "")}</td>
-            <td>${l.fecha ? new Date(l.fecha).toLocaleString() : ""}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Error cargando logs:", err);
-      }
-    }
-
-    // Util
-    function escapeHtml(text = "") {
-      return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    // Inicializar
-    (async function init() {
-      await Promise.all([cargarUsuarios(), cargarLogs()]);
-    })();
-  </script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="../scripts/script-admin-menus.js"></script>
 </body>
 </html>
