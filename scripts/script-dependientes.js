@@ -150,6 +150,16 @@ function mostrarMenuAgrupado(platos) {
 
     contenedor.appendChild(grupo);
   }
+  <div class="precio">
+  ${Number(plato.precio).toFixed(2)} CUP
+  <span class="estado ${plato.disponible ? '' : 'no'}">
+    ${plato.disponible ? '✔' : '✖'}
+  </span>
+  <span class="meta ${plato.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
+    Stock: ${plato.stock}
+  </span>
+</div>
+<input type="number" min="0" max="${plato.stock}" value="${cantidadActual}" data-menu-id="${plato.id}" ${plato.stock === 0 ? 'disabled' : ''} />
 }
 
 function actualizarFiltroCategorias(platos) {
