@@ -111,7 +111,6 @@ async function cargarMenu(force = false) {
   actualizarFiltroCategorias(menu);
   actualizarTotalesUI();
 }
-// Parte 2 — script-dependientes.js
 function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
   if (!contenedor) return;
@@ -189,4 +188,123 @@ function actualizarTotalesUI() {
     const plato = menu.find(p => p.id === id);
     return sum + (plato ? Number(plato.precio) * qty : 0);
   }, 0);
-  const items = Object.values(cantidadesSeleccionadas).reduce
+  const items = Object.values(cantidadesSeleccionadas).reduce((s, v) => s + v, 0);
+  document.getElementById("total").textContent = total.toFixed(2);
+  document.getElementById("cantidad-items").textContent = items;
+}
+
+window.limpiarSeleccion = function () {
+  cantidadesSeleccionadas = {};
+  document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
+  actualizarTotalesUI();
+};
+
+window.revisarPedido = function () {
+  const mesa = (document.getElementById("mesa").value || "").trim();
+  if (!mesa) return alert("Indica número de mesa antes de revisar el pedido.");
+  const local = document.getElementById("local").value;
+
+  const items = Object.entries(cantidadesSeleccionadas)
+    .map(([id, qty]) => {
+      const p = menu.find(m => m.id === id);
+      return p ? { id, nombre: p.nombre, price: Number(p.precio), cantidad: qty } : null;
+    })
+    .filter(Boolean);
+
+  if (items.length === 0) return alert("Selecciona al menos un plato antes de revisar.");
+
+  const resumenBlock = document.getElementById("resumen");
+  resumenBlock.innerHTML = `
+    <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
+    <p><strong>Local:</strong> ${escapeHtml(local)}</p>
+    <ul>
+      ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.price * i.cantidad).toFixed(2)} CUP</li>`).join("")}
+    </ul>
+    <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.price*i.cantidad),0).toFixed(2)} CUP</p>
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <button id="confirmar-pedido-btn" class="btn-principal">✅ Confirmar pedido</button>
+      <button id="editar-pedido-btn" class="btn-secundario">✏️ Volver a editar</button>
+    </div>
+  `;
+  document.getElementById("confirmacion").style.display = "block";
+  document.getElementById("editar-pedido-btn").onclick = () => {
+    document.getElementById("confirmacion").style.display = "none";
+  };
+  document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
+};
+
+async function confirmarPedido() {
+  const local = document.getElementById("local").value;
+  const mesa = (document.getElementById("mesa").value || "").trim();
+  if (!mesa) return alert("Indica número de mesa antes de confirmar.");
+
+  const itemsRaw = Object.entries(cantidadesSeleccionadas)
+    .map(([id, qty]) => {
+      const p = menu.find(m => m.id === id);
+      return p ? { menu_id: String(id), nombre: p.nombre, cantidad: Number(qty), precio: Number(p.precio) } : null;
+    })
+    .filter(Boolean)
+    .filter(i => i.cantidad > 0);
+
+  if (itemsRaw.length === 0) return alert("No hay items para enviar.");
+
+  const itemsMap = {};
+  itemsRaw.forEach(it => {
+    const key = String(it.menu_id);
+    if (!itemsMap[key]) itemsMap[key] = { ...it };
+    else itemsMap[key].cantidad += it.cantidad;
+  });
+
+  const items = Object.values(itemsMap);
+
+  try {
+    const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
+      p_mesa: mesa,
+      p_local: local,
+      p_usuario_id: usuarioAutenticado,
+      p_items: payload,
+      p_pedido_id: null
+    });
+
+    if (error) throw error;
+
+    const result = data;
+    const itemsReturned = (result && result.items) ? result.items : [];
+    let allGood = true;
+    items.forEach(it => {
+      const found = itemsReturned.find(r => String(r.menu_id) === String(it.menu_id));
+      if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
+    });
+
+    if (!allGood) return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
+
+    cantidadesSeleccionadas = {};
+    document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
+    actualizarTotalesUI();
+    await cargarResumen();
+    await mostrarPedidosPendientes();
+    await cargarMenu(true);
+
+    if (result && result.pedido_id) verDetalles(result.pedido_id);
+  } catch (err) {
+    console.error("Error en confirmarPedido (RPC):", err);
+    alert("❌ Error al confirmar pedido. Revisa la consola.");
+  }
+}
+
+async function mostrarPedidosPendientes() {
+  const hoy = new Date().toISOString().split("T")[0];
+  const { data: pedidos, error } = await supabase
+    .from("pedidos")
+    .select("id, mesa, local, total, fecha")
+    .eq("usuario_id", usuarioAutenticado)
+    .eq("cobrado", false)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lte("fecha", `${hoy}T23:59:59`)
+    .order("fecha", { ascending: true });
+
+  if (error) return;
+
+  let html = "<h3>🕒 Pedidos pendientes</h3>";
+ 
