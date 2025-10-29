@@ -50,19 +50,12 @@ document.getElementById("crearForm").addEventListener("submit", async (e) => {
 
   const nuevoUsuario = document.getElementById("nuevoUsuario").value.trim().toLowerCase();
   const nuevaClave = document.getElementById("nuevaClave").value.trim();
- const nuevoRolId = parseInt(document.getElementById("nuevoRol").value, 10);
+  const nuevoRolId = parseInt(document.getElementById("nuevoRol").value, 10);
 
-if (!nuevoUsuario || !nuevaClave || isNaN(nuevoRolId)) {
-  alert("Completa todos los campos para crear el usuario.");
-  return;
-}
-
-const { error } = await supabase.rpc("crear_usuario", {
-  p_usuario: nuevoUsuario,
-  p_clave: nuevaClave,
-  p_rol: nuevoRolId,
-  p_admin: usuario
-});
+  if (!nuevoUsuario || !nuevaClave || isNaN(nuevoRolId)) {
+    alert("Completa todos los campos para crear el usuario.");
+    return;
+  }
 
   try {
     // 🔍 Verificar si el usuario ya existe
@@ -82,7 +75,7 @@ const { error } = await supabase.rpc("crear_usuario", {
       return;
     }
 
-    // ✅ Crear usuario
+ // ✅ Crear usuario con rol válido
     const { error } = await supabase.rpc("crear_usuario", {
       p_usuario: nuevoUsuario,
       p_clave: nuevaClave,
