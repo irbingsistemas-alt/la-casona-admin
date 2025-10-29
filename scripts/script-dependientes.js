@@ -1,4 +1,3 @@
-// Parte 1 — script-dependientes.js
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const supabase = createClient(
@@ -133,8 +132,13 @@ function mostrarMenuAgrupado(platos) {
       item.className = "menu-item";
       item.innerHTML = `
         <div class="nombre">${escapeHtml(plato.nombre)}</div>
-        <div class="precio">${Number(plato.precio).toFixed(2)} CUP</div>
-        <input type="number" min="0" value="${cantidadActual}" data-menu-id="${plato.id}" aria-label="Cantidad ${escapeHtml(plato.nombre)}" />
+        <div class="precio">
+          ${Number(plato.precio).toFixed(2)} CUP
+          <span class="estado ${plato.disponible ? '' : 'no'}">
+            ${plato.disponible ? '✔' : '✖'}
+          </span>
+        </div>
+        <input type="number" min="0" value="${cantidadActual}" data-menu-id="${plato.id}" />
       `;
       const input = item.querySelector("input");
       input.addEventListener("input", (ev) => {
@@ -282,6 +286,9 @@ async function confirmarPedido() {
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
+    document.getElementById("confirmacion").style.display = "none";
+    document.getElementById("resumen").innerHTML = "";
+
     await cargarResumen();
     await mostrarPedidosPendientes();
     await cargarMenu(true);
@@ -291,43 +298,6 @@ async function confirmarPedido() {
     console.error("Error en confirmarPedido (RPC):", err);
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
-}
-
-async function mostrarPedidosPendientes() {
-  const hoy = new Date().toISOString().split("T")[0];
-  const { data: pedidos, error } = await supabase
-    .from("pedidos")
-    .select("id, mesa, local, total, fecha")
-    .eq("usuario_id", usuarioAutenticado)
-    .eq("cobrado", false)
-    .gte("fecha", `${hoy}T00:00:00`)
-    .lte("fecha", `${hoy}T23:59:59`)
-    .order("fecha", { ascending: true });
-
-  if (error) return;
-
-  let html = "<h3>🕒 Pedidos pendientes</h3>";
-  if (!pedidos || pedidos.length === 0) {
-    html += "<p>No hay pedidos pendientes.</p>";
-  } else {
-    html += "<ul>";
-    pedidos.forEach(p => {
-      html += `
-        <li style="margin-bottom:10px;">
-          <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${Number(p.total).toFixed(2)} CUP
-          <div style="display:inline-block; margin-left:10px;">
-            <button class="btn-principal" onclick="verDetalles('${p.id}')">Ver detalles</button>
-            <button class="btn-secundario" onclick="cerrarPedido('${p.id}')">Cobrar</button>
-          </div>
-          <div style="color:#666; font-size:0.9rem; margin-top:4px;">${new Date(p.fecha).toLocaleString()}</div>
-        </li>
-      `;
-    });
-    html += "</ul>";
-  }
-
-  const cont = document.getElementById("pedidos-pendientes");
-  if (cont) cont.innerHTML = html;
 }
 
 window.verDetalles = async function (pedidoId) {
@@ -366,7 +336,9 @@ window.verDetalles = async function (pedidoId) {
         </div>
       </div>
     `;
-    document.getElementById("modal-cerrar-btn").onclick = () => { root.innerHTML = ""; };
+    document.getElementById("modal-cerrar-btn").onclick = () => {
+      root.innerHTML = "";
+    };
   } catch (err) {
     console.error("Error verDetalles:", err);
     alert("❌ Error al cargar detalles del pedido.");
@@ -383,12 +355,22 @@ window.cerrarPedido = async function (pedidoId) {
       .single();
 
     if (errCheck) throw errCheck;
-    if (!pedidoCheck || pedidoCheck.cobrado) return alert("Pedido ya cobrado o no encontrado.");
-    if (pedidoCheck.usuario_id !== usuarioAutenticado) return alert("Este pedido no fue creado por tu sesión.");
+    if (!pedidoCheck || pedidoCheck.cobrado) {
+      alert("Pedido ya cobrado o no encontrado.");
+      return;
+    }
+    if (pedidoCheck.usuario_id !== usuarioAutenticado) {
+      alert("Este pedido no fue creado por tu sesión. No puedes cobrarlo.");
+      return;
+    }
 
     const { error } = await supabase
       .from("pedidos")
-      .update({ cobrado: true, cobrado_por: usuarioAutenticado, cobrado_at: new Date().toISOString() })
+      .update({
+        cobrado: true,
+        cobrado_por: usuarioAutenticado,
+        cobrado_at: new Date().toISOString()
+      })
       .eq("id", pedidoId);
 
     if (error) throw error;
