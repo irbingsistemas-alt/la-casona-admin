@@ -299,7 +299,48 @@ async function confirmarPedido() {
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
 }
+async function mostrarPedidosPendientes() {
+  const hoy = new Date().toISOString().split("T")[0];
 
+  try {
+    const { data: pedidos, error } = await supabase
+      .from("pedidos")
+      .select("id, mesa, local, total, fecha")
+      .eq("usuario_id", usuarioAutenticado)
+      .eq("cobrado", false)
+      .gte("fecha", `${hoy}T00:00:00`)
+      .lte("fecha", `${hoy}T23:59:59`)
+      .order("fecha", { ascending: true });
+
+    if (error) throw error;
+
+    let html = "<h3>🕒 Pedidos pendientes</h3>";
+    if (!pedidos || pedidos.length === 0) {
+      html += "<p>No hay pedidos pendientes.</p>";
+    } else {
+      html += "<ul>";
+      pedidos.forEach(p => {
+        html += `
+          <li class="pedido-pendiente">
+            <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${Number(p.total).toFixed(2)} CUP
+            <div style="margin-top:6px;">
+              <button class="btn-principal" onclick="verDetalles('${p.id}')">Ver detalles</button>
+              <button class="btn-secundario" onclick="cerrarPedido('${p.id}')">Cobrar</button>
+            </div>
+            <div class="meta">${new Date(p.fecha).toLocaleString()}</div>
+          </li>
+        `;
+      });
+      html += "</ul>";
+    }
+
+    const cont = document.getElementById("pedidos-pendientes");
+    if (cont) cont.innerHTML = html;
+  } catch (err) {
+    console.error("Error mostrarPedidosPendientes:", err);
+    alert("❌ No se pudieron cargar los pedidos pendientes.");
+  }
+}
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
