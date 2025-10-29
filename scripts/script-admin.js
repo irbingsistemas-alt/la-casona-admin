@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   // Aquí continúa toda tu lógica: logout, crear usuario, cambiar clave, cargar usuarios, historial, filtros, exportar, etc.
-});
 
   // 🔓 Logout
   document.getElementById("logoutBtn").addEventListener("click", () => {
