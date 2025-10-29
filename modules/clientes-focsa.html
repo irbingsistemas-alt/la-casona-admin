@@ -3,25 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pedidos FOCSA-La Casona de 17</title>
-  <link rel="stylesheet" href="../style-base.css" />
+  <title>Pedidos FOCSA</title>
+  <link rel="stylesheet" href="style-base.css" />
 </head>
 <body>
   <div class="contenedor">
     <div class="site-logo">
-      <img src="../assets/logo.png" alt="Logo La Casona de 17" />
+      <img src="assets/logo-casona.png" alt="Logo La Casona de 17" />
     </div>
     <h1>Pedidos FOCSA</h1>
 
     <form id="formPedido">
-      <label>Nombre del cliente</label>
-      <input type="text" id="cliente" required />
-
-      <label>Piso</label>
-      <input type="text" id="piso" required />
-
-      <label>Apartamento</label>
-      <input type="text" id="apartamento" required />
+      <div class="fila-datos">
+        <div>
+          <label>Nombre del cliente</label>
+          <input type="text" id="cliente" required />
+        </div>
+        <div>
+          <label>Piso</label>
+          <input type="text" id="piso" required />
+        </div>
+        <div>
+          <label>Apartamento</label>
+          <input type="text" id="apartamento" required />
+        </div>
+      </div>
     </form>
 
     <h2>Selecciona productos</h2>
@@ -29,10 +35,10 @@
     <select id="filtroCategoria">
       <option value="todos">Todas</option>
     </select>
-    <div id="menuContenedor" class="scrollable-menu"></div>
+    <div id="menuContenedor" class="scroll-horizontal"></div>
 
     <h2>Embalajes / Envases</h2>
-    <div id="listaEmbalajes" class="scrollable-menu"></div>
+    <div id="listaEmbalajes" class="scroll-horizontal"></div>
 
     <label class="estado-disponible">
       <input type="checkbox" id="optGrupo" checked />
@@ -49,6 +55,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="../scripts/script-clientes-focsa.js"></script>
+  <script src="script-clientes-focsa.js"></script>
 </body>
 </html>
