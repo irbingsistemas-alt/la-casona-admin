@@ -128,62 +128,85 @@ async function cargarMenu(force = false) {
   if (!force && now - latestMenuFetchTs < 2500) return;
   latestMenuFetchTs = now;
 
+  const contenedor = document.getElementById("menu");
+  if (contenedor) {
+    contenedor.innerHTML = "<p style='padding:1em;'>⏳ Cargando menú…</p>";
+  }
+
   const { data, error } = await supabase
     .from("menus")
     .select("id,nombre,precio,categoria,disponible,activo,stock")
     .eq("disponible", true)
     .eq("activo", true);
 
-  console.log("Menú cargado:", data);
-  console.log("Error al cargar menú:", error);
+  console.log("📦 Menú cargado:", data);
+  console.log("⚠️ Error al cargar menú:", error);
 
-  if (error || !data) return;
+  if (error || !data) {
+    if (contenedor) {
+      contenedor.innerHTML = "<p style='padding:1em; color:#c00;'>❌ Error al cargar el menú. Intenta recargar.</p>";
+    }
+    return;
+  }
+
+  if (data.length === 0) {
+    if (contenedor) {
+      contenedor.innerHTML = "<p style='padding:1em; color:#666;'>⚠️ No hay platos disponibles en este momento.</p>";
+    }
+    return;
+  }
+
+  // 🧠 Actualiza menú global en memoria
+  menu = data;
 
   const nuevosDatos = data.reduce((acc, item) => {
     acc[item.id] = item;
     return acc;
   }, {});
 
-  // 🔁 Actualiza solo los ítems visibles
-  document.querySelectorAll("#menu .menu-item").forEach(el => {
-    const input = el.querySelector("input[data-menu-id]");
-    const id = input?.getAttribute("data-menu-id");
-    const nuevo = nuevosDatos[id];
-    if (!nuevo) return;
+  const visibles = document.querySelectorAll("#menu .menu-item");
 
-    const nombreEl = el.querySelector(".nombre");
-    const precioEl = el.querySelector(".precio");
-    const stockEl = el.querySelector(".meta");
+  if (visibles.length === 0) {
+    console.log("🎨 Renderizando menú completo…");
+    mostrarMenuAgrupado(menu);
+  } else {
+    console.log("🔁 Actualizando ítems visibles…");
+    visibles.forEach(el => {
+      const input = el.querySelector("input[data-menu-id]");
+      const id = input?.getAttribute("data-menu-id");
+      const nuevo = nuevosDatos[id];
+      if (!nuevo) return;
 
-    if (nombreEl) nombreEl.textContent = nuevo.nombre;
-    if (precioEl) {
-      precioEl.innerHTML = `
-        ${Number(nuevo.precio).toFixed(2)} CUP
-        <span class="estado ${nuevo.disponible ? '' : 'no'}">
-          ${nuevo.disponible ? '✔' : '✖'}
-        </span>
-        <span class="meta ${nuevo.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
-          Stock: ${nuevo.stock}
-        </span>
-      `;
-    }
+      const nombreEl = el.querySelector(".nombre");
+      const precioEl = el.querySelector(".precio");
 
-    if (input) {
-      input.max = nuevo.stock;
-      input.disabled = nuevo.stock === 0;
-    }
+      if (nombreEl) nombreEl.textContent = nuevo.nombre;
+      if (precioEl) {
+        precioEl.innerHTML = `
+          ${Number(nuevo.precio).toFixed(2)} CUP
+          <span class="estado ${nuevo.disponible ? '' : 'no'}">
+            ${nuevo.disponible ? '✔' : '✖'}
+          </span>
+          <span class="meta ${nuevo.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
+            Stock: ${nuevo.stock}
+          </span>
+        `;
+      }
 
-    // 🔁 Actualiza en memoria
-    const qty = cantidadesSeleccionadas[id] || 0;
-    if (qty > nuevo.stock) {
-      cantidadesSeleccionadas[id] = nuevo.stock;
-      input.value = nuevo.stock;
-    }
-  });
+      if (input) {
+        input.max = nuevo.stock;
+        input.disabled = nuevo.stock === 0;
+      }
 
-  // 🧠 Actualiza menú global en memoria
-  menu = data;
+      const qty = cantidadesSeleccionadas[id] || 0;
+      if (qty > nuevo.stock) {
+        cantidadesSeleccionadas[id] = nuevo.stock;
+        input.value = nuevo.stock;
+      }
+    });
+  }
 
+  actualizarFiltroCategorias(menu);
   actualizarTotalesUI();
 }
 
