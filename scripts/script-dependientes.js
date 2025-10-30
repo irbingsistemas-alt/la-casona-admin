@@ -270,8 +270,8 @@ const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
 
     if (error) throw error;
 
-    const result = data;
-    const itemsReturned = (result && result.items) ? result.items : [];
+    const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    const itemsReturned = result?.items ?? [];
     let allGood = true;
     items.forEach(it => {
       const found = itemsReturned.find(r => String(r.menu_id) === String(it.menu_id));
