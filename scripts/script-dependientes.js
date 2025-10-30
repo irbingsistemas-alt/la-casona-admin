@@ -22,32 +22,70 @@ function escapeHtml(text = "") {
 window.iniciarSesion = async function () {
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
-  if (!usuario || !clave) return alert("Completa usuario y contraseña.");
 
-  const { data, error } = await supabase.rpc("login_dependiente", {
-    usuario_input: usuario,
-    clave_input: clave
-  });
+  console.log("📥 Usuario ingresado:", usuario);
+  console.log("📥 Clave ingresada:", clave);
 
-  if (error || !data) return alert("❌ Usuario o contraseña incorrectos.");
-
-  const perfil = Array.isArray(data) ? data[0] : data;
-  if (!perfil || !["admin", "dependiente", "gerente"].includes(perfil.rol)) {
-    return alert("⚠️ Acceso denegado para este rol.");
+  if (!usuario || !clave) {
+    alert("Completa usuario y contraseña.");
+    return;
   }
 
-  usuarioAutenticado = perfil.id;
-  localStorage.setItem("usuario_nombre", perfil.usuario);
-  document.getElementById("usuario-conectado").textContent = perfil.usuario;
-  document.getElementById("login").style.display = "none";
-  document.getElementById("contenido").style.display = "block";
+  try {
+    const { data, error } = await supabase.rpc("login_dependiente", {
+      usuario_input: usuario,
+      clave_input: clave
+    });
 
-  const btnRec = document.getElementById("btn-recargar-menu");
-  if (btnRec) btnRec.onclick = () => cargarMenu(true);
+    console.log("📡 Resultado RPC login_dependiente:", { data, error });
 
-  await Promise.all([cargarMenu(), cargarResumen(), mostrarPedidosPendientes()]);
+    if (error || !data) {
+      alert("❌ Usuario o contraseña incorrectos.");
+      return;
+    }
+
+    const perfil = Array.isArray(data) ? data[0] : data;
+    console.log("👤 Perfil recibido:", perfil);
+
+    if (!perfil || !["admin", "dependiente", "gerente"].includes(perfil.rol)) {
+      alert("⚠️ Acceso denegado para este rol.");
+      return;
+    }
+
+    usuarioAutenticado = perfil.id;
+    localStorage.setItem("usuario_nombre", perfil.usuario);
+    document.getElementById("usuario-conectado").textContent = perfil.usuario;
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("contenido").style.display = "block";
+
+    const btnRec = document.getElementById("btn-recargar-menu");
+    if (btnRec) btnRec.onclick = () => cargarMenu(true);
+
+    console.log("✅ Login exitoso. Cargando menú y resumen…");
+
+    await Promise.all([
+      cargarMenu(),
+      cargarResumen(),
+      mostrarPedidosPendientes()
+    ]);
+
+    console.log("✅ Datos cargados correctamente tras login.");
+
+    // 🎉 Mensaje de bienvenida
+    const saludo = document.getElementById("mensaje-bienvenida");
+    if (saludo) {
+      saludo.innerHTML = `
+        <p>👋 Bienvenido, <strong>${escapeHtml(perfil.usuario)}</strong>.</p>
+        <p>Hoy es <strong>${new Date().toLocaleDateString()}</strong>. ¡Listo para tomar pedidos!</p>
+      `;
+      saludo.style.display = "block";
+    }
+  } catch (err) {
+    console.error("❌ Error inesperado en iniciarSesion:", err);
+    alert("Error inesperado al iniciar sesión. Revisa la consola.");
+  }
 };
-
 window.cerrarSesion = function () {
   usuarioAutenticado = null;
   cantidadesSeleccionadas = {};
