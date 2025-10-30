@@ -411,7 +411,13 @@ async function confirmarPedido() {
   });
 
   try {
-    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit_v3', rpcParams);
+   const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit_v3', {
+  p_items: rpcParams.p_items,
+  p_local: rpcParams.p_local,
+  p_mesa: rpcParams.p_mesa,
+  p_pedido_id_text: rpcParams.p_pedido_id,      // null o string
+  p_usuario_id_text: rpcParams.p_usuario_id    // string
+});
     if (error) {
       console.error("RPC error detalle:", error);
       throw error;
