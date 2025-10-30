@@ -357,7 +357,6 @@ async function mostrarPedidosPendientes() {
     console.error("Error mostrarPedidosPendientes:", err);
     alert("❌ No se pudieron cargar los pedidos pendientes.");
   }
-}
   });
 window.verDetalles = async function (pedidoId) {
   try {
