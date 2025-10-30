@@ -137,8 +137,11 @@ function mostrarMenuAgrupado(platos) {
           <span class="estado ${plato.disponible ? '' : 'no'}">
             ${plato.disponible ? '✔' : '✖'}
           </span>
+          <span class="meta ${plato.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
+            Stock: ${plato.stock}
+          </span>
         </div>
-        <input type="number" min="0" value="${cantidadActual}" data-menu-id="${plato.id}" />
+        <input type="number" min="0" max="${plato.stock}" value="${cantidadActual}" data-menu-id="${plato.id}" ${plato.stock === 0 ? 'disabled' : ''} />
       `;
       const input = item.querySelector("input");
       input.addEventListener("input", (ev) => {
@@ -150,27 +153,6 @@ function mostrarMenuAgrupado(platos) {
 
     contenedor.appendChild(grupo);
   }
-  <div class="precio">
-  ${Number(plato.precio).toFixed(2)} CUP
-  <span class="estado ${plato.disponible ? '' : 'no'}">
-    ${plato.disponible ? '✔' : '✖'}
-  </span>
-  <span class="meta ${plato.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
-    Stock: ${plato.stock}
-  </span>
-    </div>
-    <div class="precio">
-  ${Number(plato.precio).toFixed(2)} CUP
-  <span class="estado ${plato.disponible ? '' : 'no'}">
-    ${plato.disponible ? '✔' : '✖'}
-  </span>
-  <span class="meta ${plato.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
-    Stock: ${plato.stock}
-  </span>
-</div>
-<input type="number" min="0" max="${plato.stock}" value="${cantidadActual}" data-menu-id="${plato.id}" ${plato.stock === 0 ? 'disabled' : ''} />
-</div>
-<input type="number" min="0" max="${plato.stock}" value="${cantidadActual}" data-menu-id="${plato.id}" ${plato.stock === 0 ? 'disabled' : ''} />
 }
 
 function actualizarFiltroCategorias(platos) {
@@ -304,30 +286,35 @@ async function confirmarPedido() {
 
     if (!allGood) return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
 
+    // 🔄 Actualizar stock local con stock_restante
+    if (result && result.items) {
+      result.items.forEach(ret => {
+        const localPlato = menu.find(p => String(p.id) === String(ret.menu_id));
+        if (localPlato) {
+          localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
+        }
+      });
+      mostrarMenuAgrupado(menu);
+      actualizarTotalesUI();
+    }
+
+    // 🧼 Limpiar selección y resumen
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
     document.getElementById("confirmacion").style.display = "none";
     document.getElementById("resumen").innerHTML = "";
 
+    // 🔁 Actualizar resumen y pedidos
     await cargarResumen();
     await mostrarPedidosPendientes();
-    await cargarMenu(true);
 
+    // 📋 Ver detalles si hay pedido_id
     if (result && result.pedido_id) verDetalles(result.pedido_id);
   } catch (err) {
     console.error("Error en confirmarPedido (RPC):", err);
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
-  if (result && result.items) {
-  result.items.forEach(ret => {
-    const localPlato = menu.find(p => String(p.id) === String(ret.menu_id));
-    if (localPlato) {
-      localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
-    }
-    mostrarMenuAgrupado(menu);
-  actualizarTotalesUI();
-}
 }
 async function mostrarPedidosPendientes() {
   const hoy = new Date().toISOString().split("T")[0];
