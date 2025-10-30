@@ -52,10 +52,14 @@ window.iniciarSesion = async function () {
       return;
     }
 
+    // 🧠 Persistencia en localStorage
     usuarioAutenticado = perfil.id;
+    localStorage.setItem("usuario_id", perfil.id);
     localStorage.setItem("usuario_nombre", perfil.usuario);
-    document.getElementById("usuario-conectado").textContent = perfil.usuario;
+    localStorage.setItem("rol", perfil.rol);
 
+    // 🖥️ Actualiza interfaz
+    document.getElementById("usuario-conectado").textContent = perfil.usuario;
     document.getElementById("login").style.display = "none";
     document.getElementById("contenido").style.display = "block";
 
