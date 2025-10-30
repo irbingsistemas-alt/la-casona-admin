@@ -7,6 +7,28 @@ const supabase = createClient(
 
 let menu = [];
 let usuarioAutenticado = null;
+window.addEventListener("load", () => {
+  const id = localStorage.getItem("usuario_id");
+  const nombre = localStorage.getItem("usuario_nombre");
+  const rol = localStorage.getItem("rol");
+
+  if (id && nombre && rol) {
+    console.log("🔄 Restaurando sesión desde localStorage…");
+    usuarioAutenticado = id;
+    document.getElementById("usuario-conectado").textContent = nombre;
+    document.getElementById("login").style.display = "none";
+    document.getElementById("contenido").style.display = "block";
+
+    const btnRec = document.getElementById("btn-recargar-menu");
+    if (btnRec) btnRec.onclick = () => cargarMenu(true);
+
+    cargarMenu();
+    cargarResumen();
+    mostrarPedidosPendientes();
+  } else {
+    console.log("ℹ️ No hay sesión activa en localStorage.");
+  }
+});
 let cantidadesSeleccionadas = {};
 let latestMenuFetchTs = 0;
 
