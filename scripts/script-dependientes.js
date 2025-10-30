@@ -118,9 +118,17 @@ window.iniciarSesion = async function () {
   }
 };
 window.cerrarSesion = function () {
+  console.log("🔒 Cerrando sesión…");
+
   usuarioAutenticado = null;
   cantidadesSeleccionadas = {};
+
+  // 🧹 Limpieza de localStorage
+  localStorage.removeItem("usuario_id");
   localStorage.removeItem("usuario_nombre");
+  localStorage.removeItem("rol");
+
+  // 🧼 Limpieza de campos y UI
   document.getElementById("usuario").value = "";
   document.getElementById("clave").value = "";
   document.getElementById("usuario-conectado").textContent = "";
@@ -130,7 +138,11 @@ window.cerrarSesion = function () {
   document.getElementById("resumen").innerHTML = "";
   document.getElementById("confirmacion").style.display = "none";
   document.getElementById("pedidos-pendientes").innerHTML = "";
+
   actualizarTotalesUI();
+
+  // ✅ Confirmación visual
+  alert("Sesión cerrada correctamente.");
 };
 
 function actualizarTotalesUI() {
