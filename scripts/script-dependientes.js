@@ -89,19 +89,55 @@ async function cargarMenu(force = false) {
     .from("menus")
     .select("id,nombre,precio,categoria,disponible,activo,stock")
     .eq("disponible", true)
-    .eq("activo", true)
-    .order("categoria", { ascending: true });
+    .eq("activo", true);
 
-  if (error) return;
+  if (error || !data) return;
 
-  menu = data || [];
-  const menuIds = new Set(menu.map(m => m.id));
-  Object.keys(cantidadesSeleccionadas).forEach(id => {
-    if (!menuIds.has(id)) delete cantidadesSeleccionadas[id];
+  const nuevosDatos = data.reduce((acc, item) => {
+    acc[item.id] = item;
+    return acc;
+  }, {});
+
+  // 🔁 Actualiza solo los ítems visibles
+  document.querySelectorAll("#menu .menu-item").forEach(el => {
+    const input = el.querySelector("input[data-menu-id]");
+    const id = input?.getAttribute("data-menu-id");
+    const nuevo = nuevosDatos[id];
+    if (!nuevo) return;
+
+    const nombreEl = el.querySelector(".nombre");
+    const precioEl = el.querySelector(".precio");
+    const stockEl = el.querySelector(".meta");
+
+    if (nombreEl) nombreEl.textContent = nuevo.nombre;
+    if (precioEl) {
+      precioEl.innerHTML = `
+        ${Number(nuevo.precio).toFixed(2)} CUP
+        <span class="estado ${nuevo.disponible ? '' : 'no'}">
+          ${nuevo.disponible ? '✔' : '✖'}
+        </span>
+        <span class="meta ${nuevo.stock <= 2 ? 'stock-bajo' : ''}" style="margin-left:6px;">
+          Stock: ${nuevo.stock}
+        </span>
+      `;
+    }
+
+    if (input) {
+      input.max = nuevo.stock;
+      input.disabled = nuevo.stock === 0;
+    }
+
+    // 🔁 Actualiza en memoria
+    const qty = cantidadesSeleccionadas[id] || 0;
+    if (qty > nuevo.stock) {
+      cantidadesSeleccionadas[id] = nuevo.stock;
+      input.value = nuevo.stock;
+    }
   });
 
-  mostrarMenuAgrupado(menu);
-  actualizarFiltroCategorias(menu);
+  // 🧠 Actualiza menú global en memoria
+  menu = data;
+
   actualizarTotalesUI();
 }
 
