@@ -266,7 +266,8 @@ async function confirmarPedido() {
       const found = itemsReturned.find(r => String(r.menu_id) === String(it.menu_id));
       if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
     });
-
+    console.log("Items enviados:", items);
+    console.log("Items devueltos por RPC:", itemsReturned);
     if (!allGood) return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
 
     if (result && result.items) {
