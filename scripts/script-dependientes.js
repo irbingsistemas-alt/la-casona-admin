@@ -401,7 +401,7 @@ window.verDetalles = async function (pedidoId) {
     alert("❌ Error al cargar detalles del pedido.");
   }
 };
-
+}
 window.cerrarPedido = async function (pedidoId) {
   if (!confirm("Confirmar cobro del pedido?")) return;
   try {
