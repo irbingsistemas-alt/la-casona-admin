@@ -189,8 +189,19 @@ async function cargarMenu(force = false) {
 
 function mostrarMenuAgrupado(platos) {
   const contenedor = document.getElementById("menu");
-  if (!contenedor) return;
+  if (!contenedor) {
+    console.warn("❌ No se encontró el contenedor #menu en el DOM.");
+    return;
+  }
+
+  console.log("🎨 Renderizando menú agrupado:", platos);
+
   contenedor.innerHTML = "";
+
+  if (!platos || platos.length === 0) {
+    contenedor.innerHTML = "<p style='padding:1em; color:#666;'>⚠️ No hay platos disponibles para mostrar.</p>";
+    return;
+  }
 
   const grupos = platos.reduce((acc, p) => {
     const cat = p.categoria || "Sin categoría";
@@ -199,6 +210,8 @@ function mostrarMenuAgrupado(platos) {
   }, {});
 
   for (const categoria of Object.keys(grupos)) {
+    console.log(`📦 Grupo de categoría: ${categoria} (${grupos[categoria].length} ítems)`);
+
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
     grupo.innerHTML = `<h3>${escapeHtml(categoria)}</h3>`;
@@ -232,6 +245,8 @@ function mostrarMenuAgrupado(platos) {
 
     contenedor.appendChild(grupo);
   }
+
+  console.log("✅ Menú renderizado correctamente.");
 }
 
 function actualizarFiltroCategorias(platos) {
