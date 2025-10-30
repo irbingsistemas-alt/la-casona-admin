@@ -410,9 +410,10 @@ async function confirmarPedido() {
 
   const items = Object.values(itemsMap);
 
-  // 🔍 Buscar pedido pendiente existente
   let pedidoExistente = null;
+
   try {
+    // 🔍 Buscar pedido pendiente existente
     const { data: pedidosPendientes, error: errorBuscar } = await supabase
       .from("pedidos")
       .select("id, cobrado")
@@ -425,41 +426,41 @@ async function confirmarPedido() {
 
     if (errorBuscar) throw errorBuscar;
     if (pedidosPendientes?.length > 0) {
-      pedidoExistente = pedidosPendientes[0].id;
+      const pedido = pedidosPendientes[0];
+      if (pedido.cobrado) {
+        return alert("⚠️ El pedido ya fue cobrado. No se puede actualizar.");
+      }
+      pedidoExistente = pedido.id;
     }
-  } catch (err) {
-    console.error("❌ Error buscando pedido pendiente:", err);
-    return alert("Error al verificar pedidos pendientes.");
-  }
 
-  // 🛑 Validar stock antes de enviar
-  const sinStock = items.filter(i => {
-    const p = menu.find(m => m.id === i.menu_id);
-    return !p || p.stock < i.cantidad;
-  });
+    // 🛑 Validar stock antes de enviar
+    const sinStock = items.filter(i => {
+      const p = menu.find(m => m.id === i.menu_id);
+      return !p || p.stock < i.cantidad;
+    });
 
-  if (sinStock.length > 0) {
-    return alert("❌ Algunos ítems no tienen suficiente stock.");
-  }
+    if (sinStock.length > 0) {
+      return alert("❌ Algunos ítems no tienen suficiente stock.");
+    }
 
-  const payload = items.map(i => ({
-    menu_id: i.menu_id,
-    nombre: i.nombre,
-    cantidad: i.cantidad,
-    precio: i.precio
-  }));
+    const payload = items.map(i => ({
+      menu_id: i.menu_id,
+      nombre: i.nombre,
+      cantidad: i.cantidad,
+      precio: i.precio
+    }));
 
-  if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
-    return alert("❌ Hay ítems mal formateados. Revisa el menú.");
-  }
+    if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
+      return alert("❌ Hay ítems mal formateados. Revisa el menú.");
+    }
 
-  try {
+    // ✅ Llamada al RPC con UUID o null
     const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
       p_mesa: mesa,
       p_local: local,
       p_usuario_id: usuarioAutenticado,
       p_items: payload,
-      p_pedido_id: pedidoExistente
+      p_pedido_id: pedidoExistente ?? null
     });
 
     if (error) throw error;
