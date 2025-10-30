@@ -248,7 +248,7 @@ async function confirmarPedido() {
   const items = Object.values(itemsMap);
 
   try {
-    const payload = items.map(i => ({ menu_id: i.menu_id, cantidad: i.cantidad, precio: i.precio }));
+    const payload = items.map(i => ({ menu_id: i.menu_id, nombre: i.nombre, cantidad: i.cantidad, precio: i.precio }));
     const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
       p_mesa: mesa,
       p_local: local,
