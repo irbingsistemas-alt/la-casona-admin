@@ -549,6 +549,12 @@ async function cargarResumen() {
 }
 
 async function mostrarPedidosPendientes() {
+  if (!usuarioAutenticado) {
+    console.warn("mostrarPedidosPendientes: no hay usuario autenticado");
+    document.getElementById("pedidos-pendientes").innerHTML = "<p>Inicia sesión para ver pedidos pendientes.</p>";
+    return;
+  }
+
   const hoy = new Date().toISOString().split("T")[0];
 
   try {
@@ -564,19 +570,23 @@ async function mostrarPedidosPendientes() {
     if (error) throw error;
 
     let html = "<h3>🕒 Pedidos pendientes</h3>";
+
     if (!pedidos || pedidos.length === 0) {
       html += "<p>No hay pedidos pendientes.</p>";
     } else {
       html += "<ul>";
       pedidos.forEach(p => {
+        const totalSafe = Number(p.total || 0).toFixed(2);
+        const fechaSafe = p.fecha ? new Date(p.fecha).toLocaleString() : "";
+        // botón con data-attribute para evitar interpolar directamente el id en onclick
         html += `
-          <li class="pedido-pendiente">
-            <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${Number(p.total).toFixed(2)} CUP
+          <li class="pedido-pendiente" data-pedido-id="${escapeHtml(String(p.id))}">
+            <strong>Mesa ${escapeHtml(p.mesa)}</strong> (${escapeHtml(p.local)}) – ${totalSafe} CUP
             <div style="margin-top:6px;">
-              <button class="btn-principal" onclick="verDetalles('${p.id}')">Ver detalles</button>
-              <button class="btn-secundario" onclick="cerrarPedido('${p.id}')">Cobrar</button>
+              <button class="btn-principal btn-ver-detalles" data-pedido-id="${escapeHtml(String(p.id))}">Ver detalles</button>
+              <button class="btn-secundario btn-cerrar-pedido" data-pedido-id="${escapeHtml(String(p.id))}">Cobrar</button>
             </div>
-            <div class="meta">${new Date(p.fecha).toLocaleString()}</div>
+            <div class="meta">${escapeHtml(fechaSafe)}</div>
           </li>
         `;
       });
@@ -585,9 +595,26 @@ async function mostrarPedidosPendientes() {
 
     const cont = document.getElementById("pedidos-pendientes");
     if (cont) cont.innerHTML = html;
+
+    // Attach listeners in JS (safer than inline onclick)
+    document.querySelectorAll(".btn-ver-detalles").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.pedidoId;
+        if (id) verDetalles(id);
+      });
+    });
+    document.querySelectorAll(".btn-cerrar-pedido").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.pedidoId;
+        if (id) cerrarPedido(id);
+      });
+    });
+
   } catch (err) {
     console.error("Error mostrarPedidosPendientes:", err);
-    alert("❌ No se pudieron cargar los pedidos pendientes.");
+    const cont = document.getElementById("pedidos-pendientes");
+    if (cont) cont.innerHTML = "<p style='color:#c00;'>❌ No se pudieron cargar los pedidos pendientes.</p>";
+    alert("❌ No se pudieron cargar los pedidos pendientes. Revisa la consola para más detalles.");
   }
 }
 
