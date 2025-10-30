@@ -314,8 +314,7 @@ async function confirmarPedido() {
     if (localPlato) {
       localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
     }
-  });
-  mostrarMenuAgrupado(menu);
+    mostrarMenuAgrupado(menu);
   actualizarTotalesUI();
 }
 }
@@ -361,6 +360,7 @@ async function mostrarPedidosPendientes() {
     alert("❌ No se pudieron cargar los pedidos pendientes.");
   }
 }
+  });
 window.verDetalles = async function (pedidoId) {
   try {
     const { data, error } = await supabase
