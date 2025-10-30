@@ -248,14 +248,25 @@ async function confirmarPedido() {
   const items = Object.values(itemsMap);
 
   try {
-    const payload = items.map(i => ({ menu_id: i.menu_id, nombre: i.nombre, cantidad: i.cantidad, precio: i.precio }));
-    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
-      p_mesa: mesa,
-      p_local: local,
-      p_usuario_id: usuarioAutenticado,
-      p_items: payload,
-      p_pedido_id: null
-    });
+const payload = items.map(i => ({
+  menu_id: i.menu_id,
+  nombre: i.nombre,
+  cantidad: i.cantidad,
+  precio: i.precio
+}));
+
+// ✅ Validación antes de enviar
+if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
+  return alert("❌ Hay ítems mal formateados. Revisa el menú.");
+}
+
+const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
+  p_mesa: mesa,
+  p_local: local,
+  p_usuario_id: usuarioAutenticado,
+  p_items: payload,
+  p_pedido_id: null
+});
 
     if (error) throw error;
 
