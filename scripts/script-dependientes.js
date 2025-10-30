@@ -389,7 +389,12 @@ async function confirmarPedido() {
   const itemsRaw = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
       const p = menu.find(m => m.id === id);
-      return p ? { menu_id: String(id), nombre: p.nombre, cantidad: Number(qty), precio: Number(p.precio) } : null;
+      return p ? {
+        menu_id: String(id),
+        nombre: p.nombre,
+        cantidad: Number(qty),
+        precio: Number(p.precio)
+      } : null;
     })
     .filter(Boolean)
     .filter(i => i.cantidad > 0);
@@ -406,38 +411,61 @@ async function confirmarPedido() {
   const items = Object.values(itemsMap);
 
   try {
-const payload = items.map(i => ({
-  menu_id: i.menu_id,
-  nombre: i.nombre,
-  cantidad: i.cantidad,
-  precio: i.precio
-}));
+    // 🔍 Buscar pedido pendiente existente
+    const { data: pedidosPendientes, error: errorBuscar } = await supabase
+      .from("pedidos")
+      .select("id")
+      .eq("usuario_id", usuarioAutenticado)
+      .eq("mesa", mesa)
+      .eq("local", local)
+      .eq("cobrado", false)
+      .order("fecha", { ascending: true })
+      .limit(1);
 
-// ✅ Validación antes de enviar
-if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
-  return alert("❌ Hay ítems mal formateados. Revisa el menú.");
-}
+    if (errorBuscar) {
+      console.error("❌ Error buscando pedido pendiente:", errorBuscar);
+      return alert("Error al verificar pedidos pendientes.");
+    }
 
-const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
-  p_mesa: mesa,
-  p_local: local,
-  p_usuario_id: usuarioAutenticado,
-  p_items: payload,
-  p_pedido_id: null
-});
+    const pedidoExistente = Array.isArray(pedidosPendientes) && pedidosPendientes.length > 0
+      ? pedidosPendientes[0].id
+      : null;
+
+    const payload = items.map(i => ({
+      menu_id: i.menu_id,
+      nombre: i.nombre,
+      cantidad: i.cantidad,
+      precio: i.precio
+    }));
+
+    // ✅ Validación antes de enviar
+    if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
+      return alert("❌ Hay ítems mal formateados. Revisa el menú.");
+    }
+
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
+      p_mesa: mesa,
+      p_local: local,
+      p_usuario_id: usuarioAutenticado,
+      p_items: payload,
+      p_pedido_id: pedidoExistente
+    });
 
     if (error) throw error;
 
     const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
     const itemsReturned = result?.items ?? [];
+
     console.log("RPC result:", data);
+    console.log("Items enviados:", items);
+    console.log("Items devueltos por RPC:", itemsReturned);
+
     let allGood = true;
     items.forEach(it => {
       const found = itemsReturned.find(r => String(r.menu_id) === String(it.menu_id));
       if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
     });
-    console.log("Items enviados:", items);
-    console.log("Items devueltos por RPC:", itemsReturned);
+
     if (!allGood) return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
 
     if (result && result.items) {
@@ -447,6 +475,7 @@ const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
           localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
         }
       });
+
       mostrarMenuAgrupado(menu);
       actualizarTotalesUI();
     }
@@ -455,18 +484,32 @@ const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
     actualizarTotalesUI();
     document.getElementById("confirmacion").style.display = "none";
-    document.getElementById("resumen").innerHTML = "";
+
+    // ✅ Mostrar resumen visual con tipo de pedido
+    const tipoPedido = pedidoExistente ? "🧾 Pedido actualizado" : "🆕 Nuevo pedido creado";
+    const resumenBlock = document.getElementById("resumen");
+    if (resumenBlock) {
+      resumenBlock.innerHTML = `
+        <p style="margin-top:12px; font-weight:bold; color:#444;">${tipoPedido}</p>
+        <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
+        <p><strong>Local:</strong> ${escapeHtml(local)}</p>
+        <ul>
+          ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.precio * i.cantidad).toFixed(2)} CUP</li>`).join("")}
+        </ul>
+        <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.precio*i.cantidad),0).toFixed(2)} CUP</p>
+      `;
+    }
 
     await cargarResumen();
     await mostrarPedidosPendientes();
 
     if (result && result.pedido_id) verDetalles(result.pedido_id);
+
   } catch (err) {
     console.error("Error en confirmarPedido (RPC):", err);
     alert("❌ Error al confirmar pedido. Revisa la consola.");
   }
 }
-
 async function cargarResumen() {
   if (!usuarioAutenticado) return;
   const hoy = new Date().toISOString().split("T")[0];
