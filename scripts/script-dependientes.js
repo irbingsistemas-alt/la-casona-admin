@@ -410,11 +410,12 @@ async function confirmarPedido() {
 
   const items = Object.values(itemsMap);
 
+  // 🔍 Buscar pedido pendiente existente
+  let pedidoExistente = null;
   try {
-    // 🔍 Buscar pedido pendiente existente
     const { data: pedidosPendientes, error: errorBuscar } = await supabase
       .from("pedidos")
-      .select("id")
+      .select("id, cobrado")
       .eq("usuario_id", usuarioAutenticado)
       .eq("mesa", mesa)
       .eq("local", local)
@@ -422,27 +423,37 @@ async function confirmarPedido() {
       .order("fecha", { ascending: true })
       .limit(1);
 
-    if (errorBuscar) {
-      console.error("❌ Error buscando pedido pendiente:", errorBuscar);
-      return alert("Error al verificar pedidos pendientes.");
+    if (errorBuscar) throw errorBuscar;
+    if (pedidosPendientes?.length > 0) {
+      pedidoExistente = pedidosPendientes[0].id;
     }
+  } catch (err) {
+    console.error("❌ Error buscando pedido pendiente:", err);
+    return alert("Error al verificar pedidos pendientes.");
+  }
 
-    const pedidoExistente = Array.isArray(pedidosPendientes) && pedidosPendientes.length > 0
-      ? pedidosPendientes[0].id
-      : null;
+  // 🛑 Validar stock antes de enviar
+  const sinStock = items.filter(i => {
+    const p = menu.find(m => m.id === i.menu_id);
+    return !p || p.stock < i.cantidad;
+  });
 
-    const payload = items.map(i => ({
-      menu_id: i.menu_id,
-      nombre: i.nombre,
-      cantidad: i.cantidad,
-      precio: i.precio
-    }));
+  if (sinStock.length > 0) {
+    return alert("❌ Algunos ítems no tienen suficiente stock.");
+  }
 
-    // ✅ Validación antes de enviar
-    if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
-      return alert("❌ Hay ítems mal formateados. Revisa el menú.");
-    }
+  const payload = items.map(i => ({
+    menu_id: i.menu_id,
+    nombre: i.nombre,
+    cantidad: i.cantidad,
+    precio: i.precio
+  }));
 
+  if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
+    return alert("❌ Hay ítems mal formateados. Revisa el menú.");
+  }
+
+  try {
     const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
       p_mesa: mesa,
       p_local: local,
