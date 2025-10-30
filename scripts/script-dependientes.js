@@ -381,39 +381,39 @@ window.revisarPedido = function () {
   };
   document.getElementById("confirmar-pedido-btn").onclick = () => confirmarPedido();
 };
+// Helper: validador simple de UUID v1-v5 (hex canonical form)
+const isUuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
 async function confirmarPedido() {
   const local = document.getElementById("local").value;
   const mesa = (document.getElementById("mesa").value || "").trim();
   if (!mesa) return alert("Indica número de mesa antes de confirmar.");
 
+  if (!usuarioAutenticado) return alert("Sesión inválida. Inicia sesión de nuevo.");
+  if (!isUuid(usuarioAutenticado)) console.warn("usuarioAutenticado no tiene formato UUID:", usuarioAutenticado);
+
   const itemsRaw = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
       const p = menu.find(m => m.id === id);
-      return p ? {
-        menu_id: String(id),
-        nombre: p.nombre,
-        cantidad: Number(qty),
-        precio: Number(p.precio)
-      } : null;
+      return p ? { menu_id: String(id), nombre: p.nombre, cantidad: Number(qty), precio: Number(p.precio) } : null;
     })
     .filter(Boolean)
     .filter(i => i.cantidad > 0);
 
   if (itemsRaw.length === 0) return alert("No hay items para enviar.");
 
+  // acumula items iguales
   const itemsMap = {};
   itemsRaw.forEach(it => {
     const key = String(it.menu_id);
     if (!itemsMap[key]) itemsMap[key] = { ...it };
     else itemsMap[key].cantidad += it.cantidad;
   });
-
   const items = Object.values(itemsMap);
 
+  // Buscar pedido pendiente existente (si existe)
   let pedidoExistente = null;
-
   try {
-    // 🔍 Buscar pedido pendiente existente
     const { data: pedidosPendientes, error: errorBuscar } = await supabase
       .from("pedidos")
       .select("id, cobrado")
@@ -425,92 +425,89 @@ async function confirmarPedido() {
       .limit(1);
 
     if (errorBuscar) throw errorBuscar;
-    if (pedidosPendientes?.length > 0) {
-      const pedido = pedidosPendientes[0];
-      if (pedido.cobrado) {
-        return alert("⚠️ El pedido ya fue cobrado. No se puede actualizar.");
+    if (Array.isArray(pedidosPendientes) && pedidosPendientes.length > 0) {
+      pedidoExistente = String(pedidosPendientes[0].id || "");
+      if (!isUuid(pedidoExistente)) {
+        console.warn("pedidoEncontrado no es UUID válido, lo normalizo a null:", pedidoExistente);
+        pedidoExistente = null;
       }
-      pedidoExistente = pedido.id;
     }
+  } catch (err) {
+    console.error("❌ Error buscando pedido pendiente:", err);
+    return alert("Error al verificar pedidos pendientes.");
+  }
 
-    // 🛑 Validar stock antes de enviar
-    const sinStock = items.filter(i => {
-      const p = menu.find(m => m.id === i.menu_id);
-      return !p || p.stock < i.cantidad;
-    });
+  // Validar stock localmente antes de llamar al RPC
+  const sinStock = items.filter(i => {
+    const p = menu.find(m => m.id === i.menu_id);
+    return !p || p.stock < i.cantidad;
+  });
+  if (sinStock.length > 0) return alert("❌ Algunos ítems no tienen suficiente stock.");
 
-    if (sinStock.length > 0) {
-      return alert("❌ Algunos ítems no tienen suficiente stock.");
+  const payload = items.map(i => ({
+    menu_id: i.menu_id,
+    nombre: i.nombre,
+    cantidad: i.cantidad,
+    precio: i.precio
+  }));
+
+  if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
+    return alert("❌ Hay ítems mal formateados. Revisa el menú.");
+  }
+
+  // Prepara el body que vamos a enviar: solo incluye p_pedido_id si es UUID válido
+  const rpcParams = {
+    p_mesa: mesa,
+    p_local: local,
+    p_usuario_id: usuarioAutenticado,
+    p_items: payload
+  };
+  if (pedidoExistente) rpcParams.p_pedido_id = pedidoExistente;
+  else rpcParams.p_pedido_id = null; // explícito; PostgREST interpreta null correctamente
+
+  console.log("▶ Llamando RPC confirmar_pedido_sum_with_audit con:", rpcParams);
+
+  try {
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', rpcParams);
+    if (error) {
+      // muestra detalle completo para depuración
+      console.error("RPC error detalle:", error);
+      throw error;
     }
-
-    const payload = items.map(i => ({
-      menu_id: i.menu_id,
-      nombre: i.nombre,
-      cantidad: i.cantidad,
-      precio: i.precio
-    }));
-
-    if (payload.some(i => !i.menu_id || !i.nombre || isNaN(i.precio) || isNaN(i.cantidad))) {
-      return alert("❌ Hay ítems mal formateados. Revisa el menú.");
-    }
-
-    // ✅ Llamada al RPC con UUID o null
-    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit', {
-      p_mesa: mesa,
-      p_local: local,
-      p_usuario_id: usuarioAutenticado,
-      p_items: payload,
-      p_pedido_id: pedidoExistente ?? null
-    });
-
-    if (error) throw error;
-
-    const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
-    const itemsReturned = result?.items ?? [];
 
     console.log("RPC result:", data);
-    console.log("Items enviados:", items);
-    console.log("Items devueltos por RPC:", itemsReturned);
 
+    // Si tu RPC devuelve array de items, adáptalo; aquí tratamos el caso genérico
+    const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
+    const itemsReturned = result?.items ?? [];
+
+    // Comprobación básica de coherencia
     let allGood = true;
     items.forEach(it => {
       const found = itemsReturned.find(r => String(r.menu_id) === String(it.menu_id));
       if (!found || Number(found.cantidad) < Number(it.cantidad)) allGood = false;
     });
+    if (!allGood) {
+      console.warn("La actualización no parece reflejarse completamente:", { sent: items, returned: itemsReturned });
+      return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
+    }
 
-    if (!allGood) return alert("❗ La actualización no se reflejó completamente. Revisa la consola.");
-
+    // Actualiza stock local y UI
     if (result && result.items) {
       result.items.forEach(ret => {
         const localPlato = menu.find(p => String(p.id) === String(ret.menu_id));
         if (localPlato) {
-          localPlato.stock = Number(ret.stock_restante ?? localPlato.stock - ret.cantidad);
+          localPlato.stock = Number(ret.stock_restante ?? (localPlato.stock - ret.cantidad));
         }
       });
-
       mostrarMenuAgrupado(menu);
       actualizarTotalesUI();
     }
 
     cantidadesSeleccionadas = {};
     document.querySelectorAll("#menu input[type='number']").forEach(input => input.value = 0);
-    actualizarTotalesUI();
     document.getElementById("confirmacion").style.display = "none";
-
-    // ✅ Mostrar resumen visual con tipo de pedido
-    const tipoPedido = pedidoExistente ? "🧾 Pedido actualizado" : "🆕 Nuevo pedido creado";
-    const resumenBlock = document.getElementById("resumen");
-    if (resumenBlock) {
-      resumenBlock.innerHTML = `
-        <p style="margin-top:12px; font-weight:bold; color:#444;">${tipoPedido}</p>
-        <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
-        <p><strong>Local:</strong> ${escapeHtml(local)}</p>
-        <ul>
-          ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.precio * i.cantidad).toFixed(2)} CUP</li>`).join("")}
-        </ul>
-        <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.precio*i.cantidad),0).toFixed(2)} CUP</p>
-      `;
-    }
+    document.getElementById("resumen").innerHTML = "";
 
     await cargarResumen();
     await mostrarPedidosPendientes();
@@ -519,8 +516,9 @@ async function confirmarPedido() {
 
   } catch (err) {
     console.error("Error en confirmarPedido (RPC):", err);
-    alert("❌ Error al confirmar pedido. Revisa la consola.");
+    alert("❌ Error al confirmar pedido. Revisa la consola para más detalles.");
   }
+}
 }
 async function cargarResumen() {
   if (!usuarioAutenticado) return;
