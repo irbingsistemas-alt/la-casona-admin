@@ -72,13 +72,18 @@ window.iniciarSesion = async function () {
 
     console.log("✅ Datos cargados correctamente tras login.");
 
-    // 🎉 Mensaje de bienvenida
+    // 🎉 Saludo dinámico
     const saludo = document.getElementById("mensaje-bienvenida");
     if (saludo) {
-      saludo.innerHTML = `
-        <p>👋 Bienvenido, <strong>${escapeHtml(perfil.usuario)}</strong>.</p>
-        <p>Hoy es <strong>${new Date().toLocaleDateString()}</strong>. ¡Listo para tomar pedidos!</p>
-      `;
+      const hora = new Date().toLocaleTimeString();
+      const rolTexto = perfil.rol === "admin"
+        ? "Panel administrativo activo."
+        : perfil.rol === "gerente"
+        ? "Gestión operativa disponible."
+        : "¡Listo para tomar pedidos!";
+      document.getElementById("saludo-usuario").textContent = `👋 Bienvenido, ${escapeHtml(perfil.usuario)}.`;
+      document.getElementById("saludo-rol").textContent = `Tu rol: ${escapeHtml(perfil.rol)} — ${rolTexto}`;
+      document.getElementById("saludo-hora").textContent = `Acceso registrado a las ${hora}.`;
       saludo.style.display = "block";
     }
   } catch (err) {
