@@ -85,13 +85,14 @@ async function cargarMenu(force = false) {
   if (!force && now - latestMenuFetchTs < 2500) return;
   latestMenuFetchTs = now;
 
-  const { data, error } = await supabase
-    .from("menus")
-    console.log("Menú cargado:", data);
-    console.log("Error al cargar menú:", error);
-    .select("id,nombre,precio,categoria,disponible,activo,stock")
-    .eq("disponible", true)
-    .eq("activo", true);
+const { data, error } = await supabase
+  .from("menus")
+  .select("id,nombre,precio,categoria,disponible,activo,stock")
+  .eq("disponible", true)
+  .eq("activo", true");
+
+console.log("Menú cargado:", data);
+console.log("Error al cargar menú:", error);
 
   if (error || !data) return;
 
