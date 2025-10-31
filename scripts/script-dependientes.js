@@ -338,7 +338,7 @@ async function confirmarPedido() {
   const itemsRaw = Object.entries(cantidadesSeleccionadas)
     .map(([id, qty]) => {
       const p = menu.find(m => m.id === id);
-      return p ? { menu_id: String(id), nombre: p.nombre, cantidad: Number(qty), precio: Number(p.precio) } : null;
+      return p ? { menu_id: p.id, nombre: p.nombre, cantidad: Number(qty), precio: Number(p.precio) } : null;
     })
     .filter(Boolean)
     .filter(i => i.cantidad > 0);
