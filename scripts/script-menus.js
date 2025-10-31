@@ -213,7 +213,7 @@ async function cargarResumenMenus() {
   });
   html += "</tbody></table>";
   cont.innerHTML = html;
-}
+ });
     <div><strong>Total ítems:</strong><br/>${totalItems}</div>
     <div><strong>Activos:</strong><br/>${activos}</div>
     <div><strong>Disponibles:</strong><br/>${disponibles}</div>
