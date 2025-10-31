@@ -3,68 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Menús</title>
+  <title>Gestión de Menús — Admin</title>
+
+  <!-- Tu CSS base y ajustes específicos del módulo -->
+  <link rel="stylesheet" href="../style-base.css" />
   <link rel="stylesheet" href="../menus.css" />
+
 </head>
 <body>
-  <header>
-    <h1>📋 Gestión de Menús</h1>
-    <div id="rolInfo"></div>
-    <button id="btnLogout">Cerrar sesión</button>
-  </header>
+  <div class="contenedor" id="main-panel">
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="../assets/logo.png" alt="La Casona de 17" class="logo-login" width="120" height="120" />
+        <div>
+          <h1 style="margin:0;font-size:1.1rem">Gestión de Menús</h1>
+          <div id="usuarioConectado" style="font-size:0.9rem;color:#666">Usuario</div>
+        </div>
+      </div>
 
-  <section class="panel-control">
-    <button id="btnNuevo">➕ Nuevo ítem</button>
-    <button id="btnExportar">📤 Exportar CSV</button>
-    <button id="btnImportar">📥 Importar CSV</button>
-    <button id="btnExportarAuditoria">📜 Exportar auditoría</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="notificacion" aria-live="polite" class="oculto" style="display:none;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06)"></div>
+        <button id="logoutBtn" class="btn-secundario">Cerrar sesión</button>
+      </div>
+    </header>
 
-    <select id="filtro-destino"><option value="">Destino</option></select>
-    <select id="filtro-area"><option value="">Área</option></select>
-    <select id="filtro-categoria"><option value="">Categoría</option></select>
-  </section>
+    <!-- CONTROLES PRINCIPALES -->
+    <section class="panel-control" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btn-nuevo-item" class="btn-principal">Nuevo ítem</button>
+        <button id="btn-exportar-csv" class="btn-ghost">Exportar CSV</button>
+        <button id="btn-importar-csv" class="btn-ghost">Importar CSV</button>
+        <button id="btn-exportar-auditoria" class="btn-ghost">Exportar auditoría</button>
+      </div>
 
-  <section>
-    <h2>📊 Resumen general</h2>
-    <div id="panel-dashboard" class="fila-datos"></div>
-  </section>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <input id="buscador-menu" type="search" placeholder="Buscar por nombre o descripción" style="padding:8px;border-radius:6px;border:1px solid #ddd" />
+        <select id="filtro-categoria" aria-label="Filtrar por categoría" style="padding:8px;border-radius:6px;border:1px solid #ddd">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="filtro-destino" aria-label="Filtrar por destino" style="padding:8px;border-radius:6px;border:1px solid #ddd">
+          <option value="">Todos los destinos</option>
+        </select>
+      </div>
+    </section>
 
-  <section>
-    <h2>📦 Ítems sin stock</h2>
-    <div id="panel-sin-stock"></div>
-  </section>
+    <!-- DASHBOARD RESUMEN -->
+    <section style="margin-bottom:14px">
+      <h2 style="margin:6px 0 8px">Resumen</h2>
+      <div id="panel-dashboard" class="fila-datos"></div>
+    </section>
 
-  <section>
-    <h2>📦 Sugerencias de reposición</h2>
-    <div id="panel-reposicion"></div>
-  </section>
+    <!-- PANELES DE ALERTAS Y SUGERENCIAS -->
+    <section style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="panel">
+        <h3 style="margin-top:0">Ítems sin stock</h3>
+        <div id="panel-sin-stock"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Sugerencias de reposición</h3>
+        <div id="panel-reposicion"></div>
+      </div>
+    </section>
 
-  <section>
-    <h2>📋 Tabla de ítems</h2>
-    <div id="tabla-menus"></div>
-  </section>
+    <!-- TABLA / LISTA PRINCIPAL -->
+    <section class="panel" style="margin-bottom:14px">
+      <h3 style="margin-top:0">Tabla de ítems</h3>
+      <div id="tabla-menus"></div>
+    </section>
 
-  <section>
-    <h2>📊 Resumen por categoría y destino</h2>
-    <div id="panel-resumen"></div>
-  </section>
+    <!-- RESUMENES Y LOCALES -->
+    <section style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="panel">
+        <h3 style="margin-top:0">Resumen por categoría y destino</h3>
+        <div id="panel-resumen"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Menú por local</h3>
+        <div id="panel-locales"></div>
+      </div>
+    </section>
 
-  <section>
-    <h2>🏬 Menú por local</h2>
-    <div id="panel-locales"></div>
-  </section>
+    <!-- ÚLTIMOS MODIFICADOS Y AUDITORÍA -->
+    <section style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="panel">
+        <h3 style="margin-top:0">Últimos ítems modificados</h3>
+        <div id="panel-modificados"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Auditoría de cambios</h3>
+        <div id="panel-auditoria"></div>
+      </div>
+    </section>
 
-  <section>
-    <h2>🕒 Últimos ítems modificados</h2>
-    <div id="panel-modificados"></div>
-  </section>
+    <!-- MODAL ROOT -->
+    <div id="modal-menu-root" aria-hidden="true"></div>
 
-  <section>
-    <h2>📜 Auditoría de cambios</h2>
-    <div id="panel-auditoria"></div>
-  </section>
-
-  <div id="modal-menu-root"></div>
+    <!-- PIE: resumen pedido opcional (si script usa pedidoTemporal) -->
+    <footer style="margin-top:18px;display:flex;justify-content:flex-end;gap:12px;align-items:center">
+      <div id="resumen-pedido" style="display:flex;gap:12px;align-items:center">
+        <div>Total: <strong id="total">0.00 CUP</strong></div>
+        <div>Items: <strong id="cantidad-items">0</strong></div>
+      </div>
+      <div>
+        <button id="btn-ver-pedido" class="btn-principal">Revisar</button>
+        <button id="btn-limpiar" class="btn-secundario">Limpiar</button>
+      </div>
+    </footer>
+  </div>
 
   <script type="module" src="../scripts/script-menus.js"></script>
 </body>
