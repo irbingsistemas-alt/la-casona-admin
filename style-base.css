@@ -306,3 +306,13 @@ tbody tr:hover { background: #f5f5f5; }
   color: #b00020;
   font-weight: bold;
 }
+.categoria-grupo.embalajes {
+  border: 1px dashed #999;
+  background-color: #f9f9f9;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+.categoria-grupo.embalajes h3::before {
+  content: "📦 ";
+}
