@@ -217,10 +217,16 @@ function mostrarMenuAgrupado(platos) {
     return acc;
   }, {});
 
-  for (const categoria of Object.keys(grupos)) {
-    const grupo = document.createElement("div");
-    grupo.className = "categoria-grupo";
-    grupo.innerHTML = `<h3>${escapeHtml(categoria)}</h3>`;
+ for (const categoria of Object.keys(grupos)) {
+  const grupo = document.createElement("div");
+  grupo.className = "categoria-grupo";
+
+  // ✅ Detectar embalajes y aplicar estilo
+  if (categoria === "Embalajes") {
+    grupo.classList.add("embalajes");
+  }
+
+  grupo.innerHTML = `<h3>${escapeHtml(categoria)}</h3>`;
 
     grupos[categoria].forEach(plato => {
       const cantidadActual = Number(cantidadesSeleccionadas[plato.id] || 0);
