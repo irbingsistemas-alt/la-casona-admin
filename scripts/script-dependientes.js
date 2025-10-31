@@ -319,9 +319,14 @@ window.revisarPedido = function () {
   resumenBlock.innerHTML = `
     <p><strong>Mesa:</strong> ${escapeHtml(mesa)}</p>
     <p><strong>Local:</strong> ${escapeHtml(local)}</p>
-    <ul>
-      ${items.map(i => `<li>${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.price * i.cantidad).toFixed(2)} CUP</li>`).join("")}
-    </ul>
+ <ul>
+  ${items.map(i => {
+    const esEmbalaje = i.nombre.toLowerCase().includes("caja") || i.nombre.toLowerCase().includes("jaba") || i.nombre.toLowerCase().includes("termo") || i.nombre.toLowerCase().includes("envase");
+    return `<li class="${esEmbalaje ? "embalaje-item" : ""}">
+      ${esEmbalaje ? "📦 " : ""}${escapeHtml(i.nombre)} x${i.cantidad} — ${(i.price * i.cantidad).toFixed(2)} CUP
+    </li>`;
+  }).join("")}
+</ul>
     <p><strong>Total:</strong> ${items.reduce((s,i)=>s+(i.price*i.cantidad),0).toFixed(2)} CUP</p>
     <div style="margin-top:12px; display:flex; gap:10px;">
       <button id="confirmar-pedido-btn" class="btn-principal">✅ Confirmar pedido</button>
