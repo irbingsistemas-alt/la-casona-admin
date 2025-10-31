@@ -3,59 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Menús | La Casona de 17</title>
-  <link rel="stylesheet" href="../style-base.css" />
+  <title>Gestión de Menús</title>
+  <link rel="stylesheet" href="../styles/menus.css" />
 </head>
 <body>
-  <div class="contenedor" id="main-panel">
-    <header style="display:flex; align-items:center; justify-content:space-between;">
-      <img src="../assets/logo.png" alt="Logo La Casona" class="logo-login" />
-      <div>
-        <h1>Gestión de Menús</h1>
-        <div class="meta" id="rolInfo"></div>
-      </div>
-      <button id="btnLogout" class="btn ghost">Cerrar sesión</button>
-    </header>
+  <header>
+    <h1>📋 Gestión de Menús</h1>
+    <div id="rolInfo"></div>
+    <button id="btnLogout">Cerrar sesión</button>
+  </header>
 
-    <section>
-      <h2>📋 Ítems del menú</h2>
+  <section class="panel-control">
+    <button id="btnNuevo">➕ Nuevo ítem</button>
+    <button id="btnExportar">📤 Exportar CSV</button>
+    <button id="btnImportar">📥 Importar CSV</button>
+    <button id="btnExportarAuditoria">📜 Exportar auditoría</button>
 
-      <div class="fila-datos">
-        <div>
-          <label for="filtro-categoria">Categoría:</label>
-          <select id="filtro-categoria"><option value="">Todas</option></select>
-        </div>
-        <div>
-          <label for="filtro-destino">Destino:</label>
-          <select id="filtro-destino"><option value="">Todos</option></select>
-        </div>
-        <div>
-          <label for="filtro-area">Área:</label>
-          <select id="filtro-area">
-            <option value="">Todas</option>
-            <option value="plato">Plato</option>
-            <option value="bebida">Bebida</option>
-            <option value="embalaje">Embalaje</option>
-            <option value="extra">Extra</option>
-          </select>
-        </div>
-      </div>
+    <select id="filtro-destino"><option value="">Destino</option></select>
+    <select id="filtro-area"><option value="">Área</option></select>
+    <select id="filtro-categoria"><option value="">Categoría</option></select>
+  </section>
 
-      <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button id="btnNuevo" class="btn-principal">➕ Crear nuevo ítem</button>
-        <button id="btnExportar" class="btn-secundario">📤 Exportar CSV</button>
-        <button id="btnImportar" class="btn-secundario">📥 Importar CSV</button>
-      </div>
+  <section>
+    <h2>📊 Resumen general</h2>
+    <div id="panel-dashboard" class="fila-datos"></div>
+  </section>
 
-      <div id="tabla-menus"></div>
+  <section>
+    <h2>📦 Ítems sin stock</h2>
+    <div id="panel-sin-stock"></div>
+  </section>
 
-      <h2>🔴 Ítems sin stock</h2>
-      <div id="panel-sin-stock"></div>
-    </section>
+  <section>
+    <h2>📦 Sugerencias de reposición</h2>
+    <div id="panel-reposicion"></div>
+  </section>
 
-    <!-- Modal para edición/creación -->
-    <div id="modal-menu-root"></div>
-  </div>
+  <section>
+    <h2>📋 Tabla de ítems</h2>
+    <div id="tabla-menus"></div>
+  </section>
+
+  <section>
+    <h2>📊 Resumen por categoría y destino</h2>
+    <div id="panel-resumen"></div>
+  </section>
+
+  <section>
+    <h2>🏬 Menú por local</h2>
+    <div id="panel-locales"></div>
+  </section>
+
+  <section>
+    <h2>🕒 Últimos ítems modificados</h2>
+    <div id="panel-modificados"></div>
+  </section>
+
+  <section>
+    <h2>📜 Auditoría de cambios</h2>
+    <div id="panel-auditoria"></div>
+  </section>
+
+  <div id="modal-menu-root"></div>
 
   <script type="module" src="../scripts/script-menus.js"></script>
 </body>
