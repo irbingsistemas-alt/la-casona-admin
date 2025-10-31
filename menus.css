@@ -154,3 +154,61 @@ li {
   resize: vertical;
   min-height: 60px;
 }
+@media screen and (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .panel-control {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fila-datos {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  table, th, td {
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 4px;
+  }
+
+  button {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+  }
+
+  .modal {
+    width: 95%;
+    padding: 0.8rem;
+  }
+
+  .modal form input,
+  .modal form select,
+  .modal form textarea {
+    font-size: 0.9rem;
+    padding: 5px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  .meta {
+    font-size: 0.8rem;
+  }
+
+  ul li {
+    font-size: 0.9rem;
+  }
+}
