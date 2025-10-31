@@ -410,7 +410,7 @@ const rpcParams = {
   });
 
   try {
-    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit_v3', rpcParams);
+    const { data, error } = await supabase.rpc('confirmar_pedido_sum_with_audit_v4', rpcParams);
     if (error) {
       console.error("RPC error detalle:", error);
       throw error;
