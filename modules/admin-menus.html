@@ -1,116 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Menús | La Casona</title>
-  <link rel="icon" href="../assets/logo.png" type="image/png" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Menús | La Casona de 17</title>
   <link rel="stylesheet" href="../style-base.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="../assets/logo.png" alt="La Casona logo" />
+  <div class="contenedor" id="main-panel">
+    <header style="display:flex; align-items:center; justify-content:space-between;">
+      <img src="../assets/logo.png" alt="Logo La Casona" class="logo-login" />
       <div>
-        <h1>Admin Menús</h1>
-        <div class="small">Crear y editar platos — destinos: focsa / restaurant / entregas</div>
+        <h1>Gestión de Menús</h1>
+        <div class="meta" id="rolInfo"></div>
       </div>
+      <button id="btnLogout" class="btn ghost">Cerrar sesión</button>
     </header>
 
-    <div class="grid">
-      <section class="card">
-        <h2>Crear / Editar Plato</h2>
-        <form id="menuForm" autocomplete="off">
-          <input type="hidden" id="menuId" />
-          <label>Nombre</label>
-          <input id="nombre" required maxlength="150" />
+    <section>
+      <h2>📋 Ítems del menú</h2>
 
-          <label>Descripción</label>
-          <textarea id="descripcion" rows="2" placeholder="Opcional"></textarea>
-
-          <div class="row">
-            <div class="col">
-              <label>Precio</label>
-              <input id="precio" type="number" step="0.01" min="0" required />
-            </div>
-            <div class="col">
-              <label>Categoría</label>
-              <select id="categoriaSelect"></select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col">
-              <label>Destino</label>
-              <select id="destino">
-                <option value="restaurant">restaurant</option>
-                <option value="focsa">focsa</option>
-                <option value="entregas">entregas</option>
-              </select>
-            </div>
-            <div class="col">
-              <label>Disponible</label>
-              <select id="disponible">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-          </div>
-
-          <label>Imagen URL</label>
-          <input id="imagen_url" placeholder="https://..." />
-
-          <label>Stock (opcional)</label>
-          <input id="stock" type="number" min="0" placeholder="Dejar vacío = sin control" />
-
-          <div class="actions">
-            <button type="submit" id="btnGuardar" class="btn">Guardar</button>
-            <button type="button" id="btnLimpiar" class="btn ghost">Limpiar</button>
-            <button type="button" id="btnCancelarEdicion" class="btn ghost" style="display:none">Cancelar Edición</button>
-          </div>
-        </form>
-      </section>
-
-      <aside>
-        <div class="card">
-          <h2>Listado de Platos</h2>
-          <div class="filters">
-            <div>
-              <label>Destino</label>
-              <select id="filtroDestino">
-                <option value="">Todos</option>
-                <option value="focsa">focsa</option>
-                <option value="restaurant">restaurant</option>
-                <option value="entregas">entregas</option>
-              </select>
-            </div>
-            <div>
-              <label>Categoría</label>
-              <select id="filtroCategoria">
-                <option value="">Todas</option>
-              </select>
-            </div>
-            <div>
-              <label>Buscar</label>
-              <input id="buscar" placeholder="Nombre..." />
-            </div>
-            <div>
-              <label>&nbsp;</label>
-              <button id="btnRefrescar" class="btn ghost" type="button">Refrescar</button>
-            </div>
-          </div>
-          <div id="menuListado" style="max-height:360px;overflow-y:auto;padding-right:6px"></div>
+      <div class="fila-datos">
+        <div>
+          <label for="filtro-categoria">Categoría:</label>
+          <select id="filtro-categoria"><option value="">Todas</option></select>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <h2>Historial de Acciones</h2>
-          <div id="historial" class="hist-list" aria-live="polite"></div>
+        <div>
+          <label for="filtro-destino">Destino:</label>
+          <select id="filtro-destino"><option value="">Todos</option></select>
         </div>
-      </aside>
-    </div>
+        <div>
+          <label for="filtro-area">Área:</label>
+          <select id="filtro-area">
+            <option value="">Todas</option>
+            <option value="plato">Plato</option>
+            <option value="bebida">Bebida</option>
+            <option value="embalaje">Embalaje</option>
+            <option value="extra">Extra</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <button id="btnNuevo" class="btn-principal">➕ Crear nuevo ítem</button>
+        <button id="btnExportar" class="btn-secundario">📤 Exportar CSV</button>
+        <button id="btnImportar" class="btn-secundario">📥 Importar CSV</button>
+      </div>
+
+      <div id="tabla-menus"></div>
+
+      <h2>🔴 Ítems sin stock</h2>
+      <div id="panel-sin-stock"></div>
+    </section>
+
+    <!-- Modal para edición/creación -->
+    <div id="modal-menu-root"></div>
   </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="../scripts/script-admin-menus.js"></script>
+  <script type="module" src="../scripts/script-menus.js"></script>
 </body>
 </html>
