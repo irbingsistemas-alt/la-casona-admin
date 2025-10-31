@@ -194,19 +194,26 @@ async function importarCSV() {
   input.click();
 }
 
-async function cargarDashboardResumen() {
-  const { data, error } = await supabase.from("menus").select("id, precio, stock, activo, disponible");
-  const cont = document.getElementById("panel-dashboard");
+async function cargarResumenMenus() {
+  const { data, error } = await supabase.from("menus").select("categoria_id, destino, stock, precio");
+  const cont = document.getElementById("panel-resumen");
   if (!cont || error || !data) return;
 
-  const totalItems = data.length;
-  const activos = data.filter(i => i.activo).length;
-  const disponibles = data.filter(i => i.disponible).length;
-  const sinStock = data.filter(i => i.stock === 0).length;
-  const stockTotal = data.reduce((s, i) => s + Number(i.stock || 0), 0);
-  const valorTotal = data.reduce((s, i) => s + Number(i.precio || 0), 0);
+  const resumen = {};
+  data.forEach(item => {
+    const key = `${item.categoria_id || "Sin categoría"} · ${item.destino}`;
+    if (!resumen[key]) resumen[key] = { total: 0, stock: 0 };
+    resumen[key].total += Number(item.precio || 0);
+    resumen[key].stock += Number(item.stock || 0);
+  });
 
-  cont.innerHTML = `
+  let html = "<table><thead><tr><th>Categoría · Destino</th><th>Stock total</th><th>Valor total (CUP)</th></tr></thead><tbody>";
+  Object.entries(resumen).forEach(([clave, val]) => {
+    html += `<tr><td>${clave}</td><td>${val.stock}</td><td>${val.total.toFixed(2)}</td></tr>`;
+  });
+  html += "</tbody></table>";
+  cont.innerHTML = html;
+}
     <div><strong>Total ítems:</strong><br/>${totalItems}</div>
     <div><strong>Activos:</strong><br/>${activos}</div>
     <div><strong>Disponibles:</strong><br/>${disponibles}</div>
