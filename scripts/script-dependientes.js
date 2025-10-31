@@ -390,14 +390,14 @@ async function confirmarPedido() {
   }
 
   const pedidoIdToSend = isUuid(pedidoExistente) ? pedidoExistente : null;
-  const rpcParams = {
-    p_mesa: mesa,
-    p_local: local,
-    p_usuario_id: usuarioAutenticado,
-    p_items: payload,
-    p_pedido_id: pedidoIdToSend,
-    p_tipo: "dependiente" // ← tipo explícito
-  };
+const rpcParams = {
+  p_mesa: mesa,
+  p_local: local,
+  p_usuario_id_text: usuarioAutenticado,
+  p_items: payload,
+  p_pedido_id_text: pedidoIdToSend,
+  p_tipo: "dependiente" // ← tipo explicito
+};
 
   console.log("▶ Llamando RPC confirmar_pedido_sum_with_audit_v3 con:", rpcParams);
   console.log("   tipos:", {
