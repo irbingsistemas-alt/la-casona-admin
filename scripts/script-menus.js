@@ -84,29 +84,40 @@ async function cargarMenus(){
   }
 }
 
-async function cargarFiltros(){
+async function cargarFiltros() {
   try {
-    // categorías (si existe tabla 'categorias')
+    // Cargar categorías (si existe la tabla)
     const { data: cats } = await supabase.from("categorias").select("id,nombre").order("nombre");
     const selCat = el("filtro-categoria");
-    if(selCat){
-      selCat.innerHTML = `<option value="">Todas las categorías</option>` + (cats||[]).map(c=>`<option value="${escapeHtml(String(c.id))}">${escapeHtml(c.nombre)}</option>`).join("");
-      selCat.addEventListener("change", ()=>{ filtrosActivos.categoria = selCat.value; renderListaPorCategoria(); });
+    if (selCat) {
+      selCat.innerHTML = `<option value="">Todas las categorías</option>` + (cats || [])
+        .map(c => `<option value="${escapeHtml(String(c.id))}">${escapeHtml(c.nombre)}</option>`).join("");
+      selCat.addEventListener("change", () => { filtrosActivos.categoria = selCat.value; renderListaPorCategoria(); });
     }
-    // destinos únicos
-    const { data: destinos } = await supabase.from("menus").select("destino").distinct();
+
+    // Obtener todos los destinos desde menus y deduplicar en el cliente
+    const { data: allMenus, error: errMenus } = await supabase
+      .from("menus")
+      .select("destino");
+    if (errMenus) throw errMenus;
+
+    const destinosSet = new Set((allMenus || []).map(r => r.destino).filter(Boolean));
+    const destinos = Array.from(destinosSet).sort();
     const selDest = el("filtro-destino");
-    if(selDest){
-      selDest.innerHTML = `<option value="">Todos los destinos</option>` + (destinos||[]).map(d=>`<option value="${escapeHtml(d.destino)}">${escapeHtml(d.destino)}</option>`).join("");
-      selDest.addEventListener("change", ()=>{ filtrosActivos.destino = selDest.value; renderListaPorCategoria(); });
+    if (selDest) {
+      selDest.innerHTML = `<option value="">Todos los destinos</option>` + destinos
+        .map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join("");
+      selDest.addEventListener("change", () => { filtrosActivos.destino = selDest.value; renderListaPorCategoria(); });
     }
+
+    // Buscador debounce
     const busc = el("buscador-menu");
-    if(busc) busc.addEventListener("input", debounce((e)=>{ filtrosActivos.texto = e.target.value.trim().toLowerCase(); renderListaPorCategoria(); }, 220));
+    if (busc) busc.addEventListener("input", debounce((e) => { filtrosActivos.texto = e.target.value.trim().toLowerCase(); renderListaPorCategoria(); }, 220));
   } catch (e) {
     console.error("cargarFiltros:", e);
+    notify("Error cargando filtros", "error");
   }
 }
-
 function actualizarFiltrosLocales(){
   // Placeholder para futuras sincronizaciones (por ahora filtros se cargan en cargarFiltros)
 }
